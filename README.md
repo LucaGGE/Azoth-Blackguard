@@ -1,23 +1,11 @@
-# Rogue24 Game System
-_CS50's Introduction to Game Development 2024, Final Project by Luca Giovani_
+# ROGUE24 - GOBLET
+The ROGUE24 engine with GOBLET, a dark fantasy crawl set in deadly wilderness.
 
-## A word (or two) on Videogames and Life
-
-What constitutes video games - probably the most complex form of art conceived by man to date - is the combination of a massive amount of disciplines, variables in quantity, form, and even presence based on the specific product. Think of the cutscenes, the music and sounds, the next-gen graphics of AAA games, or the 8x8 pixel sprites.\
-And that's not all: there are also ethical considerations. Marketing, visibility (if a tree falls in a forest, and there’s no one around to hear it, does it make a sound?). The cultural impact. The platform, which will determine who, when, and how will consume our product.\
-It is not an easy or grateful job: we have all gritted our teeth in front of the trash asset-flip money-generating games kindly encouraged by Unity and indiscriminately distributed by Steam. We have all experienced the moment when our poorly organized Kickstarter closed the crowdfunding period by barely raising $15.\
-What not everyone can do is reach the next stage: understanding that it's okay. Video games are art. And art is a thing, which can be good or bad, ordinary or exceptional, sell or never see the light of day. Art is a thing, indeed.\
-A transcendental, divine thing - as it is ideal and perfect - something that is beauty for the sake of beauty. The video game, in its form, is a game for the pleasure of playing.\
-And games teach. Games influence. Games shape.\
-That's why a good game is so powerful when it satisfies a fantasy (original or not), that's why it touches so deeply when it tells a profoundly human story, and that's why it is essential that it contains essential truths. Lies and propaganda jar like broken strings, but the most insidious ones are able to hide behind powerful notes so well as to be diabolical.\
-It is our responsibility as developers to care about the ethics and quality of our products. Only we can choose our path and decide to produce something that truly brings value to the user rather than doping them with sounds and colors or hiding the mediocrity of our product behind overwhelming special effects (which, by the way, works particularly well).\
-At the very least, we should care about dignity and self-love - however rare they may be nowadays. What twisted soul desires to sell low-quality products? What pettiness can deprive us of the highest aspirations, even if they are very modest? Perhaps it is the fear of the quintessential human act - sacrifice, of course - that deprives us of the priceless joys it brings?\
-We are nothing if we try to be everything. Sacrificing what we could be for what we decide to be is the steep path that leads to the top, which we must find groping in the dark. The night is long but not eternal, and soon our feet find the path we have been heading towards, a bit trampled and open, and a bit to clean up. Sometimes, it is almost night again when we realize that we have advanced a long way just a few steps from our path.\
-I sacrificed my being a mediocre-of-all-trades and gave everything I could to embark on my journey, so close yet found so laboriously. I sweated for years, worked beyond exhaustion, failed beyond belief, destroyed my ego, attended exceptional courses, and read books of knowledge rarer than useless diamonds. My prize is to be able to put my creatures on the cross, without pain or fear.
+![Capture](https://github.com/LucaGGE/rogue24-goblet/assets/134053142/131572f8-90cf-43d0-86f3-6899ae80f00e)
 
 ## The idea
 
-The idea for the _system_ that I have, with little imagination (I've never been strong with names), baptized _Rogue24_, is that of one capable of bringing the best elements of OSR tabletop RPGs to the computer.
+The idea for the _game system_ that I have, with little imagination (I've never been strong with names), baptized _Rogue24_, is that of one capable of bringing the best elements of OSR tabletop RPGs to the computer.
 
 Several games and genres have already succeeded in this endeavor, but always focusing on specific aspects. Perhaps the easiest way to imagine what I have in mind is to think of Rogue (without significant graphical limitations) meeting Colossal Cave Adventure with the customization capabilities of Dungeons & Dragons.
 
@@ -29,7 +17,7 @@ Therefore, I am thinking of an experience that contains the following elements:
 4. Multiplayer. Playable in _local-coop_ (currently the only way to play multiplayer that I have managed to recognize as healthy) or by a single player, if desired.
 5. Heavily customizable game. Once the tools are created to facilitate modding, the system will almost seem like an engine.
 
-**Cos'è questa storia del _sistema_? Non si tratta di un _videogame_?**
+**What about this _game system_? Isn't this a _videogame_?**
 
 Well, I didn't create so much as _a game_ but a _game system_ instead.\
 Don't get confused thinking this has something to do with game frameworks or engines. Instead, think of Tabletop RPGs (such as _Advanced Dungeons & Dragons_).
@@ -59,8 +47,6 @@ Think about these common qualities:
 
 Interestingly enough, these tend to be what we generally see as _educational_ characteristics, as we easily recognise them as positive qualities.
 
-**What's this talk about the _system_? Isn't this a _videogame_?**
-
 Basically, _game systems_ allow you to create _games_. Think of a LEGO set to build Hogwarts. LEGO is the _game system_, the castle a predefined setting to play in, with a clear fantasy and suggested scenarios to play (since we could play Harry as a cyborg and Hermione as an alien from outer space), supported by specific graphics (think of a colorful set of bricks - probably not very helpful for your gothic cathedral project).
 
 Or try taking in consideration the most abstract and therefore flexible of the examples given - since it's mostly played with pen, paper and dices - D&D.\
@@ -70,6 +56,7 @@ Anyone who has ever played it knows there are all these books full of rules. Wel
 
 Creating a _game_ using your own _game system_ helps you develop not only more robustly, but also to test the fun your system can provide, and helps you showcase magnificently what can be done with said system.\
 That's why all of the above-mentioned _systems_ always come with at least one "premade" _game_.\
+In this specific case, the repo has been named "ROGUE24 - GOBLET" since "GOBLET" is the game that comes premade with the system, helping immensely in developing the system itself.\
  
 Players will see what can be done and will jump right in to start making their own content.\
 It's like selling an ice cream cup that instead of just containing your ice cream and then becoming junk, provides you with all the ice cream you want.\
@@ -78,7 +65,7 @@ Actually, creators of _game systems_ have a tendency to create many _games_ as p
 
 ## About ethics
 
-And here's where we should, in my opinion, start to think about _ethics_, and maybe how to make them go hand-in-hand with business (I may be dumb or naive, but I honestly think that's perfectly possible).
+And here's where we should, in my opinion, think a little about _ethics_, and maybe how to make them go hand-in-hand with business (I may be dumb or naive, but I honestly think that's perfectly possible).
 
 To start, here are some ideas that come to mind to avoid selling unethical products. You'll see these are very common techniques not at all exclusive to videogames. Our products:
 
@@ -94,7 +81,7 @@ At this point, it seems appropriate to propose my solutions to the above points.
 1. I promise that it will represent the best of the best that my abilities and dedication can produce. No fixes/improvements will be shelved to save time.
 1. It is being developed with my own hands, and those who created the sources for the sounds have been regularly paid.
 1. It does not contain advertisements or propaganda, nor does it seek to deceive or misinform people. It is a genuine product.
-1. It is being developed with portability and lightness in mind. My goal is to create something as compatible as possible with older operating systems and machines, and it will be sold for a few dollars. In fact, I am considering releasing it under an OS MPLv2 license.
+1. It is being developed with portability and lightness in mind. My goal is to create something as compatible as possible with older operating systems and machines, and it will be sold for a few dollars. Also, I am releasing it as OS under an MPLv2 license, so paying is absolutely optional (but please do, it would help immensely and allow me to switch to game dev full-time).
 
 ## So, this "system" of yours, how is it?
 
@@ -131,6 +118,8 @@ Here I list and briefly explain my project's main characteristics:
     - It's of little surprise that such a flexible game system is able to offer drastically different gaming experiences, since what the _game system_ does is foundamentally allowing turn-based interactions between game entities. These interactions can be things like collision, combat, dialogue, triggers or powerups. This means we can, for example, create a farming game, where the player has to defend their crops from noctural hordes of pests. We can create intelligent entities that can move but at the same time can be collected by the player. Multiplayer is not yet fully implemented, but the game is structured in such a way that it is perfectly possible for players to play together, maybe with NPCs with rich dialogues written by them.
 
 ## How much of that has been actually developed?
+>[!WARNING]
+>Be aware of the fact that the below content is often going to be outdated (will be updated from time to time). Its main purpose is to help developers understand how advanced the project is. 
 
 Now let's get a little pragmatic, and let's check out the actual code.\
 So the first question is: how much of all that is already developed and working?
@@ -155,6 +144,8 @@ As of today, my _Rogue24_ (called this way to because it's my 2024 version of Ro
 There's much; **much** more to come; but still, I hope I was able to showcase effectively the main concepts behind the project.
 
 ## The Development
+>[!WARNING]
+>Be **very** aware of the fact that the below content is often going to be outdated (will be updated from time to time). Its main purpose is to help developers to grasp how the software's architecture. 
 
 To help you better understand the my _Rogue24_, I will quickly illustrate all the files found in this project's folder. Please note I was quite generous with comments while developing this and I think it might be useful to use this overview documentation in conjunction with simply reading the code.
 
@@ -225,8 +216,9 @@ The folder accomodating all of the Game States. These are nothing particularly a
 
 ## OOP by aggregation
 
-This was not my original idea by any means, and all I did by myself was taking the abstract idea and give it a practical application. I recommend you check last section, "Acknowledgments", and check out Cowboy Programming's article "Evolve your hierarchy" where I originally took the idea. I also consulted other material scattered on the web but I honestly had a hard time finding anything that gave practical examples. Despite that, I must say I am quite satisfied with the results.\
-You probably have already heard of OOP by aggregation (sometimes slightly different terms are used) or you may even be more familiar with it than I am. It's an extremely interesting topic and I hope to illustrate here my understanding of the subject.
+ROGUE24 is built with OOP by aggregation in mind.\
+OOPBA not my original idea by any means, and all I did by myself was taking the abstract idea and give it a practical application. I recommend you check last section, "Acknowledgments", and check out Cowboy Programming's article "Evolve your hierarchy" where I originally took the idea. I also consulted other material scattered on the web but I honestly had a hard time finding anything that gave practical examples. Despite that, I must say I am quite satisfied with the results.\
+You probably have already heard of OOPBA (sometimes slightly different terms are used) or you may even be more familiar with it than I am. It's an extremely interesting topic and I hope to illustrate here my understanding of the subject.
  
 Basically, the strongest arguments in favour of this approach are two:
 1. On one side, when you use inheritance to create your classes, you're not only being extremely abstract and philosophical (is this a _tool_ or a _weapon_? Should it be _both_?) but you're creating big, bloated classes full of useless data and functions (just think about a platypus class, inheriting from mammals class, birds class etc and only needing a small part of each).\
@@ -246,9 +238,9 @@ If you are really clever about your components, you may not have the perfect sys
 
 The project was born as a game, and even if it has evolved into a system, it still is shipped with a game, of which I already explained the importance.\
 This means the project would have had little sense without at least some game graphics.\
-The stuff you will found included on GitHub is not there just for test purposes nor it was copied or bought anywhere. Everything was especially developed for this final project. This material is to be considered a finished first alpha that needs to be tested, modified and polished. I also have Game design docs that still have some incogruences and need to be merged, updated and improved until they become the final, official version. Along the Krita files for the graphics, they weren't included in the repo.\
+The stuff you will found included on GitHub is not there just for test purposes nor it was copied or bought anywhere. Everything was especially developed for this ROGUE24.\
 I like how the tileset came out but it will undergo some changes anyway, especially background tiles that are too little and rough (since they are the one that suffered the most when I decided to change tile resolution from 32x32 pixels to 20x20).\
-Of course it would have been extremely cool to include at least a first draft of the "Modders Manual", but with the time at my disposal that was absolutely out of question.
+Of course it would have been extremely cool to immediately include at least a first draft of the "Modders Manual", but with the time at my disposal that was absolutely out of question.
 
 ## Acknowledgments
 
@@ -267,12 +259,10 @@ Link to the GitHub page: https://github.com/alexshi126/lua-knife
 Florentine24 by Haboo - a 24 colors palette I used for my pixelart graphics.\
 Link to Lospec: https://lospec.com/palette-list/florentine24
 
-Special thanks to Martina Del Giudice, my loved girlfriend, for supporting me first during CS50 and then during CS50's Intoduction to Game Development. And also for sacrificing her mental health listening to me rambling about code and the courses all the time.\
-Also, I'd like to thank her for being my first tester, for trying so hard to help and for being extremely understanding in regards of all the time I sacrificed for this program.
+Special thanks to Martina Del Giudice, my loved girlfriend, for supporting me for all these years with all my personal projects. And also for sacrificing her mental health listening to me rambling about code and design all the time.\
+Also, I'd like to thank her for being my first tester, for trying so hard to help and for being extremely understanding in regards of all the time I sacrificed for this.
 
 And lastly, thanks to anybody who went through this chunky document. I really appreciate you spending some of your time to read this, and I'd be glad to hear you out if you have any questions.
 
-Well, that's all for now! I wish you the best of luck for your own projects. I'm sure you'll deliver!\
-This was CS50... again!
 Cheers,\
-Luca
+Luca G

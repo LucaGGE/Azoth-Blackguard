@@ -50,7 +50,7 @@ function strings_separator(line, separator, pos)
     -- parsing results for each line, until end of line
     while true do
         if line == nil then
-            error_handler("ERROR READING CSV: Blank file")
+            error_handler("ERROR READING CSV: Blank file/line")
             break
         end
         -- storing starting and end points between commas, updating pos value
@@ -232,7 +232,7 @@ function map_generator(map_values, regen_players)
                             blueprint["name"] = tile_values[3]
                         end
                     else
-                        error_handler("Illegal entity at row "..i.." column "..j..". Ignored.")
+                        error_handler("Map: illegal entity at row "..i.." column "..j..". Ignored.")
                     end
                 elseif tile_index == "x" and tile_values[2]:match("%d") then
                     -- REMEMBER: values extracted from CSV (such as tile_values[2]!) are STRINGS!
@@ -241,20 +241,22 @@ function map_generator(map_values, regen_players)
                     g.grid[i][j].index = "empty"
                     goto continue
                 else
-                    error_handler("Illegal cell value at row "..i.." column "..j..". Replaced with empty cell.")
+                    error_handler("Map: illegal cell value at row "..i.." column "..j..". Replaced with empty cell.")
                     g.grid[i][j].index = "empty"
                     goto continue
                 end                    
             else
                 tile_index = map_values[i][j]
-                if not tile_index:match("%d") then
+                -- if tile_index == nil then there must be a blank line or the value is unreadable
+                -- if tile index doesn't match a number ("%d") then there is an illegal value
+                if tile_index == nil or not tile_index:match("%d") then
                     -- not-numeric value for a tile
-                    error_handler("Illegal cell value at row "..i.." column "..j..". Replaced with empty cell.")
+                    error_handler("Map: illegal cell value at row "..i.." column "..j..". Replaced with empty cell.")
                     g.grid[i][j].index = "empty"
                     goto continue
                 elseif tile_index == "x" then
                     -- spawn location lacking an order number
-                    error_handler("Spawn point at row "..i.." column "..j.." lacking second arg. Replaced with empty cell.")
+                    error_handler("Map: spawn point at row "..i.." column "..j.." lacking second arg. Replaced with empty cell.")
                     g.grid[i][j].index = "empty"
                     goto continue
                 end

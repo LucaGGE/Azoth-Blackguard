@@ -94,33 +94,33 @@ function StatePlay:update()
         -- checking if a valid action was taken. If not, turn is not over
         if valid_action then
             current_turn = current_turn + 1
-        end
 
-        -- NOTE: be careful with tweening. Check State before activating.
-        if not g.game_state:is(StatePlay) then
-            goto continue_statchange
-        end
-
-        -- If the current_turn (now + 1) exceeds the n of players, it's NPCs turn
-        if not g.players_party[current_turn] then
-            -- reset turn system to 1
-            current_turn = 1
-
-            -- block player from doing anything while g.camera and NPCs act
-            g.is_tweening = true
-            -- If g.players_party[1] is not true, all players died/we are changing level
-            if g.players_party[current_turn] then
-                turns_manager(g.players_party[current_turn])
-            elseif g.game_state:is(StatePlay) then
-                -- triggering Game Over, but only if we didn't simply pass through an exit!
-                g.game_state = StateGameOver()
-                g.game_state:init()
+            -- NOTE: be careful with tweening. Check State before activating.
+            if not g.game_state:is(StatePlay) then
+                goto continue_statchange
             end
-        else
-            g.is_tweening = true
-            turns_manager(g.players_party[current_turn])
+
+            -- If the current_turn (now + 1) exceeds the n of players, it's NPCs turn
+            if not g.players_party[current_turn] then
+                -- reset turn system to 1
+                current_turn = 1
+                -- block player from doing anything while g.camera and NPCs act
+                g.is_tweening = true
+                -- If g.players_party[1] is not true, all players died/we are changing level
+                if g.players_party[current_turn] then
+                    -- reset current_turn number and move NPCs
+                    turns_manager(g.players_party[current_turn], true)
+                elseif g.game_state:is(StatePlay) then
+                    -- triggering Game Over, but only if we didn't simply pass through an exit!
+                    g.game_state = StateGameOver()
+                    g.game_state:init()
+                end
+            else
+                g.is_tweening = true
+                turns_manager(g.players_party[current_turn], false)
+            end
+            ::continue_statchange::
         end
-        ::continue_statchange::
     end
 end
 

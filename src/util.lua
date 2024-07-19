@@ -504,7 +504,7 @@ function dice_roll(die_set, success)
     return result
 end
 
-function turns_manager(current_player)
+function turns_manager(current_player, npc_turn)
     -- updating current_player to next entity for tweening purposes
     local x_for_tweening = current_player["entity"].cell["cell"].x
     local y_for_tweening = current_player["entity"].cell["cell"].y
@@ -514,7 +514,7 @@ function turns_manager(current_player)
     Timer.tween(TWEENING_TIME, {
         [g.camera] =  {x = x_for_tweening, y = y_for_tweening}
     }):finish(function ()
-        if g.npcs_group then
+        if npc_turn and g.npcs_group then
             for i, npc in ipairs(g.npcs_group) do
                 -- check if the NPC is alive or needs to be removed from game
                 if npc.alive == false then

@@ -1,6 +1,6 @@
 -- variable containing the path to the necessary CSV files
--- the two paths are "F:/Development/Dev_Soft/Harvard/W11 - CS50FP/modding/" or "C:/Users/foxre/"
-PATH_TO_CSV = mod.path_to_csv or "C:/Users/foxre/"
+-- the two paths are "F:/Development/Dev_Games/GOBLET/source/rogue24-goblet/modding/" or "C:/Users/foxre/"
+PATH_TO_CSV = mod.path_to_csv or "F:/Development/Dev_Games/GOBLET/source/rogue24-goblet/modding/"
 
 GAME_TITLE = type(mod.game_title) == "string" and mod.game_title or "Bogs of Doom (CS50 Edition)"
 

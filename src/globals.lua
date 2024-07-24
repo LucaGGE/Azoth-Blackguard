@@ -16,4 +16,5 @@ g = {
     TILESET = love.graphics.newImage(mod.PATH_TO_TILESET or "graphics/tileset.png"),
     game_state, -- the current game state
     error_messages = {}, -- holds all error messages to be print on screen
+    keys_pressed = {} -- variable for storing and clearing keys pressed each update
 }

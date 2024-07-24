@@ -14,12 +14,12 @@ local current_turn = 1
 function StatePlay:manage_input(key)
     -- managing input for multiple players
     if #g.players_party > 1 then
-        if #keys_pressed == 0 and not g.is_tweening then
-            table.insert(keys_pressed, key)
+        if #g.keys_pressed == 0 and not g.is_tweening then
+            table.insert(g.keys_pressed, key)
         end
     else
-        if #keys_pressed <= 1 then
-            table.insert(keys_pressed, key)
+        if #g.keys_pressed <= 1 then
+            table.insert(g.keys_pressed, key)
         else
             print("Tweening, ignoring input")
         end
@@ -72,7 +72,7 @@ end
 
 function StatePlay:update()
     -- checking for input to resolve turns
-    if keys_pressed[1] and not g.is_tweening then
+    if g.keys_pressed[1] and not g.is_tweening then
         -- getting rid of useless references to dead players
         for i,v in ipairs(g.players_party) do
             if v["entity"].alive == false then
@@ -85,10 +85,10 @@ function StatePlay:update()
         
         -- sending input to current player input_manager (if alive)
         if current_player then
-            for i2,key in ipairs(keys_pressed) do
+            for i2,key in ipairs(g.keys_pressed) do
                 valid_action = current_player["player_component"]:input_management(current_player["entity"], key)
                 -- removing input that was taken care of
-                table.remove(keys_pressed, i2)
+                table.remove(g.keys_pressed, i2)
             end
         end
 

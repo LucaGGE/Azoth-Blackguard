@@ -23,7 +23,7 @@ local text = {
 }
 
 function StateMenu:manage_input(key)
-    table.insert(keys_pressed, key)
+    table.insert(g.keys_pressed, key)
 end
 
 function StateMenu:init()
@@ -58,8 +58,8 @@ end
 
 function StateMenu:update()
     -- checking for input to resolve turns
-    if keys_pressed[1] then
-        for i,key in ipairs(keys_pressed) do  
+    if g.keys_pressed[1] then
+        for i,key in ipairs(g.keys_pressed) do  
             if key == "escape" then
                 love.event.quit()   
             elseif key == "right" then
@@ -157,7 +157,7 @@ function StateMenu:update()
                 end
             end
         end
-        keys_pressed = {}
+        g.keys_pressed = {}
     end
 end
 

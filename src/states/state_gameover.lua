@@ -7,7 +7,7 @@ local can_input
 local players_count
 
 function StateGameOver:manage_input(key)
-    table.insert(keys_pressed, key)
+    table.insert(g.keys_pressed, key)
 end
 
 function StateGameOver:init()
@@ -35,15 +35,15 @@ function StateGameOver:init()
     -- unlock input for player after few seconds
     Timer.after(2, function ()
         -- empty previously pressed keys and enable input
-        keys_pressed = {}
+        g.keys_pressed = {}
         can_input = true
     end)    
 end
 
 function StateGameOver:update()
     -- checking for input to resolve turns
-    if keys_pressed[1] and can_input then
-        for i,key in ipairs(keys_pressed) do     
+    if g.keys_pressed[1] and can_input then
+        for i,key in ipairs(g.keys_pressed) do     
             print(key)
             if key == "enter" or key == "return" then
                 love.audio.stop(MUSIC["gameover_sting"])
@@ -52,7 +52,7 @@ function StateGameOver:update()
                 g.game_state:init()
             end
         end
-        keys_pressed = {}
+        g.keys_pressed = {}
     end
 end
 

@@ -12,9 +12,6 @@ love.graphics.setDefaultFilter("nearest", "nearest")
 -- current state of the game
 g.game_state = StateMenu()
 
--- variable for storing and clearing keys pressed each update
-keys_pressed = {}
-
 function love.keypressed(key)
     -- all inputs with few system-related exceptions are handled inside Game States    
     if key == "f11" then

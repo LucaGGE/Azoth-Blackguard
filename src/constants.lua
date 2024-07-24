@@ -1,8 +1,9 @@
 -- variable containing the path to the necessary CSV files
--- the two paths are "F:/Development/Dev_Games/GOBLET/source/rogue24-goblet/modding/" or "C:/Users/foxre/"
+-- the two paths current local parths I use are "F:/Development/Dev_Games/GOBLET/source/rogue24-goblet/modding/" or "C:/Users/foxre/"
+-- you'll need to modify these to your local path since the system, to date, cannot find other than LUA files in the relative path
 PATH_TO_CSV = mod.path_to_csv or "C:/Users/foxre/"
 
-GAME_TITLE = type(mod.game_title) == "string" and mod.game_title or "Bogs of Doom (CS50 Edition)"
+GAME_TITLE = type(mod.game_title) == "string" and mod.game_title or "GOBLET"
 
 --[[
     Pay attention to tiles_features_pairs. It will store tile index = tile type,

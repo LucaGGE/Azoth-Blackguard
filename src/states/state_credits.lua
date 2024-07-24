@@ -7,7 +7,7 @@ local credits_height = credits:getHeight()
 local scale = g.window_height / 1300
 
 function StateCredits:manage_input(key)
-    table.insert(keys_pressed, key)
+    table.insert(g.keys_pressed, key)
 end
 
 function StateCredits:init()
@@ -20,8 +20,8 @@ function StateCredits:update()
     -- this is simply an optimal proportion between the image size and the screen size
     scale = g.window_height / 1300
     -- on any key pressed, empty inputs to avoid acceidents and go to menu
-    if keys_pressed[1] then
-        keys_pressed = {}
+    if g.keys_pressed[1] then
+        g.keys_pressed = {}
         g.game_state = StateMenu()
         StateMenu:init()
     end

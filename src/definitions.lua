@@ -10,21 +10,21 @@ cell = {
     entity = nil -- any entity that is not a 'occupant'. Limited to one per cell
 }
 
--- Entity definition. Entities are very simple containers for features!
+-- entity definition. Entities are very simple containers for features!
 Entity = Object:extend()
 
 function Entity:new(id, tile, features, name)
     -- can be either a player or a NPC. Used to check groups
     self.controller = nil
-    -- checked everytime an Entity gets drawn, to see if it need to be eliminated
+    -- checked everytime an entity gets drawn, to see if it need to be eliminated
     self.alive = true
-    -- an Entity can only live inside cells. They also give x and y coords for drawing
+    -- an entity can only live inside cells. They also give x and y coords for drawing
     self.cell = {["cell"] = nil, ["grid_column"] = nil, ["grid_row"] = nil}
     -- obligatory, first CSV arg. Necessary to give a player context, since entities are universal containers
     self.id = id
-    -- obligatory, second CSV arg. Necessary to draw Entities to screen, even invisible ones (see design docs)
+    -- obligatory, second CSV arg. Necessary to draw entities to screen, even invisible ones (see design docs)
     self.tile = tile
-    -- completely optional. This is where all Entity Features are defined, in an Object Aggregation fashion
+    -- completely optional. This is where all entity features are defined, in an Object Aggregation fashion
     self.features = features or {}
     -- completely optional. Used for Players names and special NPCs/objects
     self.name = name or id

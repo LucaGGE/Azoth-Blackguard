@@ -83,7 +83,7 @@ function Movable:new(optional_args)
 end
 
 --[[
-    NOTE: if something can move, it can attack. Moving against an Entity = attacking it.
+    NOTE: if something can move, it can attack. Moving against an entity = attacking it.
     This also means that something can have no mov features but if it is movable, it can
     still attack - think of a living tree that can bash players with its branches but
     cannot move around!
@@ -186,7 +186,7 @@ function Movable:move_entity(entity, direction)
             return false
         end
     end  
-    -- self is a reference to the Entity's Movable() component
+    -- self is a reference to the entity's Movable() component
     if can_traverse then
         entity.cell["cell"].occupant = nil -- freeing old cell
         entity.cell["grid_row"] = entity.cell["grid_row"] + direction[1]
@@ -203,18 +203,20 @@ function Movable:move_entity(entity, direction)
             -- immediately check if that's a trigger and which effects it may have
             if target_cell.entity.features["trigger"] then
                 if target_cell.entity.features["statchange"] then
-                    target_cell.entity.features["statchange"]:activate(entity)
+                    local trigger_fired = target_cell.entity.features["statchange"]:activate(entity)
+                    -- check if trigger was fired or not
+                    if trigger_fired then
+                        -- if entity is to destroyontrigger, destroy it
+                        if target_cell.entity.features["trigger"].destroyontrigger then
+                            -- will be removed from render_group automatically in StatePlay:Draw()
+                            target_cell.entity.alive = false
+                            target_cell.entity = nil
+                        end
+                    end
                 elseif target_cell.entity.features["exit"] then
                     -- stepping into an exit means turn isn't valid and stuff has to be reset!
                     target_cell.entity.features["exit"]:activate(target_cell.entity)
                     return false
-                end
-
-                -- if entity is to destroyontrigger, destroy it
-                if target_cell.entity.features["trigger"].destroyontrigger then
-                    -- will be removed from render_group automatically in StatePlay:Draw()
-                    target_cell.entity.alive = false
-                    target_cell.entity = nil
                 end
             end
         end
@@ -329,15 +331,15 @@ Inventory = Object:extend()
 function Inventory:new()
 end
 
--- for all the Entities that are not Players but occupy it entirely (trees, boulders...)
+-- for all the entities that are not Players but occupy it entirely (trees, boulders...)
 Block = Object:extend()
 function Block:new()
 end
 
--- This comp warns the game when an entity behaves in a trigger volume fashion
+-- this comp warns the game when an entity behaves in a trigger volume fashion
 Trigger = Object:extend()
 function Trigger:new(args)
-    self.destroyontrigger = args[1] -- THIS IS TEMPORARY. RIGHT NOW, IT TRANSLATES ANY FIRST ARG AS A "DESTROYONTRIGGER" VALIDATION <-----------------
+    self.destroyontrigger = args[1]
 end
 
 StatChange = Object:extend()
@@ -348,23 +350,30 @@ function StatChange:new(args)
 end
 
 function StatChange:activate(entity, sound)
-    if entity.features["player"] then
+    -- entities without the stat of interest won't be affected
+    if entity.features["stats"].stats[self.stat] then
         code_reference = entity.features["stats"].stats
-    end
 
-    -- creating final string for code conversion
-    local codeblock = 'code_reference["' .. self.stat .. '"]'
-    local code_test = codeblock .. "=" .. codeblock .. "+" .. self.change
+        -- creating final string for code conversion
+        local codeblock = 'code_reference["' .. self.stat .. '"]'
+        local code_test = codeblock .. "=" .. codeblock .. "+" .. self.change
 
-    print("Script executed: "..code_test)
-    
-    -- creating function from string and executing it
-    local f = loadstring(code_test); f()
-    code_reference = nil
-    -- play eventual sound
-    if self.sound and SOUNDS[self.sound] then
-        love.audio.stop(SOUNDS[self.sound])
-        love.audio.play(SOUNDS[self.sound])
+        print("Script executed: "..code_test)
+
+        -- creating function from string and executing it
+        local f = loadstring(code_test); f()
+        -- resetting global code_reference to nil
+        code_reference = nil
+        -- play eventual sound
+        if self.sound and SOUNDS[self.sound] then
+            love.audio.stop(SOUNDS[self.sound])
+            love.audio.play(SOUNDS[self.sound])
+        end
+
+        -- return successful statchange
+        return true
+    else
+        return false
     end
 end
 
@@ -384,7 +393,7 @@ function Exit:activate(owner)
     end
 end
 
--- this contains all the Entity's stats
+-- this contains all the entity's stats
 -- NPCs need this comp or they won't have hp = they will be immortal
 -- if a Player doesn't hav it, the system automatically adds it with hp = 1, gold = 0
 Stats = Object:extend()
@@ -396,7 +405,7 @@ function Stats:new(stats_table)
         if new_stat[2]:match("%d") then
             new_stat[2] = tonumber(new_stat[2])
         end
-        -- assign. below translates as "self.stats[stat_name] = stat_value"
+        -- code below translates as "self.stats[stat_name] = stat_value"
         self.stats[new_stat[1]] = new_stat[2]
     end
 end

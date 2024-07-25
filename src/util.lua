@@ -118,7 +118,7 @@ function entities_spawner(blueprint, loc_row, loc_column)
         ["player_component"] = nil
     }
 
-    -- now create Component instances to feed to new Entity
+    -- now create component instances to feed to new entity
     local instanced_features = {}
     local instanced_entity = nil
 
@@ -142,7 +142,7 @@ function entities_spawner(blueprint, loc_row, loc_column)
 
     instanced_entity = Entity(blueprint["bp"].id, blueprint["bp"].tile, instanced_features, blueprint["name"])
 
-    -- once special components are stored, finish Entityt identity 
+    -- once special components are stored, finish entityt identity 
     if is_npc then
         -- save NPC controller in entity.controller
         instanced_entity.controller = instanced_entity.features["npc"]
@@ -173,12 +173,12 @@ function entities_spawner(blueprint, loc_row, loc_column)
         end
     end
 
-    -- positioning Entities
+    -- positioning entities
     instanced_entity.cell["cell"] = g.grid[loc_row][loc_column]
     instanced_entity.cell["grid_row"] = loc_row
     instanced_entity.cell["grid_column"] = loc_column
 
-    -- occupying the cell appropriately depending on Entity type
+    -- occupying the cell appropriately depending on entity type
     if is_occupant then
         instanced_entity.cell["cell"].occupant = instanced_entity
     else
@@ -211,7 +211,7 @@ function map_generator(map_values, regen_players)
             g.grid[i][j].x = cell_x
             g.grid[i][j].y = cell_y
 
-            -- checking if a tile contains Entities...
+            -- checking if a tile contains entities...
             local tile_values = strings_separator(map_values[i][j], ",", 1)
             -- ...if it does, the table will have at least a second element:
             if tile_values[2] then
@@ -219,7 +219,7 @@ function map_generator(map_values, regen_players)
                 -- if tile_values[1] is a legal tile, then it's a blueprint.
                 -- else, if it is = x, it's a player spawn point!
                 if tile_index:match("%d") then
-                    -- save Entity in the blueprint variable
+                    -- save entity in the blueprint variable
                     if BLUEPRINTS_LIST[tile_values[2]] then
                         blueprint = {["bp"] = BLUEPRINTS_LIST[tile_values[2]],
                         ["name"] = nil
@@ -288,7 +288,7 @@ function map_generator(map_values, regen_players)
 
     -- not spawning the players again if we just changed level
     if regen_players then
-        -- spawning players: in the menu we have inserted players Entities but not their input_comp!
+        -- spawning players: in the menu we have inserted players entities but not their input_comp!
         local players_party_copy = g.players_party
         g.players_party = {}
         for i,blueprint in ipairs(players_party_copy) do
@@ -338,7 +338,7 @@ function map_reader(map, regen_players)
             end
         end
 
-        -- initializing game canvases (g.canvas_base  with tiles, g.canvas_final adds Entities)
+        -- initializing game canvases (g.canvas_base  with tiles, g.canvas_final adds entities)
         g.canvas_final = love.graphics.newCanvas(g.grid_x * TILE_SIZE, g.grid_y * TILE_SIZE)
         g.canvas_base  = love.graphics.newCanvas(g.grid_x * TILE_SIZE, g.grid_y * TILE_SIZE)
 
@@ -429,7 +429,7 @@ function blueprints_generator(id, tile, features_list_input)
         -- translating features tags into actual components thanks to features_interface
         local new_feature = features_interface(comp_tags)
         if new_feature ~= nil then
-            -- at this stage, we don't store any Component, only its data for later use
+            -- at this stage, we don't store any component, only its data for later use
             table.insert(features_list, comp_tags)
         else
             -- warning with console if an invalid feature was found inside CSV

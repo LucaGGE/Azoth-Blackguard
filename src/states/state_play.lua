@@ -7,7 +7,7 @@ local HALF_TILE = (mod.TILE_SIZE or 20) / 2 -- used when centering the screen on
 local current_turn = 1
 
 --[[
-    Here's where we accumulate key inputs for Entities, containing their number.
+    Here's where we accumulate key inputs for entities, containing their number.
     This is done to make the game feel more responsive.
     NOTE: we cannot accumulate input if we are in multiplayer!
 ]]--

@@ -163,13 +163,13 @@ end
 
 function StateMenu:draw()
     love.graphics.setFont(FONTS["title"])
-    love.graphics.printf(GAME_TITLE, 0, g.window_height / 5, g.window_width, 'center')
+    love.graphics.printf(GAME_TITLE, 0, g.window_height / 5, g.window_width, "center")
 
     love.graphics.setFont(FONTS["subtitle"])
     if input_phase == 1 then
-        love.graphics.printf(text[input_phase] .. n_of_players, 0, g.window_height / 5 + (FONT_SIZE_TITLE * 2), g.window_width, 'center')
+        love.graphics.printf(text[input_phase] .. n_of_players, 0, g.window_height / 5 + (FONT_SIZE_TITLE * 2), g.window_width, "center")
     else
         love.graphics.printf(text[input_phase] .. text[current_player + 2] .. "rogue:\n" .. input_name,
-        0, g.window_height / 5 + (FONT_SIZE_TITLE * 2), g.window_width, 'center')
+        0, g.window_height / 5 + (FONT_SIZE_TITLE * 2), g.window_width, "center")
     end
 end

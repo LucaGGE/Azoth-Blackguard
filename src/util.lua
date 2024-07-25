@@ -78,9 +78,9 @@ end
     and if we call it in main.lua we can output some more info about the error
 ]]--
 function csv_reader(input_csv, separator)
-    local input_line = 'nil'
+    local input_line = "nil"
     local new_table = {} -- final table
-    local separator = separator or '|'
+    local separator = separator or "|"
     local count = 1
     if input_csv ~= nil then
         local file = io.open(input_csv, "r")
@@ -184,20 +184,18 @@ function entities_spawner(blueprint, loc_row, loc_column)
     else
         instanced_entity.cell["cell"].entity = instanced_entity
     end
-    -- adding the entity to the g.render_group (WRONG: SOME ENTITIES ARE INVISIBLE BY DEFAULT!!!) <-------------------------------------------
-    -- check if they are to be inserted here by looking for a visible() component or something
-    table.insert(g.render_group, instanced_entity)
+    -- adding the entity to the g.render_group IF it is not invisible by default
+    if not instanced_entity.features["invisible"] then
+        table.insert(g.render_group, instanced_entity)
+    end
 end
 
 --[[
-    During g.grid generation, tiles (if present) are assigned to cells. After this process, 
+    During g.grid generation, tiles (if present) are assigned to cells. After this process,
     tiles are drawn once and stored for next drawing passes, so they get drawn only once and 
     function as a base canvas where dynamic entities will be drawn each loop.
 ]]--
 function map_generator(map_values, regen_players)
-    -- this variable contains all the entities to spawn for entities_spawner()
-    local to_spawn_entities = {}
-
     local cell_x = 0
     local cell_y = 0
     local player_spawn_loc = {}
@@ -221,7 +219,7 @@ function map_generator(map_values, regen_players)
                 -- if tile_values[1] is a legal tile, then it's a blueprint.
                 -- else, if it is = x, it's a player spawn point!
                 if tile_index:match("%d") then
-                    -- save Entity in the to_spawn_entities table
+                    -- save Entity in the blueprint variable
                     if BLUEPRINTS_LIST[tile_values[2]] then
                         blueprint = {["bp"] = BLUEPRINTS_LIST[tile_values[2]],
                         ["name"] = nil
@@ -235,7 +233,7 @@ function map_generator(map_values, regen_players)
                         error_handler("Map: illegal entity at row "..i.." column "..j..". Ignored.")
                     end
                 elseif tile_index == "x" and tile_values[2]:match("%d") then
-                    -- REMEMBER: values extracted from CSV (such as tile_values[2]!) are STRINGS!
+                    -- REMEMBER: values extracted from CSV (such as tile_values[2]) are STRINGS!
                     player_spawn_loc[tonumber(tile_values[2])] = {["row"] = i, ["column"] = j, ["cell"] = g.grid[i][j]}
                     -- if that's a spawn point, no need for more calculations, just go to next loop
                     g.grid[i][j].index = "empty"
@@ -265,7 +263,7 @@ function map_generator(map_values, regen_players)
             -- extracting the quad for graphics
             g.grid[i][j].tile = tile_to_quad(tile_index)
 
-            -- checking if the map has an empty tile there (0 or < 0), and marking it as "empty"
+            -- checking if the map has an empty tile there (0 or < 0), and marking it as 'empty'
             if tonumber(tile_index) > 0 then
                 -- 'g.grid' reads STRINGS and NOT numbers! 
                 g.grid[i][j].index = tile_index
@@ -316,8 +314,7 @@ function map_generator(map_values, regen_players)
 end
 
 function map_reader(map, regen_players)
-    -- all the valid tiles features for TILES_VALID_FEATURES table
-    -- (see pairings in components.lua)
+    -- all the valid tiles features for TILES_VALID_FEATURES table (see pairings in components.lua)
     local TILES_VALID_FEATURES = {
     ["liquid"] = true,
     ["tricky"] = true,

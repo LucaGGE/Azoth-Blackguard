@@ -1,3 +1,5 @@
+-- This file manages the Debug Console.
+
 -- requiring dependencies
 require "modding/mods"
 

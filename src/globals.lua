@@ -1,6 +1,6 @@
 g = {
     game_track = nil, -- the game's soundtrack
-    window_width = 1280, -- screen size must be == odd number to have perfect pixels
+    window_width = 1280, -- screen size must be an odd number to have perfect pixels
     window_height = 720,
     canvas_base, -- game canvases: base for statics, and final for statics + dynamics
     canvas_final, 

@@ -1,5 +1,5 @@
 -- variable containing the path to the necessary CSV files
--- the two paths current local parths I use are "F:/Development/Dev_Games/GOBLET/source/rogue24-goblet/modding/" or "C:/Users/foxre/"
+-- the two current local paths I use are "F:/Development/Dev_Games/GOBLET/source/rogue24-goblet/modding/" or "C:/Users/foxre/"
 -- you'll need to modify these to your local path since the system, to date, cannot find other than LUA files in the relative path
 PATH_TO_CSV = mod.path_to_csv or "C:/Users/foxre/"
 
@@ -25,6 +25,39 @@ FONT_SIZE_TITLE = mod.font_size_title or 60
 FONT_SIZE_SUBTITLE = mod.font_size_subtitle or 30
 FONT_SIZE_DEFAULT = mod.font_size_default or 24
 
+MUSIC = {
+    ["swamp"] = love.audio.newSource("sfx/st_swamp.ogg", "static"),
+    ["gameover_sting"] = love.audio.newSource("sfx/sting_gameover.ogg", "static"),
+    ["gameover"] = love.audio.newSource("sfx/st_gameover.ogg", "static"),
+    ["menu"] = love.audio.newSource("sfx/st_menu.ogg", "static"),
+}
+
+SOUNDS = {
+    ["ground"] = love.audio.newSource("sfx/step_ground.ogg", "static"),
+    ["solid"] = love.audio.newSource("sfx/step_solid.ogg", "static"),
+    ["climbable"] = love.audio.newSource("sfx/step_climbable.ogg", "static"),
+    ["tricky"] = love.audio.newSource("sfx/step_tricky.ogg", "static"),
+    ["liquid"] = love.audio.newSource("sfx/step_liquid.ogg", "static"),
+    ["wait"] = love.audio.newSource("sfx/step_wait.wav", "static"),
+    ["button_select"] = love.audio.newSource("sfx/button_select.wav", "static"),
+    ["button_switch"] = love.audio.newSource("sfx/button_switch.wav", "static"),
+    ["type_input"] = love.audio.newSource("sfx/type_input.wav", "static"),
+    ["type_backspace"] = love.audio.newSource("sfx/type_backspace.wav", "static"),
+    ["type_nil"] = love.audio.newSource("sfx/type_nil.wav", "static"),
+    ["puzzle_success"] = love.audio.newSource("sfx/puzzle_success.wav", "static"),
+    ["puzzle_fail"] = love.audio.newSource("sfx/puzzle_fail.wav", "static"),
+    ["hit_blow"] = love.audio.newSource("sfx/hit_blow.ogg", "static"),
+    ["hit_miss"] = love.audio.newSource("sfx/hit_miss.wav", "static"),
+    ["sfx_gold"] = love.audio.newSource("sfx/sfx_gold.wav", "static"),
+}
+
+FONTS = {
+    ["title"] = love.graphics.newFont("fonts/Bitmgothic.ttf", FONT_SIZE_TITLE),
+    ["subtitle"] = love.graphics.newFont("fonts/Bitmgothic.ttf", FONT_SIZE_SUBTITLE),
+    ["default"] = love.graphics.newFont("fonts/BitPotion.ttf", FONT_SIZE_DEFAULT),
+    ["narration"] = love.graphics.newFont("fonts/Pixellove.ttf", FONT_SIZE_DEFAULT),
+}
+
 --[[
     All the valid features for FEATURES_INTERFACE function.
     NOTE: this table requires components.lua to be required first.
@@ -41,38 +74,6 @@ FEATURES_TABLE = {
     ["movable"] = Movable,
     ["statchange"] = StatChange,
     ["exit"] = Exit,
-    ["dies"] = Dies
-}
-
-MUSIC = {
-    ['swamp'] = love.audio.newSource('sfx/st_swamp.ogg', 'static'),
-    ['gameover_sting'] = love.audio.newSource('sfx/sting_gameover.ogg', 'static'),
-    ['gameover'] = love.audio.newSource('sfx/st_gameover.ogg', 'static'),
-    ['menu'] = love.audio.newSource('sfx/st_menu.ogg', 'static'),
-}
-
-SOUNDS = {
-    ['ground'] = love.audio.newSource('sfx/step_ground.ogg', 'static'),
-    ['solid'] = love.audio.newSource('sfx/step_solid.ogg', 'static'),
-    ['climbable'] = love.audio.newSource('sfx/step_climbable.ogg', 'static'),
-    ['tricky'] = love.audio.newSource('sfx/step_tricky.ogg', 'static'),
-    ['liquid'] = love.audio.newSource('sfx/step_liquid.ogg', 'static'),
-    ['wait'] = love.audio.newSource('sfx/step_wait.wav', 'static'),
-    ['button_select'] = love.audio.newSource('sfx/button_select.wav', 'static'),
-    ['button_switch'] = love.audio.newSource('sfx/button_switch.wav', 'static'),
-    ['type_input'] = love.audio.newSource('sfx/type_input.wav', 'static'),
-    ['type_backspace'] = love.audio.newSource('sfx/type_backspace.wav', 'static'),
-    ['type_nil'] = love.audio.newSource('sfx/type_nil.wav', 'static'),
-    ['puzzle_success'] = love.audio.newSource('sfx/puzzle_success.wav', 'static'),
-    ['puzzle_fail'] = love.audio.newSource('sfx/puzzle_fail.wav', 'static'),
-    ['hit_blow'] = love.audio.newSource('sfx/hit_blow.ogg', 'static'),
-    ['hit_miss'] = love.audio.newSource('sfx/hit_miss.wav', 'static'),
-    ['sfx_gold'] = love.audio.newSource('sfx/sfx_gold.wav', 'static'),
-}
-
-FONTS = {
-    ['title'] = love.graphics.newFont('fonts/Bitmgothic.ttf', FONT_SIZE_TITLE),
-    ['subtitle'] = love.graphics.newFont('fonts/Bitmgothic.ttf', FONT_SIZE_SUBTITLE),
-    ['default'] = love.graphics.newFont('fonts/BitPotion.ttf', FONT_SIZE_DEFAULT),
-    ['narration'] = love.graphics.newFont('fonts/Pixellove.ttf', FONT_SIZE_DEFAULT),
+    ["dies"] = Dies,
+    ["invisible"] = Invisible
 }

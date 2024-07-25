@@ -2,12 +2,12 @@
 cell = {
     x = 0,
     y = 0,
-    -- tiles are only drawn once. Note that doors and other interactives are entities.
+    -- tiles are only drawn once. Note that doors and other 'interactives' are entities.
     tile = nil, -- represented by a quad on the tileset. 
     index = nil, -- tile index. Most entities are unable to traverse solid tiles, but some can climb trees.
-    trigger = nil,
-    occupant = nil,
-    entity = nil
+    trigger = nil, -- a special slot reserved to triggers (ie next-level triggers)
+    occupant = nil, -- a player/npc or an entity with a 'Block' feature, occupying the cell
+    entity = nil -- any entity that is not a 'occupant'. Limited to one per cell
 }
 
 -- Entity definition. Entities are very simple containers for features!
@@ -16,17 +16,17 @@ Entity = Object:extend()
 function Entity:new(id, tile, features, name)
     -- can be either a player or a NPC. Used to check groups
     self.controller = nil
-    -- Checked everytime an Entity gets drawn, to see if it need to be eliminated
+    -- checked everytime an Entity gets drawn, to see if it need to be eliminated
     self.alive = true
-    -- Entities can only live inside cells. They also give x and y coords for drawing
+    -- an Entity can only live inside cells. They also give x and y coords for drawing
     self.cell = {["cell"] = nil, ["grid_column"] = nil, ["grid_row"] = nil}
-    -- Obligatory, first CSV arg. Necessary to give a player context, since they are universal containers
+    -- obligatory, first CSV arg. Necessary to give a player context, since entities are universal containers
     self.id = id
-    -- Obligatory, second CSV arg. Necessary to draw Entities to screen, even invisible ones (see design docs)
+    -- obligatory, second CSV arg. Necessary to draw Entities to screen, even invisible ones (see design docs)
     self.tile = tile
-    -- Completely optional. This is where all Entity Features are defined, in an Object Aggregation fashion
+    -- completely optional. This is where all Entity Features are defined, in an Object Aggregation fashion
     self.features = features or {}
-    -- Completely optional. Used for Players names and special NPCs/objects
+    -- completely optional. Used for Players names and special NPCs/objects
     self.name = name or id
 end
 
@@ -40,7 +40,7 @@ function BaseState:new()
 	function BaseState:update() end
 	function BaseState:draw() end
 	function BaseState:exit() end
-    function BaseState:manage_input() end -- States manage input in different ways
+    function BaseState:manage_input() end -- states manage input in different ways
 end
 
 

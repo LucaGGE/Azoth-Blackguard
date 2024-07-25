@@ -59,16 +59,16 @@ end
 function StateGameOver:draw()
     love.graphics.setColor(1, 0, 0, 1)
     love.graphics.setFont(FONTS["title"])
-    love.graphics.printf("Game Over", 0, g.window_height / 4 - FONT_SIZE_TITLE, g.window_width, 'center')
+    love.graphics.printf("Game Over", 0, g.window_height / 4 - FONT_SIZE_TITLE, g.window_width, "center")
 
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.setFont(FONTS["subtitle"])
-    love.graphics.printf("These souls have left us forever:", 0, g.window_height / 4 + (FONT_SIZE_SUBTITLE), g.window_width, 'center')
+    love.graphics.printf("These souls have left us forever:", 0, g.window_height / 4 + (FONT_SIZE_SUBTITLE), g.window_width, "center")
 
-    -- Printing all deceased players and info about their death
+    -- printing all deceased players and info about their death
     for i, death in ipairs(g.cemetery) do 
         love.graphics.printf(death["player"]..", killed by "..death["killer"].." for "..death["loot"].." gold,\n"..
         "has found a final resting place in "..death["place"]..".",
-        0, g.window_height / 3.5 + (FONT_SIZE_SUBTITLE * (i * 3)), g.window_width, 'center')
+        0, g.window_height / 3.5 + (FONT_SIZE_SUBTITLE * (i * 3)), g.window_width, "center")
     end
 end

@@ -33,11 +33,11 @@ function StatePlay:init(map, regen_players)
         love.audio.stop(g.game_track)
     end
     -- startin soundtrack
-    g.game_track = MUSIC['swamp']
+    g.game_track = MUSIC["swamp"]
     g.game_track:setLooping(true)
     love.audio.play(g.game_track)
 
-    -- feeding "true" the first level, to regen players
+    -- feeding 'true' the first level, to regen players
     local current_map = map_reader(map, regen_players)
 
     if current_map then
@@ -102,13 +102,13 @@ function StatePlay:update()
             goto continue_statchange
         end
 
-        -- If the current_turn (now + 1) exceeds the n of players, it's NPCs turn
+        -- if the current_turn (now + 1) exceeds the n of players, it's NPCs turn
         if not g.players_party[current_turn] then
             -- reset turn system to 1
             current_turn = 1
             -- block player from doing anything while g.camera and NPCs act
             g.is_tweening = true
-            -- If g.players_party[1] is not true, all players died/we are changing level
+            -- if g.players_party[1] is not true, all players died/we are changing level
             if g.players_party[current_turn] then
                 -- reset current_turn number and move NPCs
                 turns_manager(g.players_party[current_turn], true)
@@ -146,7 +146,7 @@ function StatePlay:draw()
         end
     end
 
-    -- Reset default canvas and draw g.canvas_final on the screen, with g.camera offset.
+    -- reset default canvas and draw g.canvas_final on the screen, with g.camera offset.
     love.graphics.setCanvas()
     if g.camera["entity"] then
         -- screen is drawn on g.canvas_final with player perfectly at the center of it

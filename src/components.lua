@@ -34,7 +34,7 @@ function Player:new(optional_args)
     if optional_args[3] and optional_args[3]:match("%d") then self.inventory_size = tonumber(optional_args[3]) end
     self.inventory = {}
     if optional_args[4] then
-        error_handler("Feeding to 'Player' component more than three args, additional args ignored")
+        error_handler('Feeding to "Player" component more than three args, additional args ignored')
     end
 end
 
@@ -250,7 +250,7 @@ function Npc:new(args)
             else
                 variables_group[new_var[1]] = new_var[2]
                 if new_var[3] then
-                    error_handler("Trying to assign multiple values to a NPC variable. 'enemies' is the only variable that can take multiple args.")
+                    error_handler('Trying to assign multiple values to a NPC variable. "enemies" is the only variable that can take multiple args.')
                 end
             end
         end
@@ -435,4 +435,9 @@ function Dies:new(dies_table)
         -- at last, assign new set to self.dies at name (new_set[1])
         self.dies[new_set[1]] = set_values
     end
+end
+
+-- for all entities that are invisible by default (i.e. traps, invisible creatures)
+Invisible = Object:extend()
+function Invisible:new()
 end

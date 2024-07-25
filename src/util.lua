@@ -186,7 +186,12 @@ function entities_spawner(blueprint, loc_row, loc_column)
     end
     -- adding the entity to the g.render_group IF it is not invisible by default
     if not instanced_entity.features["invisible"] then
-        table.insert(g.render_group, instanced_entity)
+        -- adding entity in front or back depending if it is an occupant or a simple entity
+        if is_occupant then
+            table.insert(g.render_group, instanced_entity)
+        else
+            table.insert(g.render_group, #g.render_group, instanced_entity)
+        end
     end
 end
 

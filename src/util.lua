@@ -529,3 +529,31 @@ function turns_manager(current_player, npc_turn)
         g.is_tweening = false
     end)
 end
+
+function text_backspace(input_string)
+    input_string = string.sub(input_string, 1, -2)
+    love.audio.stop(SOUNDS["type_backspace"])
+    love.audio.play(SOUNDS["type_backspace"])
+
+    return input_string
+end
+
+function text_input(valid_input, key, input_string, max_length)
+    -- if the character is legal (see valid_input variable) then append it
+    if string.find(valid_input, key) and #input_string < max_length then
+        if key == "space" then
+            input_string = input_string .. " "
+        elseif love.keyboard.isDown("rshift") or love.keyboard.isDown("lshift") then
+            input_string = input_string .. string.upper(key)
+        else
+            input_string = input_string .. key
+        end
+        love.audio.stop(SOUNDS["type_input"])
+        love.audio.play(SOUNDS["type_input"])
+    elseif #input_string >= max_length then
+        love.audio.stop(SOUNDS["type_nil"])
+        love.audio.play(SOUNDS["type_nil"])
+    end
+
+    return input_string
+end

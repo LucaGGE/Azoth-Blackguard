@@ -147,23 +147,21 @@ end
 
 function StateMenu:update()
     -- checking for input to resolve turns
-    if g.keys_pressed[1] then
-        for i,key in ipairs(g.keys_pressed) do
-            if input_phase == 1 then
-                key_output = INPUT_DTABLE1[key] or function()
-                    love.audio.stop(SOUNDS["type_nil"])
-                    love.audio.play(SOUNDS["type_nil"])
-                end
-            else
-                key_output = INPUT_DTABLE2[key] or function()
-                    -- the input is an alphanumeric char, call dedicated function
-                    input_name = text_input(valid_input, key, input_name, 20)
-                end
+    for i,key in ipairs(g.keys_pressed) do
+        if input_phase == 1 then
+            key_output = INPUT_DTABLE1[key] or function()
+                love.audio.stop(SOUNDS["type_nil"])
+                love.audio.play(SOUNDS["type_nil"])
             end
-            key_output()
+        else
+            key_output = INPUT_DTABLE2[key] or function()
+                -- the input is an alphanumeric char, call dedicated function
+                input_name = text_input(valid_input, key, input_name, 20)
+            end
         end
-        g.keys_pressed = {}
+        key_output()
     end
+    g.keys_pressed = {}
 end
 
 function StateMenu:draw()

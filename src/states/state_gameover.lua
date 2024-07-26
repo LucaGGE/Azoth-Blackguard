@@ -41,19 +41,19 @@ function StateGameOver:init()
 end
 
 function StateGameOver:update()
+    -- guard statement to check if player can input or not
+    if not can_input then return end
+
     -- checking for input to resolve turns
-    if g.keys_pressed[1] and can_input then
-        for i,key in ipairs(g.keys_pressed) do     
-            print(key)
-            if key == "enter" or key == "return" then
-                love.audio.stop(MUSIC["gameover_sting"])
-                love.audio.stop(MUSIC["gameover"])
-                g.game_state = StateMenu()
-                g.game_state:init()
-            end
+    for i,key in ipairs(g.keys_pressed) do     
+        if key == "enter" or key == "return" then
+            love.audio.stop(MUSIC["gameover_sting"])
+            love.audio.stop(MUSIC["gameover"])
+            g.game_state = StateMenu()
+            g.game_state:init()
         end
-        g.keys_pressed = {}
     end
+    g.keys_pressed = {}
 end
 
 function StateGameOver:draw()

@@ -3,7 +3,7 @@
     as they will be added to special groups, needed to avoid searching for specific components each time
     an event is fired (i.e. when Player gives input, or the Player position).
     This is no different than looking for them each update, but much less computationally expensive.
---]]
+]]
 
 -- this is needed during dynamic code generation, since loadstring() is limited to global variables
 code_reference = nil
@@ -87,7 +87,7 @@ end
     This also means that something can have no mov features but if it is movable, it can
     still attack - think of a living tree that can bash players with its branches but
     cannot move around!
-]]--
+]]
 function Movable:move_entity(entity, direction)
     local target_cell
     local relevant_tiles = {}

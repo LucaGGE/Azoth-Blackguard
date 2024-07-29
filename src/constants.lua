@@ -63,7 +63,8 @@ FONTS = {
     NOTE: this table requires components.lua to be required first.
     Still, components can use constants.lua variables since they're called inside
     the classes and not executed until main.lua has finished loading everything.
-]]--
+]]
+
 FEATURES_TABLE = {
     ["player"] = Player,
     ["npc"] = Npc,

@@ -10,7 +10,7 @@ local current_turn = 1
     Here's where we accumulate key inputs for entities, containing their number.
     This is done to make the game feel more responsive.
     NOTE: we cannot accumulate input if we are in multiplayer!
-]]--
+]]
 function StatePlay:manage_input(key)
     -- managing input for multiple players
     if #g.players_party > 1 then

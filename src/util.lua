@@ -13,53 +13,48 @@ end
 
 -- this simple function returns all the optional arguments of features
 function feature_tags(tags)
-    if tags then
-        local feature_tags = {}
-        for i,v in ipairs(tags) do
-            -- avoiding first tag, as it is the id of the feature!
-            if i ~= 1 then
-                table.insert(feature_tags, v)
-            end
+    if not tags then return nil end
+    local feature_tags = {}
+
+    for i,v in ipairs(tags) do
+        -- avoiding first tag, as it is the id of the feature!
+        if i ~= 1 then
+            table.insert(feature_tags, v)
         end
-        return feature_tags
-    else
-        return nil
     end
+
+    return feature_tags
 end
 
 --[[
     Features interface. Used to link features and their optional args to the actual components.
     These are the the strings you feed inside the 'entities.csv' to explain to the engine what an
     entity is composed of. The function below needs to be updated with each added feature!
-]]--
+]]
 function features_interface(tags)
+    if not FEATURES_TABLE[tags[1]] then return nil end
     -- tags[1] = feature id, others (if present) are their arguments
-    if FEATURES_TABLE[tags[1]] ~= nil then
-        -- adding () to FEATURES_TABLE values, to turn them into functions
-        return FEATURES_TABLE[tags[1]](feature_tags(tags))
-    else
-        return nil
-    end
+    -- adding () to FEATURES_TABLE values, to turn them into functions
+    return FEATURES_TABLE[tags[1]](feature_tags(tags))
 end
 
 function strings_separator(line, separator, pos)
     local line = line
     local separator = separator
     local pos = pos
-    local results = {} 
+    local results = {}
+
     -- parsing results for each line, until end of line
     while true do
-        if line == nil then
+        if not line then
             error_handler("ERROR READING CSV: Blank file/line")
             break
         end
         -- storing starting and end points between commas, updating pos value
         local start_point, end_point = string.find(line, separator, pos)
         if (start_point) then
-            --[[ 
-            start_point - 1 is used since we do not want to store the sep. value,
-            so we store from start/after a sep. to before the next sep.
-            --]]
+            -- start_point - 1 is used since we do not want to store the sep. value,
+            -- so we store from start/after a sep. to before the next sep.
             table.insert(results, string.sub(line, pos, start_point - 1))
             -- and then we update pos, so we can skip already stored values
             pos = end_point + 1
@@ -76,35 +71,39 @@ end
 --[[
     note that the error_handler is never called in csv_reader, since it is called various times
     and if we call it in main.lua we can output some more info about the error
-]]--
+]]
 function csv_reader(input_csv, separator)
-    local input_line = "nil"
     local new_table = {} -- final table
-    local separator = separator or "|"
-    local count = 1
-    if input_csv ~= nil then
-        local file = io.open(input_csv, "r")
-        if file ~= nil then
-            io.input(file)
-            -- reading line by line from CSV, starting from first char
-            local pos = 1 -- start position in file
-            for line in file:lines() do
-                local results = strings_separator(line, separator, pos)
-                -- reset all values for next line, and append result to return table
-                pos = 1
-                new_table[count] = results
-                results = {}
-                count = count + 1
-            end
-            io.close(file)
-        else
-            new_table = "ERROR READING CSV: Invalid file/path"
-            return new_table
-        end
-    else
+
+    if not input_csv then
         new_table = "ERROR READING CSV: Missing input"
         return new_table
     end
+
+    local file = io.open(input_csv, "r")
+
+    if not file then
+        new_table = "ERROR READING CSV: Invalid file/path"
+        return new_table
+    end
+
+    local input_line = "nil"
+    local separator = separator or "|"
+    local count = 1
+
+    io.input(file)
+    -- reading line by line from CSV, starting from first char
+    local pos = 1 -- start position in file
+    for line in file:lines() do
+        local results = strings_separator(line, separator, pos)
+        -- reset all values for next line, and append result to return table
+        pos = 1
+        new_table[count] = results
+        results = {}
+        count = count + 1
+    end
+    io.close(file)
+
     -- returning results only if the whole operation went right
     return new_table
 end
@@ -149,28 +148,30 @@ function entities_spawner(blueprint, loc_row, loc_column)
         table.insert(g.npcs_group, instanced_entity)
     -- if one uses a 'Npc' comp with a player, it just becomes a Npc!
     elseif instanced_entity.id == "player" and not is_npc then
-        if loc_row and loc_column then
-            -- save Player controller in entity.controller
-            instanced_entity.controller = instanced_entity.features["player"]
-            -- immediately check if player has Stats() component with "hp". If not, add it/them
-            if instanced_entity.features["stats"] then
-                if not instanced_entity.features["stats"].stats["hp"] then
-                    instanced_entity.features["stats"].stats["hp"] = 1
-                end
-            else
-                local stat_feature = features_interface({"stats", "hp:1"})
-                instanced_entity.features["stats"] = stat_feature
-            end
-
-            new_player["entity"] = instanced_entity
-            table.insert(g.players_party, new_player)
-        else
+        if not loc_row and not loc_column then
             -- as soon as missing player spawn locations are called, call FatalError State
             error_handler("Insufficient player spawning locations in current map. Each player needs one.")
             g.game_state:exit()
             g.game_state = StateFatalError()
             g.game_state:init()
+
+            return nil
         end
+
+        -- save Player controller in entity.controller
+        instanced_entity.controller = instanced_entity.features["player"]
+        -- immediately check if player has Stats() component with "hp". If not, add it/them
+        if not instanced_entity.features["stats"] then
+            local stat_feature = features_interface({"stats", "hp:1"})
+            instanced_entity.features["stats"] = stat_feature
+        end
+
+        if not instanced_entity.features["stats"].stats["hp"] then
+            instanced_entity.features["stats"].stats["hp"] = 1
+        end
+
+        new_player["entity"] = instanced_entity
+        table.insert(g.players_party, new_player)
     end
 
     -- positioning entities
@@ -199,18 +200,84 @@ end
     During g.grid generation, tiles (if present) are assigned to cells. After this process,
     tiles are drawn once and stored for next drawing passes, so they get drawn only once and 
     function as a base canvas where dynamic entities will be drawn each loop.
-]]--
+]]
 function map_generator(map_values, regen_players)
     local cell_x = 0
     local cell_y = 0
     local player_spawn_loc = {}
+    local finalize_cell = function(tile_index, blueprint, i, j)
+        -- extracting the quad for graphics
+        g.grid[i][j].tile = tile_to_quad(tile_index)
+        -- checking if the map has an empty tile there (0 or < 0), and marking it as 'empty'
+        if tonumber(tile_index) > 0 then
+            -- 'g.grid' reads STRINGS and NOT numbers! 
+            g.grid[i][j].index = tile_index
+        else
+            g.grid[i][j].index = "empty"
+        end
+
+        -- spawn here
+        if blueprint then
+            entities_spawner(blueprint, i, j)
+        end
+    end
+    -- decision table
+    local DTABLE1 = {
+        [true] = function(tile_value_1, tile_value_2, tile_value_3, i, j)
+            local blueprint
+            local tile_index = tile_value_1
+            -- if tile_value_1 is a tile, then tile_value_2 is a blueprint,
+            -- else, if it is = x, it's a player spawn point!
+            if tile_index:match("%d") then
+                -- save entity in the blueprint variable
+                if BLUEPRINTS_LIST[tile_value_2] then
+                    blueprint = {["bp"] = BLUEPRINTS_LIST[tile_value_2],
+                    ["name"] = nil
+                    }
+
+                    -- checking if a special name for the entity was fed in the map
+                    if tile_value_3 then 
+                        blueprint["name"] = tile_value_3
+                    end
+                else
+                    error_handler("Map: illegal entity at row "..i.." column "..j..". Ignored.")
+                end
+
+                finalize_cell(tile_index, blueprint, i, j)
+            elseif tile_index == "x" and tile_value_2:match("%d") then
+                -- REMEMBER: values extracted from CSV (such as tile_value_2) are STRINGS!
+                player_spawn_loc[tonumber(tile_value_2)] = {["row"] = i, ["column"] = j, ["cell"] = g.grid[i][j]}
+                -- if that's a spawn point, no need for more calculations, just go to next loop
+                g.grid[i][j].index = "empty"
+            else
+                error_handler("Map: illegal cell value at row "..i.." column "..j..". Replaced with empty cell.")
+                g.grid[i][j].index = "empty"
+            end
+            return player_spawn_loc
+        end,
+        [false] = function(map_value, i, j)
+            local tile_index = map_value
+            -- if tile_index == nil then there must be a blank line or the value is unreadable
+            -- if tile index doesn't match a number ("%d") then there is an illegal value
+            if not tile_index or not tile_index:match("%d") then
+                -- not-numeric value for a tile
+                error_handler("Map: illegal cell value at row "..i.." column "..j..". Replaced with empty cell.")
+                g.grid[i][j].index = "empty"
+            elseif tile_index == "x" then
+                -- spawn location lacking an order number
+                error_handler("Map: spawn point at row "..i.." column "..j.." lacking second arg. Replaced with empty cell.")
+                g.grid[i][j].index = "empty"
+            else
+                finalize_cell(tile_index, nil, i, j)
+            end
+            return tile_index
+        end
+    }
+
     -- for every g.grid row, assign number of columns cells; each one with x and y values
     for i = 1, g.grid_y do
         g.grid[i] = {}
         for j = 1, g.grid_x do
-            local tile_index
-            local blueprint = false
-
             -- filling g.grid position with a cell 'struct'
             g.grid[i][j] = {cell}
             g.grid[i][j].x = cell_x
@@ -220,70 +287,13 @@ function map_generator(map_values, regen_players)
             local tile_values = strings_separator(map_values[i][j], ",", 1)
             -- ...if it does, the table will have at least a second element:
             if tile_values[2] then
-                tile_index = tile_values[1]
-                -- if tile_values[1] is a legal tile, then it's a blueprint.
-                -- else, if it is = x, it's a player spawn point!
-                if tile_index:match("%d") then
-                    -- save entity in the blueprint variable
-                    if BLUEPRINTS_LIST[tile_values[2]] then
-                        blueprint = {["bp"] = BLUEPRINTS_LIST[tile_values[2]],
-                        ["name"] = nil
-                        }
-
-                        -- checking if a special name for the entity was fed in the map
-                        if tile_values[3] then 
-                            blueprint["name"] = tile_values[3]
-                        end
-                    else
-                        error_handler("Map: illegal entity at row "..i.." column "..j..". Ignored.")
-                    end
-                elseif tile_index == "x" and tile_values[2]:match("%d") then
-                    -- REMEMBER: values extracted from CSV (such as tile_values[2]) are STRINGS!
-                    player_spawn_loc[tonumber(tile_values[2])] = {["row"] = i, ["column"] = j, ["cell"] = g.grid[i][j]}
-                    -- if that's a spawn point, no need for more calculations, just go to next loop
-                    g.grid[i][j].index = "empty"
-                    goto continue
-                else
-                    error_handler("Map: illegal cell value at row "..i.." column "..j..". Replaced with empty cell.")
-                    g.grid[i][j].index = "empty"
-                    goto continue
-                end                    
+                player_spawn_loc = DTABLE1[true](tile_values[1],tile_values[2],tile_values[3], i, j)
             else
-                tile_index = map_values[i][j]
-                -- if tile_index == nil then there must be a blank line or the value is unreadable
-                -- if tile index doesn't match a number ("%d") then there is an illegal value
-                if tile_index == nil or not tile_index:match("%d") then
-                    -- not-numeric value for a tile
-                    error_handler("Map: illegal cell value at row "..i.." column "..j..". Replaced with empty cell.")
-                    g.grid[i][j].index = "empty"
-                    goto continue
-                elseif tile_index == "x" then
-                    -- spawn location lacking an order number
-                    error_handler("Map: spawn point at row "..i.." column "..j.." lacking second arg. Replaced with empty cell.")
-                    g.grid[i][j].index = "empty"
-                    goto continue
-                end
+                -- funcs do not accept entire tables as arguments, feeding value
+                DTABLE1[false](map_values[i][j], i, j)
             end
 
-            -- extracting the quad for graphics
-            g.grid[i][j].tile = tile_to_quad(tile_index)
-
-            -- checking if the map has an empty tile there (0 or < 0), and marking it as 'empty'
-            if tonumber(tile_index) > 0 then
-                -- 'g.grid' reads STRINGS and NOT numbers! 
-                g.grid[i][j].index = tile_index
-            else
-                g.grid[i][j].index = "empty"
-            end
-
-            -- spawn here
-            if blueprint then
-                entities_spawner(blueprint, i, j)
-            end
-            -- if we found a spawn location in the cell, we skipped to here
-            ::continue::
-
-            -- increase column value
+            -- increase column value and break, since we found a spawn loc in cell
             cell_x = cell_x + TILE_SIZE
         end
         -- reset columns value, increase row value
@@ -296,7 +306,7 @@ function map_generator(map_values, regen_players)
         -- spawning players: in the menu we have inserted players entities but not their input_comp!
         local players_party_copy = g.players_party
         g.players_party = {}
-        for i,blueprint in ipairs(players_party_copy) do
+        for i, player_blueprint in ipairs(players_party_copy) do
             -- check that all 4 spawn locations for players were set
             if not player_spawn_loc[i] then
                 error_handler("Map has insufficient Player Spawn Points. All maps should have four.")
@@ -305,7 +315,7 @@ function map_generator(map_values, regen_players)
                 g.game_state:init()
                 break
             end
-            entities_spawner(blueprint, player_spawn_loc[i]["row"], player_spawn_loc[i]["column"])
+            entities_spawner(player_blueprint, player_spawn_loc[i]["row"], player_spawn_loc[i]["column"])
         end
     else
         for i, player in ipairs(g.players_party)  do

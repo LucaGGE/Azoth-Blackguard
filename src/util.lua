@@ -205,6 +205,7 @@ function map_generator(map_values, regen_players)
     local cell_x = 0
     local cell_y = 0
     local player_spawn_loc = {}
+    -- function dedicated to finalize cell generation with tile/entity
     local finalize_cell = function(tile_index, blueprint, i, j)
         -- extracting the quad for graphics
         g.grid[i][j].tile = tile_to_quad(tile_index)
@@ -216,13 +217,13 @@ function map_generator(map_values, regen_players)
             g.grid[i][j].index = "empty"
         end
 
-        -- spawn here
+        -- spawning the entity from a blueprint
         if blueprint then
             entities_spawner(blueprint, i, j)
         end
     end
-    -- decision table
-    local DTABLE1 = {
+    -- decision table for entity/no entity cells chain of action
+    local CELL_DTABLE = {
         [true] = function(tile_value_1, tile_value_2, tile_value_3, i, j)
             local blueprint
             local tile_index = tile_value_1
@@ -231,14 +232,9 @@ function map_generator(map_values, regen_players)
             if tile_index:match("%d") then
                 -- save entity in the blueprint variable
                 if BLUEPRINTS_LIST[tile_value_2] then
-                    blueprint = {["bp"] = BLUEPRINTS_LIST[tile_value_2],
-                    ["name"] = nil
-                    }
-
+                    blueprint = {["bp"] = BLUEPRINTS_LIST[tile_value_2]}
                     -- checking if a special name for the entity was fed in the map
-                    if tile_value_3 then 
-                        blueprint["name"] = tile_value_3
-                    end
+                    blueprint["name"] = tile_value_3
                 else
                     error_handler("Map: illegal entity at row "..i.." column "..j..". Ignored.")
                 end
@@ -253,10 +249,9 @@ function map_generator(map_values, regen_players)
                 error_handler("Map: illegal cell value at row "..i.." column "..j..". Replaced with empty cell.")
                 g.grid[i][j].index = "empty"
             end
-            return player_spawn_loc
         end,
-        [false] = function(map_value, i, j)
-            local tile_index = map_value
+        [false] = function(tile_value_1, i, j)
+            local tile_index = tile_value_1
             -- if tile_index == nil then there must be a blank line or the value is unreadable
             -- if tile index doesn't match a number ("%d") then there is an illegal value
             if not tile_index or not tile_index:match("%d") then
@@ -268,6 +263,7 @@ function map_generator(map_values, regen_players)
                 error_handler("Map: spawn point at row "..i.." column "..j.." lacking second arg. Replaced with empty cell.")
                 g.grid[i][j].index = "empty"
             else
+                -- cell simply has no entities inside!
                 finalize_cell(tile_index, nil, i, j)
             end
             return tile_index
@@ -283,16 +279,15 @@ function map_generator(map_values, regen_players)
             g.grid[i][j].x = cell_x
             g.grid[i][j].y = cell_y
 
-            -- checking if a tile contains entities...
+            -- checking if a cell contains entities...
             local tile_values = strings_separator(map_values[i][j], ",", 1)
             -- ...if it does, the table will have at least a second element:
             if tile_values[2] then
-                player_spawn_loc = DTABLE1[true](tile_values[1],tile_values[2],tile_values[3], i, j)
+                CELL_DTABLE[true](tile_values[1], tile_values[2], tile_values[3], i, j)
             else
-                -- funcs do not accept entire tables as arguments, feeding value
-                DTABLE1[false](map_values[i][j], i, j)
+                -- funcs do not accept entire tables as arguments! Feeding values
+                CELL_DTABLE[false](tile_values[1], i, j)
             end
-
             -- increase column value and break, since we found a spawn loc in cell
             cell_x = cell_x + TILE_SIZE
         end
@@ -340,47 +335,47 @@ function map_reader(map, regen_players)
     -- reading map values (static, one-draw pass tiles only)
     local map_values = csv_reader(PATH_TO_CSV .. "map_"..map..".csv")
 
-    -- check if operation went right; if not, activate error_handler
-    if type(map_values) == "string" then
+    -- check if operation went right; if not, activate error_handler and return
+    if not type(map_values) == "string" then
         error_handler(map_values, "The above error was triggered while trying to read map.csv")
         return false
-    else
-        -- setting g.grid size depending on map's CSV input
-        for row, column in ipairs(map_values) do
-            g.grid_y = row
-            for column_number, columns_value in ipairs(column) do
-                g.grid_x = column_number
-            end
-        end
+    end
 
-        -- initializing game canvases (g.canvas_base  with tiles, g.canvas_final adds entities)
-        g.canvas_final = love.graphics.newCanvas(g.grid_x * TILE_SIZE, g.grid_y * TILE_SIZE)
-        g.canvas_base  = love.graphics.newCanvas(g.grid_x * TILE_SIZE, g.grid_y * TILE_SIZE)
-
-        -- getting tiles features groups from the specific CSV file
-        local tiles_features_csv = csv_reader(PATH_TO_CSV .. "tiles_features.csv")
-
-        -- check if operation went right; if not, activate error_handler
-        if type(tiles_features_csv) == "string" then
-            error_handler(tiles_features_csv, "The above error was triggered while trying to read tiles_features.csv")
-            return false
-        else
-            for i, tile_type in ipairs(tiles_features_csv) do
-                -- check if the type is valid and has tile indexes assigned to it
-                if tile_type[2] and TILES_VALID_FEATURES[tile_type[1]] then
-                    -- separating tile indexes inside tile_type[2]
-                    tile_type[2] = strings_separator(tile_type[2], ",", 1)
-                    -- tile_type[1] == tile_type name, tile_type[2] == tiles
-                    for i2, tile in ipairs(tile_type[2]) do
-                        -- each tile == its type
-                        TILES_FEATURES_PAIRS[tile] = tile_type[1]
-                    end
-                end
-            end
-            -- now generating the map with the extracted data
-            map_generator(map_values, regen_players)
+    -- setting g.grid size depending on map's CSV input
+    for row, column in ipairs(map_values) do
+        g.grid_y = row
+        for column_number, columns_value in ipairs(column) do
+            g.grid_x = column_number
         end
     end
+
+    -- initializing game canvases (g.canvas_base  with tiles, g.canvas_final adds entities)
+    g.canvas_final = love.graphics.newCanvas(g.grid_x * TILE_SIZE, g.grid_y * TILE_SIZE)
+    g.canvas_base  = love.graphics.newCanvas(g.grid_x * TILE_SIZE, g.grid_y * TILE_SIZE)
+
+    -- getting tiles features groups from the specific CSV file
+    local tiles_features_csv = csv_reader(PATH_TO_CSV .. "tiles_features.csv")
+
+    -- check if operation went right; if not, activate error_handler and return
+    if type(tiles_features_csv) == "string" then
+        error_handler(tiles_features_csv, "The above error was triggered while trying to read tiles_features.csv")
+        return false
+    end
+
+    for i, tile_type in ipairs(tiles_features_csv) do
+        -- check if the type is valid and has tile indexes assigned to it
+        if tile_type[2] and TILES_VALID_FEATURES[tile_type[1]] then
+            -- separating tile indexes inside tile_type[2]
+            tile_type[2] = strings_separator(tile_type[2], ",", 1)
+            -- tile_type[1] == tile_type name, tile_type[2] == tiles
+            for i2, tile in ipairs(tile_type[2]) do
+                -- each tile == its type
+                TILES_FEATURES_PAIRS[tile] = tile_type[1]
+            end
+        end
+    end
+    -- now generating the map with the extracted data
+    map_generator(map_values, regen_players)
     -- if everything went fine, return true. Else, false.
     return true
 end
@@ -392,18 +387,21 @@ function tile_to_quad(index)
     local tileset_width_in_cells = TILESET_WIDTH / TILE_SIZE
     local tileset_height_in_cells = TILESET_HEIGHT / TILE_SIZE
     local max_index = tileset_width_in_cells * tileset_height_in_cells
+    local row = 1
+
     -- checking if index is in g.TILESET's range (NOTE: indexes start from 1)
-    -- or if index is a string, the 'x' value used to mark player spawn positions
     if tile_index <= 0 or tile_index > max_index then
         return nil
     end
-    local row = 1
+    
     -- search for correct row with a simple subtraction
     while tile_index > tileset_width_in_cells do
         row = row + 1
         tile_index = tile_index - (tileset_width_in_cells)
     end
+
     local column = tile_index -- since what is left is the column position
+    
     -- note how the 0 based coords for drawing are kept with -1 subtractions
     return love.graphics.newQuad((column - 1) * TILE_SIZE, (row - 1) * TILE_SIZE,
     TILE_SIZE, TILE_SIZE, TILESET_WIDTH, TILESET_HEIGHT)
@@ -526,16 +524,18 @@ function turns_manager(current_player, npc_turn)
     Timer.tween(TWEENING_TIME, {
         [g.camera] =  {x = x_for_tweening, y = y_for_tweening}
     }):finish(function ()
-        if npc_turn and g.npcs_group then
-            for i, npc in ipairs(g.npcs_group) do
-                -- check if the NPC is alive or needs to be removed from game
-                if npc.alive == false then
-                    table.remove(g.npcs_group, i)
-                else
-                    g.npcs_group[i].features["npc"]:activate(g.npcs_group[i])
-                end
+        if not npc_turn and g.npcs_group then goto continue end
+
+        for i, npc in ipairs(g.npcs_group) do
+            -- check if the NPC is alive or needs to be removed from game
+            if npc.alive == false then
+                table.remove(g.npcs_group, i)
+            else
+                g.npcs_group[i].features["npc"]:activate(g.npcs_group[i])
             end
         end
+
+        ::continue::
         g.is_tweening = false
     end)
 end

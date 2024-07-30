@@ -33,7 +33,7 @@ function StateGameOver:init()
         end
     end)
     -- unlock input for player after few seconds
-    Timer.after(2, function ()
+    Timer.after(1, function ()
         -- empty previously pressed keys and enable input
         g.keys_pressed = {}
         can_input = true

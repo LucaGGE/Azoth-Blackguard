@@ -23,31 +23,44 @@ Player = Object:extend()
 function Player:new()
     -- players are automatically part of this group
     self.group = "players"
+
+    -- this variable contains all the movement inputs key-values for keypad and keyboard, with key = (row, column)
+    self.movement_inputs = {
+        ["kp7"] = {-1,-1}, ["t"] = {-1,-1},
+        ["kp8"] = {-1,0}, ["y"] = {-1,0},
+        ["kp9"] = {-1,1}, ["u"] = {-1,1},
+        ["kp6"] = {0,1}, ["j"] = {0,1},
+        ["kp3"] = {1,1}, ["m"] = {1,1},
+        ["kp2"] = {1,0}, ["n"] = {1,0},
+        ["kp1"] = {1,-1}, ["b"] = {1,-1},
+        ["kp4"] = {0,-1}, ["g"] = {0,-1},
+        ["kp5"] = "stay", ["h"] = "stay"
+        }
+    self.hotkeys = {
+        ["space"] = function()
+            print("console")
+            return false
+        end,
+        ["."] = function()
+            print("pickup")
+            return true
+        end,
+        ["i"] = function()
+            print("inventory")
+            return true
+        end,
+    }
 end
 
 function Player:input_management(entity, key)
-    -- input is handled this way: input received -> check and store component -> activate component
-        
-    -- this variable contains all the movement inputs key-values for keypad and keyboard, with key = (row, column)
-    local movement_inputs = {
-    ["kp7"] = {-1,-1}, ["t"] = {-1,-1},
-    ["kp8"] = {-1,0}, ["y"] = {-1,0},
-    ["kp9"] = {-1,1}, ["u"] = {-1,1},
-    ["kp6"] = {0,1}, ["j"] = {0,1},
-    ["kp3"] = {1,1}, ["m"] = {1,1},
-    ["kp2"] = {1,0}, ["n"] = {1,0},
-    ["kp1"] = {1,-1}, ["b"] = {1,-1},
-    ["kp4"] = {0,-1}, ["g"] = {0,-1},
-    ["kp5"] = "stay", ["h"] = "stay"
-    }
-
     -- checking if input is valid
-    if not movement_inputs[key] then
-        return false
+    if not self.movement_inputs[key] then
+        -- return function() result if 'key' is valid
+        return self.hotkeys[key] and self.hotkeys[key]()
     end
 
     -- check if player is skipping turn (always possible, even without a mov comp)
-    if movement_inputs[key] == "stay" then
+    if self.movement_inputs[key] == "stay" then
         love.audio.stop(SOUNDS["wait"])
         love.audio.play(SOUNDS["wait"])
         return true
@@ -60,7 +73,7 @@ function Player:input_management(entity, key)
     end
 
     -- if no issues arised, then player can move
-    return entity.features["movable"]:move_entity(entity, movement_inputs[key])
+    return entity.features["movable"]:move_entity(entity, self.movement_inputs[key])
 end
 
 Movable = Object:extend()

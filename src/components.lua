@@ -27,6 +27,7 @@ end
 
 function Player:input_management(entity, key)
     -- input is handled this way: input received -> check and store component -> activate component
+        
     -- this variable contains all the movement inputs key-values for keypad and keyboard, with key = (row, column)
     local movement_inputs = {
     ["kp7"] = {-1,-1}, ["t"] = {-1,-1},
@@ -39,24 +40,27 @@ function Player:input_management(entity, key)
     ["kp4"] = {0,-1}, ["g"] = {0,-1},
     ["kp5"] = "stay", ["h"] = "stay"
     }
-    if movement_inputs[key] ~= nil then
-        -- check if player is skipping turn
-        if movement_inputs[key] ~= "stay" then
-            -- Movable features can be modified/added/removed during gameplay, so always check
-            if entity.features["movable"] then
-                -- remember that Object:function() automatically feeds 'self' to func
-                return entity.features["movable"]:move_entity(entity, movement_inputs[key])
-            else
-                print("INFO: The entity does not contain a movement component")
-                return false
-            end
-        else
-            -- player skipped turn, playing sound
-            love.audio.stop(SOUNDS["wait"])
-            love.audio.play(SOUNDS["wait"])
-            return true
-        end
+
+    -- checking if input is valid
+    if not movement_inputs[key] then
+        return false
     end
+
+    -- check if player is skipping turn (always possible, even without a mov comp)
+    if movement_inputs[key] == "stay" then
+        love.audio.stop(SOUNDS["wait"])
+        love.audio.play(SOUNDS["wait"])
+        return true
+    end
+
+    -- Movable features can be modified/added/removed during gameplay, so always check
+    if not entity.features["movable"] then
+        print("INFO: The entity does not contain a movement component")
+        return false
+    end
+
+    -- if no issues arised, then player can move
+    return entity.features["movable"]:move_entity(entity, movement_inputs[key])
 end
 
 Movable = Object:extend()

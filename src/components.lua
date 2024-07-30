@@ -76,23 +76,23 @@ end
     NOTE: if something can move, it can attack. Moving against an entity = attacking it.
     This also means that something can have no mov features but if it is movable, it can
     still attack - think of a living tree that can bash players with its branches but
-    cannot move around!
+    cannot move around (this is the 'wiggle' mov type)!
 ]]
 function Movable:move_entity(entity, direction)
     local target_cell
-    local relevant_tiles = {}
-    local can_traverse = false
+    local relevant_tiles = {} -- if moving diagonally, check if adjacent cells are transversable
     local row_movement = entity.cell["grid_row"] + direction[1]
     local column_movement = entity.cell["grid_column"] + direction[2]
+
     -- making sure that the Player isn't trying to move out of g.grid
     if column_movement > g.grid_x or column_movement <= 0 or row_movement > g.grid_y or row_movement <= 0 then
         target_cell = nil
         print("Trying to move out of g.grid boundaries")
         return false
-    else
-        -- once we are sure the cell exists and is part of the g.grid, store it as target_cell
-        target_cell = g.grid[entity.cell["grid_row"] + direction[1]][entity.cell["grid_column"] + direction[2]]
     end
+
+    -- once we are sure the cell exists and is part of the g.grid, store it as target_cell
+    target_cell = g.grid[entity.cell["grid_row"] + direction[1]][entity.cell["grid_column"] + direction[2]]
 
     -- checking for additional tiles to check, since diagonal mov requires entity to be able to traverse all of them
     if direction[1] ~= 0 and direction[2] ~= 0 then
@@ -107,15 +107,11 @@ function Movable:move_entity(entity, direction)
     -- now checking if tile feature is compatible with movement abilities
     table.insert(relevant_tiles, TILES_FEATURES_PAIRS[target_cell.index])
     for i, tile_type in ipairs(relevant_tiles) do
-        can_traverse = false
+        local can_traverse = false
         for i2, mov_type in ipairs(self.movement_type) do
-            if pairings[mov_type] == tile_type then
+            if pairings[mov_type] == tile_type or pairings[mov_type] == "wiggle" then
                 can_traverse = true
                 break
-            elseif pairings[mov_type] == "wiggle" then
-                -- NOTE: wiggle is a special mov type that allows unmoving entities to interact with other
-                -- entities, I.E. think of a living tree, stuck to the grund but able to hit with its branches
-                can_traverse = true
             end
         end
         -- if even one cell isn't compatible with entity mov, entity cannot interact with it
@@ -125,96 +121,87 @@ function Movable:move_entity(entity, direction)
         end 
     end    
     -- checking if there are entities on the target_cell. These always have precedence of interaction
-    if target_cell.occupant ~= nil and can_traverse then
+    if target_cell.occupant then
         -- a lack of controller means the player is dealing with an object entity, not a creature entity
-        if target_cell.occupant.controller then
-            -- moving against another entity = attack, if they are part of different groups or the special "self" group
-            if entity.controller.group ~= target_cell.occupant.controller.group or entity.controller.group == "self" then
-                -- checking if entity has stats and can take damage
-                if target_cell.occupant.features["stats"] then
-                    local target_stats = target_cell.occupant.features["stats"].stats
-                    if target_stats["hp"] then
-                        -- dices get rolled to identify successful hit and eventual damage
-                        local successful_attack = dice_roll({1, 12, 1}, 7)
-                        
-                        -- entities without dice sets roll 1d1
-                        local damage = dice_roll(entity.features["dies"].dies["atk"] or {1, 1})
-                        target_stats["hp"] = target_stats["hp"] - (successful_attack and damage or 0)
-                        if successful_attack then 
-                            love.audio.stop(SOUNDS["hit_blow"])
-                            love.audio.play(SOUNDS["hit_blow"])
-                        else
-                            love.audio.play(SOUNDS["hit_miss"])
-                        end
-                        if target_stats["hp"] <= 0 then
-                            target_stats["hp"] = 0
-                            -- entity will be removed from render_group automatically in StatePlay:Draw()
-                            target_cell.occupant.alive = false
-                            if target_cell.occupant.features["player"] then
-                                local deceased = {["player"] = target_cell.occupant.name,
-                                ["killer"] = entity.name,
-                                ["loot"] = target_cell.occupant.features["stats"].stats["gold"],
-                                ["place"] = "Black Swamps"
-                                }
-                                table.insert(g.cemetery, deceased)
-                            end
-                            target_cell.occupant = nil
-                        end
-                    else
-                        print("This NPC has no HP and cannot die")
-                    end
-                else
-                    print("NPC has no Stats component")
-                end
-                -- HERE CHECK IF ATTACKED ENTITY IS NPC, AND IN CASE REACT CONSEQUENTIALLY ---------------------------------------------------------------------
-            else
-                print("You order you teammate to do something")
-            end
-            return true
-        elseif target_cell.occupant.features["block"] then
+        if not target_cell.occupant.controller then
             print("Cell is already occupied by: "..target_cell.occupant.id)
             return false
         end
-    end  
-    -- self is a reference to the entity's Movable() component
-    if can_traverse then
-        entity.cell["cell"].occupant = nil -- freeing old cell
-        entity.cell["grid_row"] = entity.cell["grid_row"] + direction[1]
-        entity.cell["grid_column"] = entity.cell["grid_column"] + direction[2]
-        entity.cell["cell"] = target_cell
-        target_cell.occupant = entity -- occupying new cell
-        
-        -- playing sound based on tile type
-        love.audio.stop(SOUNDS[TILES_FEATURES_PAIRS[target_cell.index]])
-        love.audio.play(SOUNDS[TILES_FEATURES_PAIRS[target_cell.index]])
 
-        -- if there's an entity in the cell, compute it
-        if target_cell.entity ~= nil then
-            -- immediately check if that's a trigger and which effects it may have
-            if target_cell.entity.features["trigger"] then
-                if target_cell.entity.features["statchange"] then
-                    local trigger_fired = target_cell.entity.features["statchange"]:activate(entity)
-                    -- check if trigger was fired or not
-                    if trigger_fired then
-                        -- if entity is to destroyontrigger, destroy it
-                        if target_cell.entity.features["trigger"].destroyontrigger then
-                            -- will be removed from render_group automatically in StatePlay:Draw()
-                            target_cell.entity.alive = false
-                            target_cell.entity = nil
-                        end
-                    end
-                elseif target_cell.entity.features["exit"] then
-                    -- stepping into an exit means turn isn't valid and stuff has to be reset!
-                    target_cell.entity.features["exit"]:activate(target_cell.entity)
-                    return false
-                end
+        -- moving against another entity = attack, if they are part of different groups or the special "self" group
+        if entity.controller.group ~= "self" and entity.controller.group == target_cell.occupant.controller.group then
+            print("Entity interacts with teammate")
+            return true
+        end
+
+        -- checking if entity has stats and can take damage
+        if not target_cell.occupant.features["stats"] then
+            print("NPC has no Stats component")
+            return false
+        end
+
+        local target_stats = target_cell.occupant.features["stats"].stats
+        if not target_stats["hp"] then
+            print("This NPC has no HP and cannot die")
+            return false
+        end
+
+        -- dices get rolled to identify successful hit and eventual damage
+        local score_to_succeed = 7
+        local successful_attack = dice_roll({1, 12, 1}, score_to_succeed)
+        
+        -- entities without dice sets roll 1d1
+        local damage = dice_roll(entity.features["dies"].dies["atk"] or {1, 1})
+        target_stats["hp"] = target_stats["hp"] - (successful_attack and damage or 0)
+
+        if successful_attack then 
+            love.audio.stop(SOUNDS["hit_blow"])
+            love.audio.play(SOUNDS["hit_blow"])
+        else
+            love.audio.play(SOUNDS["hit_miss"])
+        end
+
+        if target_stats["hp"] <= 0 then
+            target_stats["hp"] = 0
+            -- entity will be removed from render_group automatically in StatePlay:Draw()
+            target_cell.occupant.alive = false
+            -- if a player just died, save all deceased's relevant info in cemetery for Game Over screen
+            if target_cell.occupant.features["player"] then
+                local deceased = {["player"] = target_cell.occupant.name,
+                ["killer"] = entity.name,
+                ["loot"] = target_cell.occupant.features["stats"].stats["gold"],
+                ["place"] = "Black Swamps"
+                }
+                table.insert(g.cemetery, deceased)
             end
+            target_cell.occupant = nil
         end
 
         return true
-    else
-        return false
     end
+
+    -- if no occupants are found in target cell, you're good to go
+    entity.cell["cell"].occupant = nil -- freeing old cell
+    entity.cell["grid_row"] = entity.cell["grid_row"] + direction[1]
+    entity.cell["grid_column"] = entity.cell["grid_column"] + direction[2]
+    entity.cell["cell"] = target_cell
+    target_cell.occupant = entity -- occupying new cell
+    
+    -- playing sound based on tile type
+    love.audio.stop(SOUNDS[TILES_FEATURES_PAIRS[target_cell.index]])
+    love.audio.play(SOUNDS[TILES_FEATURES_PAIRS[target_cell.index]])
+
+    -- lastly, check if there's an entity in the new cell
+    if not target_cell.entity then
+        return true
+    end
+
+    -- check if that's a trigger
+    if not target_cell.entity.features["trigger"] then
+        return true
+    end
+
+    return target_cell.entity.features["trigger"]:activate(target_cell.entity, entity)
 end
 
 Npc = Object:extend()
@@ -230,22 +217,24 @@ function Npc:new(args)
     for i, var in ipairs(args) do
         local new_var = strings_separator(var, ":", 1)
         -- if it is a valid table variable, assign values to it
-        if variables_group[new_var[1]] then
-            -- "enemies" is the only 'array' variable 
-            if new_var[1] == "enemies" then
-                for i2, values in ipairs(new_var) do
-                    -- first new_var value is always index name
-                    if i2 ~= 1 then
-                        table.insert(variables_group[new_var[1]], values)
-                    end
-                end
-            else
-                variables_group[new_var[1]] = new_var[2]
-                if new_var[3] then
-                    error_handler('Trying to assign multiple values to a NPC variable. "enemies" is the only variable that can take multiple args.')
+        if not variables_group[new_var[1]] then
+            goto continue
+        end
+        -- "enemies" is the only 'array' variable 
+        if new_var[1] == "enemies" then
+            for i2, values in ipairs(new_var) do
+                -- first new_var value is always index name
+                if i2 ~= 1 then
+                    table.insert(variables_group[new_var[1]], values)
                 end
             end
+        else
+            variables_group[new_var[1]] = new_var[2]
+            if new_var[3] then
+                error_handler('Trying to assign multiple values to a NPC variable. Only "enemies" can take multiple args.')
+            end
         end
+        ::continue::
     end
 
     self.group = variables_group["group"]
@@ -256,6 +245,7 @@ function Npc:new(args)
 end
 
 function Npc:activate(entity)
+    -- this code is in draft state... I beg thee pardon
     if entity.features["movable"] then
         if self.nature == "aggressive" then
             local search_row = entity.cell["grid_row"] - 2
@@ -266,7 +256,7 @@ function Npc:activate(entity)
                 search_col = entity.cell["grid_column"] - 2
                 for j = 1, 5, 1 do
                     if search_col > g.grid_x or search_col <= 0 or search_row > g.grid_y or search_row <= 0 then
-                        -- this code is in draft state... I beg thee pardon
+                        
                     else
                         local other_entity = g.grid[search_row][search_col].occupant
                         if other_entity then
@@ -330,6 +320,29 @@ end
 Trigger = Object:extend()
 function Trigger:new(args)
     self.destroyontrigger = args[1]
+end
+
+function Trigger:activate(owner, entity)
+    -- stepping into an exit means turn isn't valid and stuff has to be reset!
+    if owner.features["exit"] then
+        owner.features["exit"]:activate(owner)
+        return false
+    end
+
+    if owner.features["statchange"] then
+        local trigger_fired = owner.features["statchange"]:activate(entity)
+        -- check if trigger was fired or not (ie critters cannot pick up gold)
+        if not trigger_fired then
+            return true
+        end
+        -- if owner is to 'destroyontrigger', destroy it
+        if owner.features["trigger"].destroyontrigger then
+            -- will be removed from render_group automatically in StatePlay:Draw()
+            owner.alive = false
+            owner = nil
+            return true
+        end
+    end
 end
 
 -- StatChange class is useful for things like gold or traps, since they change player's stats

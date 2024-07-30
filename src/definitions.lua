@@ -14,7 +14,7 @@ cell = {
 Entity = Object:extend()
 
 function Entity:new(id, tile, features, name)
-    -- can be either a player or a NPC. Used to check groups
+    -- can be either a player or a NPC component. Used to check groups
     self.controller = nil
     -- checked everytime an entity gets drawn, to see if it need to be eliminated
     self.alive = true

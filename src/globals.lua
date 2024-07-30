@@ -9,6 +9,7 @@ g = {
     grid_y = 0, -- this is established by the CSV files containing the map
     camera = {["entity"] = nil, ["x"] = 0, ["y"] = 0}, -- the entity to center to the screen
     render_group = {}, -- contains all the entities to be drawn
+    invisible_group = {}, -- contains all the invisible entities
     players_party = {}, -- contains both the entities reacting to input and their Player component
     npcs_group = {}, -- contains all the NPCs
     cemetery = {}, -- a table containing deaths data (player, killer, gold...)

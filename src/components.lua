@@ -18,24 +18,11 @@ local pairings = {
     ["fly"] = "untraversable"
 }
 
--- note how this is not found in FEATURES_TABLE, as this is reserved for the game menu
+-- note this is NOT found in FEATURES_TABLE, as it is restricted to the game menu
 Player = Object:extend()
-function Player:new(optional_args)
+function Player:new()
     -- players are automatically part of this group
     self.group = "players"
-    -- checking that numbers were input for Player variables, and converting them from strings
-    self.hp = 1
-    self.gold = 0
-    self.inventory_size = 1
-
-    -- checking if optional args are there, and in case convert them to numbers
-    if optional_args[1] and optional_args[1]:match("%d") then self.hp = tonumber(optional_args[1]) end
-    if optional_args[2] and optional_args[2]:match("%d") then self.gold = tonumber(optional_args[2]) end
-    if optional_args[3] and optional_args[3]:match("%d") then self.inventory_size = tonumber(optional_args[3]) end
-    self.inventory = {}
-    if optional_args[4] then
-        error_handler('Feeding to "Player" component more than three args, additional args ignored')
-    end
 end
 
 function Player:input_management(entity, key)
@@ -76,7 +63,6 @@ Movable = Object:extend()
 function Movable:new(optional_args)
     self.movement_type = {}
     for i,v in ipairs(optional_args) do
-        print(v)
         -- adding movement abilities
         table.insert(self.movement_type, v)
     end
@@ -239,7 +225,7 @@ function Npc:new(args)
     }
     for i, var in ipairs(args) do
         local new_var = strings_separator(var, ":", 1)
-        -- if it is a valid variable, assign values to it
+        -- if it is a valid table variable, assign values to it
         if variables_group[new_var[1]] then
             -- "enemies" is the only 'array' variable 
             if new_var[1] == "enemies" then
@@ -342,6 +328,7 @@ function Trigger:new(args)
     self.destroyontrigger = args[1]
 end
 
+-- StatChange class is useful for things like gold or traps, since they change player's stats
 StatChange = Object:extend()
 function StatChange:new(args)
     self.stat = args[1]
@@ -349,19 +336,19 @@ function StatChange:new(args)
     self.sound = args[3]
 end
 
-function StatChange:activate(entity, sound)
+function StatChange:activate(entity)
     -- entities without the stat of interest won't be affected
     if entity.features["stats"].stats[self.stat] then
         code_reference = entity.features["stats"].stats
 
         -- creating final string for code conversion
         local codeblock = 'code_reference["' .. self.stat .. '"]'
-        local code_test = codeblock .. "=" .. codeblock .. "+" .. self.change
+        local code_script = codeblock .. "=" .. codeblock .. "+" .. self.change
 
-        print("Script executed: "..code_test)
+        print("Script executed: "..code_script)
 
         -- creating function from string and executing it
-        local f = loadstring(code_test); f()
+        local f = loadstring(code_script); f()
         -- resetting global code_reference to nil
         code_reference = nil
         -- play eventual sound
@@ -381,11 +368,12 @@ Exit = Object:extend()
 function Exit:new()
 end
 
+-- Simple class to jump between levels or from game to menu (game end)
 function Exit:activate(owner)
     if owner.name ~= "menu" then
         g.game_state:exit()
-        print("id "..owner.id)
-        print("name "..owner.name)
+        print("Exit id: "..owner.id)
+        print("Level name: "..owner.name)
         g.game_state:init(owner.name, false)
     else
         g.game_state = StateMenu()
@@ -395,7 +383,7 @@ end
 
 -- this contains all the entity's stats
 -- NPCs need this comp or they won't have hp = they will be immortal
--- if a Player doesn't hav it, the system automatically adds it with hp = 1, gold = 0
+-- if a Player doesn't have it, the system automatically adds it with hp = 1, gold = 0
 Stats = Object:extend()
 function Stats:new(stats_table)
     self.stats = {}
@@ -412,7 +400,7 @@ end
 
 Dies = Object:extend()
 function Dies:new(dies_table)
-    -- NOTE: TO DATE, die sets can contain only dies of the same type (d4, d6...)
+    -- NOTE: TO DATE, die sets can contain only dies of the same type (2d4, 3d6...)
     -- self.dies is a table of all of the entity's die sets
     self.dies = {}
     for i, stat in ipairs(dies_table) do
@@ -423,22 +411,25 @@ function Dies:new(dies_table)
         -- set_data == n of dies, type of die + (optional) modifier
         local set_data = strings_separator(new_set[2], "d", 1)
 
+        -- check for the presence of positive/negative modifiers. This would mean
+        -- that set_data[2] corresponds to a dice value like 4+1, or 6-2
+        local is_plus = string.find(set_data[2], "+")
+        local is_minus = string.find(set_data[2], "-")
+
+        -- number of dies in set
         set_values[1] = set_data[1]
-        set_values[2] = set_data[2]
 
-        --check for the presence of positive/negative modifiers
-        local is_plus = string.find(set_values[2], "+")
-        local is_minus = string.find(set_values[2], "-")
-
-        -- (optional) modifier[1] == dice type, modifier[2] == modifier 
+        -- (optional) modifier[1] == dice type, modifier[2] == modifier
         if is_plus then
-            local modifier = strings_separator(set_values[2], "+", 1)
-            set_values[2] = modifier[1]
-            set_values[3] = modifier[2]
+            local modifier = strings_separator(set_data[2], "+", 1)
+            set_values[2] = tonumber(modifier[1])
+            set_values[3] = tonumber(modifier[2])
         elseif is_minus then
-            local modifier = strings_separator(set_values[2], "-", 1)
-            set_values[2] = modifier[1]
-            set_values[3] = modifier[2]
+            local modifier = strings_separator(set_data[2], "-", 1)
+            set_values[2] = tonumber(modifier[1])
+            set_values[3] = tonumber(modifier[2]) * -1
+        else
+            set_values[2] = tonumber(set_data[2])
         end
 
         -- at last, assign new set to self.dies at name (new_set[1])

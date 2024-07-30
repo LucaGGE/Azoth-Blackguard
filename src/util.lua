@@ -189,10 +189,14 @@ function entities_spawner(blueprint, loc_row, loc_column)
     if not instanced_entity.features["invisible"] then
         -- adding entity in front or back depending if it is an occupant or a simple entity
         if is_occupant then
+            -- insert to front in drawing order
             table.insert(g.render_group, instanced_entity)
         else
+            -- insert to back in drawing order
             table.insert(g.render_group, #g.render_group, instanced_entity)
         end
+    else
+        talbe.insert(g.invisible_group, instanced_entity)
     end
 end
 

@@ -6,6 +6,9 @@ local HALF_TILE = (mod.TILE_SIZE or 20) / 2 -- used when centering the screen on
 -- this variable stores the current turn
 local current_turn = 1
 
+-- ui dedicated canvas (state_play only)
+local canvas_ui
+
 --[[
     Here's where we accumulate key inputs for entities, containing their number.
     This is done to make the game feel more responsive.
@@ -47,10 +50,10 @@ function StatePlay:init(map, regen_players)
         -- setting the state's font
         love.graphics.setFont(FONTS["default"])
 
-        -- preliminary drawing pass on g.canvas_base , to avoid re-drawing statics each time 
-        love.graphics.setCanvas(g.canvas_base )
+        -- preliminary drawing pass on g.canvas_base, to avoid re-drawing statics each time 
+        love.graphics.setCanvas(g.canvas_base)
 
-        -- using g.canvas_base  with static tiles to create a base for final, updated drawing
+        -- using g.canvas_base with static tiles to create a base for final, updated drawing
         for i, v in ipairs(g.grid) do
             for i2, v2 in ipairs(v) do
                 if g.grid[i][i2].tile ~= nil then
@@ -130,9 +133,9 @@ end
 function StatePlay:refresh()
     -- setting canvas to g.canvas_final, to give effects and offset before
     love.graphics.setCanvas(g.canvas_final)
-    -- erase canvas with BKG color and draw g.canvas_base  as a base to draw upon
+    -- erase canvas with BKG color and draw g.canvas_base as a base to draw upon
     love.graphics.clear((mod.BKG_R or 12) / 255, (mod.BKG_G or 8) / 255, (mod.BKG_B or 42) / 255)
-    love.graphics.draw(g.canvas_base , 0, 0)
+    love.graphics.draw(g.canvas_base, 0, 0)
     
     -- drawing in a loop all the elements to be drawn on screen, removing dead ones
     for i, entity in ipairs(g.render_group) do
@@ -148,7 +151,9 @@ function StatePlay:refresh()
         end
     end
 
-    -- reset default canvas and set g.camera position
+    canvas_ui = ui_manager()
+
+    -- reset default canvas to draw on it in draw() func
     love.graphics.setCanvas()
 end
 
@@ -157,7 +162,7 @@ function StatePlay:draw()
     if g.camera["entity"] then
         -- screen is drawn on g.canvas_final with player perfectly at the center of it
         love.graphics.draw(g.canvas_final,
-        (g.window_width / 2) - (g.camera["x"] * SIZE_MULTIPLIER) - HALF_TILE, -- INSTEAD OF CALCULATING THESE COORDS, JUST CALC AND SAVE THEM IN refresh() (use local vars)
+        (g.window_width / 2) - (g.camera["x"] * SIZE_MULTIPLIER) - HALF_TILE,
         (g.window_height / 2) - (g.camera["y"] * SIZE_MULTIPLIER) - HALF_TILE,
         0,
         SIZE_MULTIPLIER,
@@ -167,28 +172,8 @@ function StatePlay:draw()
         -- if for any reason there's no player, g.camera points 0,0 with its left upper corner
         love.graphics.draw(g.canvas_final, 0, 0, 0, SIZE_MULTIPLIER, SIZE_MULTIPLIER)
     end
-
-    -- drawing UI on top of everything for the current player    
-    love.graphics.setFont(FONTS["subtitle"])
-
-    -- making the UI semi-transparent
-    love.graphics.setColor(0.78, 0.96, 0.94, 1)    
-
-    love.graphics.print(
-        g.camera["entity"].name,
-        FONT_SIZE_SUBTITLE, g.window_height - (FONT_SIZE_SUBTITLE * 4)
-    )
-    love.graphics.print(
-        "Life "..g.camera["entity"].features["stats"].stats["hp"],
-        FONT_SIZE_SUBTITLE, g.window_height - (FONT_SIZE_SUBTITLE * 3)
-    )
-    love.graphics.print(
-        "Gold "..g.camera["entity"].features["stats"].stats["gold"], -- WARNING: this is not forced and will therefore crash game if not explicitly input in entities.csv. UI system should be modular and adapt to dynamic stats!  
-        FONT_SIZE_SUBTITLE, g.window_height - (FONT_SIZE_SUBTITLE * 2)
-    )
-
-    -- restoring default RGBA, since this function influences ALL graphics
-    love.graphics.setColor(1, 1, 1, 1)
+    -- drawing UI dedicated canvas on top of everything, always locked on screen
+    love.graphics.draw(canvas_ui, 0, 0)
 end
 
 function StatePlay:exit()

@@ -548,6 +548,37 @@ function turns_manager(current_player, npc_turn)
     g.game_state:refresh()
 end
 
+function ui_manager()
+    -- generating a canvas of the proper size
+    local new_canvas  = love.graphics.newCanvas(g.screen_width, g.screen_height)
+
+    love.graphics.setCanvas(new_canvas)
+    -- clear to transparent black
+    love.graphics.clear(0, 0, 0, 0)
+    -- drawing UI on top of everything for the current player    
+    love.graphics.setFont(FONTS["subtitle"])
+    -- making the UI semi-transparent
+    love.graphics.setColor(0.78, 0.96, 0.94, 1)
+    
+    love.graphics.print(
+        g.camera["entity"].name,
+        FONT_SIZE_SUBTITLE, g.window_height - (FONT_SIZE_SUBTITLE * 3)
+    )
+    love.graphics.print(
+        "Life "..g.camera["entity"].features["stats"].stats["hp"],
+        FONT_SIZE_SUBTITLE, g.window_height - (FONT_SIZE_SUBTITLE * 2)
+    )
+    love.graphics.print(
+        "Gold "..g.camera["entity"].features["stats"].stats["gold"], -- WARNING: gold is not forced and will therefore crash game if not explicitly input in entities.csv. UI system should be modular and adapt to dynamic stats!  
+        FONT_SIZE_SUBTITLE, g.window_height - (FONT_SIZE_SUBTITLE)
+    )
+    
+    -- restoring default RGBA, since this function influences ALL graphics
+    love.graphics.setColor(1, 1, 1, 1)
+
+    return new_canvas
+end
+
 function text_backspace(input_string)
     input_string = string.sub(input_string, 1, -2)
     love.audio.stop(SOUNDS["type_backspace"])

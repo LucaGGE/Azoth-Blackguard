@@ -3,7 +3,7 @@ g = {
     window_width = 1280, -- screen size must be an odd number to have perfect pixels
     window_height = 720,
     canvas_base, -- game canvases: base for statics, and final for statics + dynamics
-    canvas_final, 
+    canvas_final,
     grid = {}, -- grid system main data
     grid_x = 0, -- this is established by the CSV files containing the map
     grid_y = 0, -- this is established by the CSV files containing the map

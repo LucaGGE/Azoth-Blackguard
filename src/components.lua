@@ -26,29 +26,37 @@ function Player:new()
 
     -- this variable contains all the movement inputs key-values for keypad and keyboard, with key = (row, column)
     self.movement_inputs = {
-        ["kp7"] = {-1,-1}, ["t"] = {-1,-1},
-        ["kp8"] = {-1,0}, ["y"] = {-1,0},
-        ["kp9"] = {-1,1}, ["u"] = {-1,1},
-        ["kp6"] = {0,1}, ["j"] = {0,1},
-        ["kp3"] = {1,1}, ["m"] = {1,1},
-        ["kp2"] = {1,0}, ["n"] = {1,0},
-        ["kp1"] = {1,-1}, ["b"] = {1,-1},
-        ["kp4"] = {0,-1}, ["g"] = {0,-1},
-        ["kp5"] = "stay", ["h"] = "stay"
+        ["kp7"] = {-1,-1}, ["q"] = {-1,-1},
+        ["kp8"] = {-1,0}, ["w"] = {-1,0},
+        ["kp9"] = {-1,1}, ["e"] = {-1,1},
+        ["kp6"] = {0,1}, ["d"] = {0,1},
+        ["kp3"] = {1,1}, ["c"] = {1,1},
+        ["kp2"] = {1,0}, ["x"] = {1,0},
+        ["kp1"] = {1,-1}, ["z"] = {1,-1},
+        ["kp4"] = {0,-1}, ["a"] = {0,-1},
+        ["kp5"] = "stay", ["s"] = "stay"
         }
     self.hotkeys = {
         ["space"] = function()
             print("console")
             return false
         end,
-        ["."] = function()
-            print("pickup")
+        ["u"] = function()
+            print("use")
             return true
         end,
         ["i"] = function()
             print("inventory")
             return true
         end,
+        ["o"] = function()
+            print("observe")
+            return true
+        end,
+        ["p"] = function()
+            print("pickup")
+            return true
+        end
     }
 end
 
@@ -147,6 +155,11 @@ function Movable:move_entity(entity, direction)
             return true
         end
 
+        if entity.controller.group == "players" and target_cell.occupant.controller.nature == "civilized" then
+            print("Player dialogues with civilized creature")
+            return true -- this will actually lead to a dialogue func() that will return true/false
+        end
+
         -- checking if entity has stats and can take damage
         if not target_cell.occupant.features["stats"] then
             print("NPC has no Stats component")
@@ -176,7 +189,7 @@ function Movable:move_entity(entity, direction)
 
         if target_stats["hp"] <= 0 then
             target_stats["hp"] = 0
-            -- entity will be removed from render_group automatically in StatePlay:Draw()
+            -- entity will be removed from render_group automatically in StatePlay:refresh()
             target_cell.occupant.alive = false
             -- if a player just died, save all deceased's relevant info in cemetery for Game Over screen
             if target_cell.occupant.features["player"] then
@@ -350,7 +363,7 @@ function Trigger:activate(owner, entity)
         end
         -- if owner is to 'destroyontrigger', destroy it
         if owner.features["trigger"].destroyontrigger then
-            -- will be removed from render_group automatically in StatePlay:Draw()
+            -- will be removed from render_group automatically in StatePlay:refresh()
             owner.alive = false
             owner = nil
             return true

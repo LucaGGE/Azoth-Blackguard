@@ -37,7 +37,9 @@ function StateGameOver:init()
         -- empty previously pressed keys and enable input
         g.keys_pressed = {}
         can_input = true
-    end)    
+    end)
+    
+    g.game_state:refresh()  
 end
 
 function StateGameOver:update()

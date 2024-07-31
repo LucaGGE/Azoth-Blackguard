@@ -426,6 +426,7 @@ end
 -- screen resizing handling
 function love.resize(w, h)
     g.window_width, g.window_height = pixel_adjust(w, h)
+    g.game_state:refresh()
 end
 
 function blueprints_generator(id, tile, features_list_input)
@@ -524,6 +525,7 @@ function turns_manager(current_player, npc_turn)
     local y_for_tweening = current_player["entity"].cell["cell"].y
     -- set next (or first) player as the g.camera entity
     g.camera["entity"] = current_player["entity"]
+    g.game_state:refresh()
     -- tween between previous and current active player
     Timer.tween(TWEENING_TIME, {
         [g.camera] =  {x = x_for_tweening, y = y_for_tweening}
@@ -541,7 +543,9 @@ function turns_manager(current_player, npc_turn)
 
         ::continue::
         g.is_tweening = false
+        g.game_state:refresh()        
     end)
+    g.game_state:refresh()
 end
 
 function text_backspace(input_string)

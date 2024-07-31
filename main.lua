@@ -56,7 +56,6 @@ end
 
 function love.draw()
     g.game_state:draw()
-
     -- errors will always be printed on screen, to aid modders
     love.graphics.setFont(FONTS["default"])
     for i, error_msg in ipairs(g.error_messages) do

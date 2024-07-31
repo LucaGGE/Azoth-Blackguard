@@ -14,6 +14,9 @@ function StateCredits:init()
     if g.game_track then
         love.audio.stop(g.game_track)
     end
+    
+    g.game_state:refresh()
+    love.graphics.setBackgroundColor(0 / 255, 0 / 255, 0 / 255)
 end
 
 function StateCredits:update()
@@ -28,7 +31,6 @@ function StateCredits:update()
 end
 
 function StateCredits:draw()
-    love.graphics.setBackgroundColor(0 / 255, 0 / 255, 0 / 255)
     love.graphics.setCanvas()
     -- always keeping the image with its original proportions and in the screen center
     love.graphics.draw(

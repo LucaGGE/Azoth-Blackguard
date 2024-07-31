@@ -38,9 +38,10 @@ BaseState = Object:extend()
 function BaseState:new()
 	function BaseState:init() end
 	function BaseState:update() end
-	function BaseState:draw() end
+    function BaseState:refresh() end -- all the NON real-time graphics go here
+	function BaseState:draw() end -- all the real-time graphics go here
 	function BaseState:exit() end
-    function BaseState:manage_input() end -- states manage input in different ways
+    function BaseState:manage_input() end -- some states manage input in different ways
 end
 
 

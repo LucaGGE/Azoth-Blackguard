@@ -68,6 +68,8 @@ function StatePlay:init(map, regen_players)
         g.game_state = StateFatalError()
         g.game_state:init()
     end
+
+    g.game_state:refresh()
 end
 
 function StatePlay:update()
@@ -125,7 +127,7 @@ function StatePlay:update()
     end
 end
 
-function StatePlay:draw()
+function StatePlay:refresh()
     -- setting canvas to g.canvas_final, to give effects and offset before
     love.graphics.setCanvas(g.canvas_final)
     -- erase canvas with BKG color and draw g.canvas_base  as a base to draw upon
@@ -146,12 +148,16 @@ function StatePlay:draw()
         end
     end
 
-    -- reset default canvas and draw g.canvas_final on the screen, with g.camera offset.
+    -- reset default canvas and set g.camera position
     love.graphics.setCanvas()
+end
+
+function StatePlay:draw()
+    -- draw g.canvas_final on the screen, with g.camera offset.
     if g.camera["entity"] then
         -- screen is drawn on g.canvas_final with player perfectly at the center of it
         love.graphics.draw(g.canvas_final,
-        (g.window_width / 2) - (g.camera["x"] * SIZE_MULTIPLIER) - HALF_TILE,
+        (g.window_width / 2) - (g.camera["x"] * SIZE_MULTIPLIER) - HALF_TILE, -- INSTEAD OF CALCULATING THESE COORDS, JUST CALC AND SAVE THEM IN refresh() (use local vars)
         (g.window_height / 2) - (g.camera["y"] * SIZE_MULTIPLIER) - HALF_TILE,
         0,
         SIZE_MULTIPLIER,
@@ -168,9 +174,6 @@ function StatePlay:draw()
     -- making the UI semi-transparent
     love.graphics.setColor(0.78, 0.96, 0.94, 1)    
 
-    -- TO IMPROVE: THERE IS A LOT OF CALCULATIONS FOR EACH FRAME HERE. HANDLE THIS DATA WITH FUNCS LIKE RESIZE_SCREEN AND DRAW STUFF WITH AS LITTLE CALCS AS POSSIBLE -----------
-    -- for dynamic values, strings should be updated with an event called when stats change 
-
     love.graphics.print(
         g.camera["entity"].name,
         FONT_SIZE_SUBTITLE, g.window_height - (FONT_SIZE_SUBTITLE * 4)
@@ -180,7 +183,7 @@ function StatePlay:draw()
         FONT_SIZE_SUBTITLE, g.window_height - (FONT_SIZE_SUBTITLE * 3)
     )
     love.graphics.print(
-        "Gold "..g.camera["entity"].features["stats"].stats["gold"], -- ERROR: this is not forced and will therefore crash game if not explicitly input in entities.csv. UI system should be modular and adapt to dynamic stats!  
+        "Gold "..g.camera["entity"].features["stats"].stats["gold"], -- WARNING: this is not forced and will therefore crash game if not explicitly input in entities.csv. UI system should be modular and adapt to dynamic stats!  
         FONT_SIZE_SUBTITLE, g.window_height - (FONT_SIZE_SUBTITLE * 2)
     )
 

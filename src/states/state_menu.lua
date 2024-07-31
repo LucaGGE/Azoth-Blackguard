@@ -143,6 +143,8 @@ function StateMenu:init()
     g.game_track = MUSIC["menu"]
     g.game_track:setLooping(true)
     love.audio.play(g.game_track)
+    
+    g.game_state:refresh()
 end
 
 function StateMenu:update()

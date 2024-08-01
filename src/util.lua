@@ -525,18 +525,15 @@ function turns_manager(current_player, npc_turn)
     local y_for_tweening = current_player["entity"].cell["cell"].y
     -- set next (or first) player as the g.camera entity
     g.camera["entity"] = current_player["entity"]
-    g.game_state:refresh()
     -- tween between previous and current active player
     Timer.tween(TWEENING_TIME, {
         [g.camera] =  {x = x_for_tweening, y = y_for_tweening}
     }):finish(function ()
-        if not npc_turn and g.npcs_group then goto continue end
+        if not npc_turn and not g.npcs_group then goto continue end
 
         for i, npc in ipairs(g.npcs_group) do
             -- check if the NPC is alive or needs to be removed from game
-            if npc.alive == false then
-                table.remove(g.npcs_group, i)
-            else
+            if npc.alive then
                 g.npcs_group[i].features["npc"]:activate(g.npcs_group[i])
             end
         end
@@ -545,7 +542,6 @@ function turns_manager(current_player, npc_turn)
         g.is_tweening = false
         g.game_state:refresh()        
     end)
-    g.game_state:refresh()
 end
 
 function ui_manager_play()

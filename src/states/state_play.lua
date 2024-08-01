@@ -72,19 +72,13 @@ function StatePlay:init(map, regen_players)
         g.game_state:init()
     end
 
+    print("init")
     g.game_state:refresh()
 end
 
 function StatePlay:update()
     -- checking for input to resolve turns
     if g.keys_pressed[1] and not g.is_tweening then
-        -- getting rid of useless references to dead players
-        for i,v in ipairs(g.players_party) do
-            if v["entity"].alive == false then
-                table.remove(g.players_party, i)
-            end
-        end
-
         local current_player = g.players_party[current_turn]
         local valid_action
         
@@ -104,7 +98,7 @@ function StatePlay:update()
 
         -- NOTE: be careful with tweening. Check State before activating.
         if not g.game_state:is(StatePlay) then
-            goto continue_statchange
+            goto continue_statechange
         end
 
         -- if the current_turn (now + 1) exceeds the n of players, it's NPCs turn
@@ -126,7 +120,8 @@ function StatePlay:update()
             g.is_tweening = true
             turns_manager(g.players_party[current_turn], false)
         end
-        ::continue_statchange::
+        g.game_state:refresh()
+        ::continue_statechange::
     end
 end
 
@@ -136,19 +131,45 @@ function StatePlay:refresh()
     -- erase canvas with BKG color and draw g.canvas_base as a base to draw upon
     love.graphics.clear((mod.BKG_R or 12) / 255, (mod.BKG_G or 8) / 255, (mod.BKG_B or 42) / 255)
     love.graphics.draw(g.canvas_base, 0, 0)
+
+    -- removing dead players from g.players_party
+    for i, player_ref in ipairs(g.players_party) do
+        if player_ref["entity"].alive == false then
+            player_ref["entity"].cell["cell"].occupant = nil
+            table.remove(g.players_party, i)
+        end
+    end
+
+    -- removing dead NPCs from g.npcs_group
+    for i, npc in ipairs(g.npcs_group) do
+        if npc.alive == false then
+            npc.cell["cell"].occupant = nil
+            table.remove(g.npcs_group, i)
+        end
+    end
     
-    -- drawing in a loop all the elements to be drawn on screen, removing dead ones
+    -- removing dead entities (no special group, contains also NPCs and players)
     for i, entity in ipairs(g.render_group) do
-        if entity.alive then
-            if tile_to_quad(entity.tile) then
-                love.graphics.draw(g.TILESET, tile_to_quad(entity.tile), entity.cell["cell"].x, entity.cell["cell"].y)
-            else
-                error_handler(entity.id.." has invalid tile index and cannot be drawn. Removed from render_group")
-                table.remove(g.render_group, i)
-            end
-        else
+        if not tile_to_quad(entity.tile) then
+            -- entities can have their properties changed, that's why this check is needed each refresh() cycle
+            error_handler(entity.id.." has invalid tile index and cannot be drawn. Removed from render_group")
             table.remove(g.render_group, i)
         end
+
+        if entity.alive == false then
+            table.remove(g.render_group, i)
+            if entity.features["block"] then
+                print("block destroyed")
+                entity.cell["cell"].occupant = nil
+            else
+                entity.cell["cell"].entity = nil
+            end
+        end
+    end
+
+    -- drawing in a loop all the elements to be drawn on screen
+    for i, entity in ipairs(g.render_group) do
+        love.graphics.draw(g.TILESET, tile_to_quad(entity.tile), entity.cell["cell"].x, entity.cell["cell"].y)
     end
 
     canvas_ui = ui_manager_play()

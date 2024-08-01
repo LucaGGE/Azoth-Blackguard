@@ -189,7 +189,7 @@ function Movable:move_entity(entity, direction)
 
         if target_stats["hp"] <= 0 then
             target_stats["hp"] = 0
-            -- entity will be removed from render_group automatically in StatePlay:refresh()
+            -- entity will be removed from render_group and cell automatically in StatePlay:refresh()
             target_cell.occupant.alive = false
             -- if a player just died, save all deceased's relevant info in cemetery for Game Over screen
             if target_cell.occupant.features["player"] then
@@ -200,18 +200,19 @@ function Movable:move_entity(entity, direction)
                 }
                 table.insert(g.cemetery, deceased)
             end
-            target_cell.occupant = nil
         end
 
         return true
     end
 
+    print("check here")
+
     -- if no occupants are found in target cell, you're good to go
     entity.cell["cell"].occupant = nil -- freeing old cell
     entity.cell["grid_row"] = entity.cell["grid_row"] + direction[1]
     entity.cell["grid_column"] = entity.cell["grid_column"] + direction[2]
-    entity.cell["cell"] = target_cell
-    target_cell.occupant = entity -- occupying new cell
+    entity.cell["cell"] = target_cell -- storing new cell
+    entity.cell["cell"].occupant = entity -- occupying new cell
     
     -- playing sound based on tile type
     love.audio.stop(SOUNDS[TILES_FEATURES_PAIRS[target_cell.index]])
@@ -222,12 +223,9 @@ function Movable:move_entity(entity, direction)
         return true
     end
 
-    -- check if that's a trigger
-    if not target_cell.entity.features["trigger"] then
-        return true
-    end
-
-    return target_cell.entity.features["trigger"]:activate(target_cell.entity, entity)
+    -- check if that's a trigger. It may work or not, but entity still moved, so return true
+    target_cell.entity.features["trigger"]:activate(target_cell.entity, entity)
+    return true
 end
 
 Npc = Object:extend()
@@ -324,7 +322,7 @@ function Npc:activate(entity)
                 search_row = search_row + 1
             end
         else
-            --print("The NPC minds its business")
+            --print("The NPC mids it own business")
         end
     end
 end
@@ -363,9 +361,8 @@ function Trigger:activate(owner, entity)
         end
         -- if owner is to 'destroyontrigger', destroy it
         if owner.features["trigger"].destroyontrigger then
-            -- will be removed from render_group automatically in StatePlay:refresh()
+            -- will be removed from render_group and cell automatically in StatePlay:refresh()
             owner.alive = false
-            owner = nil
             return true
         end
     end

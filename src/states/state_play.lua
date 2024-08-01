@@ -158,7 +158,7 @@ function StatePlay:refresh()
 
         if entity.alive == false then
             table.remove(g.render_group, i)
-            if entity.features["block"] then
+            if entity.features["block"] or entity.features["player"] or entity.features["npc"] then
                 print("block destroyed")
                 entity.cell["cell"].occupant = nil
             else

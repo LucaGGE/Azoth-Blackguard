@@ -49,8 +49,10 @@ function Player:new()
             print("inventory")
             return true
         end,
-        ["o"] = function()
+        ["o"] = function(player)
             print("observe")
+            local target_cell = g.grid[player.cell["grid_row"]][player.cell["grid_column"]]
+            print(target_cell.entity and target_cell.entity["id"] or "Nothing")
             return true
         end,
         ["p"] = function()
@@ -64,7 +66,7 @@ function Player:input_management(entity, key)
     -- checking if input is valid
     if not self.movement_inputs[key] then
         -- return function() result if 'key' is valid
-        return self.hotkeys[key] and self.hotkeys[key]()
+        return self.hotkeys[key] and self.hotkeys[key](entity)
     end
 
     -- check if player is skipping turn (always possible, even without a mov comp)
@@ -205,8 +207,6 @@ function Movable:move_entity(entity, direction)
         return true
     end
 
-    print("check here")
-
     -- if no occupants are found in target cell, you're good to go
     entity.cell["cell"].occupant = nil -- freeing old cell
     entity.cell["grid_row"] = entity.cell["grid_row"] + direction[1]
@@ -219,7 +219,7 @@ function Movable:move_entity(entity, direction)
     love.audio.play(SOUNDS[TILES_FEATURES_PAIRS[target_cell.index]])
 
     -- lastly, check if there's an entity in the new cell
-    if not target_cell.entity then
+    if not target_cell.entity or not target_cell.entity.features["trigger"] then
         return true
     end
 
@@ -349,22 +349,20 @@ end
 function Trigger:activate(owner, entity)
     -- stepping into an exit means turn isn't valid and stuff has to be reset!
     if owner.features["exit"] then
-        owner.features["exit"]:activate(owner)
+        owner.features["exit"]:activate(owner, entity)
         return false
     end
 
     if owner.features["statchange"] then
         local trigger_fired = owner.features["statchange"]:activate(entity)
-        -- check if trigger was fired or not (ie critters cannot pick up gold)
-        if not trigger_fired then
-            return true
-        end
         -- if owner is to 'destroyontrigger', destroy it
-        if owner.features["trigger"].destroyontrigger then
+        if owner.features["trigger"].destroyontrigger and trigger_fired then
             -- will be removed from render_group and cell automatically in StatePlay:refresh()
             owner.alive = false
-            return true
         end
+
+        -- if trigger was fired or not (ie critters cannot pick up gold), turn still counts
+        return true
     end
 end
 
@@ -409,15 +407,17 @@ function Exit:new()
 end
 
 -- Simple class to jump between levels or from game to menu (game end)
-function Exit:activate(owner)
-    if owner.name ~= "menu" then
-        g.game_state:exit()
-        print("Exit id: "..owner.id)
-        print("Level name: "..owner.name)
-        g.game_state:init(owner.name, false)
-    else
-        g.game_state = StateMenu()
-        g.game_state:init()
+function Exit:activate(owner, entity)
+    if entity.features["player"] then
+        if owner.name ~= "menu" then
+            g.game_state:exit()
+            print("Exit id: "..owner.id)
+            print("Level name: "..owner.name)
+            g.game_state:init(owner.name, false)
+        else
+            g.game_state = StateMenu()
+            g.game_state:init()
+        end
     end
 end
 

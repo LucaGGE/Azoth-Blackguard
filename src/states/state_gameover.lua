@@ -6,6 +6,9 @@ local can_input
 -- used to print all the death messages on screen
 local players_count
 
+-- menu dedicated canvas (gameover only)
+local canvas_gameover
+
 function StateGameOver:manage_input(key)
     table.insert(g.keys_pressed, key)
 end
@@ -58,19 +61,13 @@ function StateGameOver:update()
     g.keys_pressed = {}
 end
 
+function StateGameOver:refresh()
+    canvas_gameover = ui_manager_gameover()
+
+    -- reset default canvas to draw on it in draw() func
+    love.graphics.setCanvas()
+end
+
 function StateGameOver:draw()
-    love.graphics.setColor(1, 0, 0, 1)
-    love.graphics.setFont(FONTS["title"])
-    love.graphics.printf("Game Over", 0, g.window_height / 4 - FONT_SIZE_TITLE, g.window_width, "center")
-
-    love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.setFont(FONTS["subtitle"])
-    love.graphics.printf("These souls have left us forever:", 0, g.window_height / 4 + (FONT_SIZE_SUBTITLE), g.window_width, "center")
-
-    -- printing all deceased players and info about their death
-    for i, death in ipairs(g.cemetery) do 
-        love.graphics.printf(death["player"]..", killed by "..death["killer"].." for "..death["loot"].." gold,\n"..
-        "has found a final resting place in "..death["place"]..".",
-        0, g.window_height / 3.5 + (FONT_SIZE_SUBTITLE * (i * 3)), g.window_width, "center")
-    end
+    love.graphics.draw(canvas_gameover, 0, 0)
 end

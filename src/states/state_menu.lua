@@ -22,6 +22,9 @@ local text = {
     [6] = "fourth "
 }
 
+-- menu dedicated canvas (state_play only)
+local canvas_menu
+
 function StateMenu:manage_input(key)
     table.insert(g.keys_pressed, key)
 end
@@ -37,6 +40,9 @@ local INPUT_DTABLE1 = {
             n_of_players = n_of_players + 1
             love.audio.stop(SOUNDS["button_switch"])
             love.audio.play(SOUNDS["button_switch"])
+        else
+            love.audio.stop(SOUNDS["type_nil"])
+            love.audio.play(SOUNDS["type_nil"])
         end
     end,
     ["left"] = function()
@@ -44,6 +50,9 @@ local INPUT_DTABLE1 = {
             n_of_players = n_of_players - 1
             love.audio.stop(SOUNDS["button_switch"])
             love.audio.play(SOUNDS["button_switch"])
+        else
+            love.audio.stop(SOUNDS["type_nil"])
+            love.audio.play(SOUNDS["type_nil"])
         end
     end,
     ["enter"] = function()
@@ -162,19 +171,18 @@ function StateMenu:update()
             end
         end
         key_output()
+        g.game_state:refresh()
     end
     g.keys_pressed = {}
 end
 
-function StateMenu:draw()
-    love.graphics.setFont(FONTS["title"])
-    love.graphics.printf(GAME_TITLE, 0, g.window_height / 5, g.window_width, "center")
+function StateMenu:refresh()
+    canvas_menu = ui_manager_menu(text, input_phase, n_of_players, current_player, input_name)
 
-    love.graphics.setFont(FONTS["subtitle"])
-    if input_phase == 1 then
-        love.graphics.printf(text[input_phase] .. n_of_players, 0, g.window_height / 5 + (FONT_SIZE_TITLE * 2), g.window_width, "center")
-    else
-        love.graphics.printf(text[input_phase] .. text[current_player + 2] .. "rogue:\n" .. input_name,
-        0, g.window_height / 5 + (FONT_SIZE_TITLE * 2), g.window_width, "center")
-    end
+    -- reset default canvas to draw on it in draw() func
+    love.graphics.setCanvas()
+end
+
+function StateMenu:draw()
+    love.graphics.draw(canvas_menu, 0, 0)
 end

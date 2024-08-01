@@ -548,11 +548,11 @@ function turns_manager(current_player, npc_turn)
     g.game_state:refresh()
 end
 
-function ui_manager()
+function ui_manager_play()
     -- generating a canvas of the proper size
-    local new_canvas  = love.graphics.newCanvas(g.screen_width, g.screen_height)
-
+    local new_canvas  = love.graphics.newCanvas(g.window_width, g.window_height)
     love.graphics.setCanvas(new_canvas)
+
     -- clear to transparent black
     love.graphics.clear(0, 0, 0, 0)
     -- drawing UI on top of everything for the current player    
@@ -562,20 +562,81 @@ function ui_manager()
     
     love.graphics.print(
         g.camera["entity"].name,
-        FONT_SIZE_SUBTITLE, g.window_height - (FONT_SIZE_SUBTITLE * 3)
+        FONT_SIZE_SUBTITLE, g.window_height - (FONT_SIZE_SUBTITLE * 3.5)
     )
     love.graphics.print(
         "Life "..g.camera["entity"].features["stats"].stats["hp"],
-        FONT_SIZE_SUBTITLE, g.window_height - (FONT_SIZE_SUBTITLE * 2)
+        FONT_SIZE_SUBTITLE, g.window_height - (FONT_SIZE_SUBTITLE * 2.5)
     )
     love.graphics.print(
         "Gold "..g.camera["entity"].features["stats"].stats["gold"], -- WARNING: gold is not forced and will therefore crash game if not explicitly input in entities.csv. UI system should be modular and adapt to dynamic stats!  
-        FONT_SIZE_SUBTITLE, g.window_height - (FONT_SIZE_SUBTITLE)
+        FONT_SIZE_SUBTITLE, g.window_height - (FONT_SIZE_SUBTITLE * 1.5)
     )
     
     -- restoring default RGBA, since this function influences ALL graphics
     love.graphics.setColor(1, 1, 1, 1)
 
+    return new_canvas
+end
+
+function ui_manager_menu(text, input_phase, n_of_players, current_player, input_name)
+    -- generating a canvas of the proper size
+    local new_canvas  = love.graphics.newCanvas(g.window_width, g.window_height)
+    love.graphics.setCanvas(new_canvas)
+
+    love.graphics.setFont(FONTS["title"])
+    love.graphics.printf(GAME_TITLE, 0, g.window_height / 5, g.window_width, "center")
+
+    love.graphics.setFont(FONTS["subtitle"])
+    if input_phase == 1 then
+        love.graphics.printf(text[input_phase] .. n_of_players, 0, g.window_height / 5 + (FONT_SIZE_TITLE * 2), g.window_width, "center")
+    else
+        love.graphics.printf(text[input_phase] .. text[current_player + 2] .. "rogue:\n" .. input_name,
+        0, g.window_height / 5 + (FONT_SIZE_TITLE * 2), g.window_width, "center")
+    end
+
+    return new_canvas
+end
+
+function ui_manager_gameover()
+    -- generating a canvas of the proper size
+    local new_canvas  = love.graphics.newCanvas(g.window_width, g.window_height)
+    love.graphics.setCanvas(new_canvas)
+
+    love.graphics.setColor(1, 0, 0, 1)
+    love.graphics.setFont(FONTS["title"])
+    love.graphics.printf("Game Over", 0, g.window_height / 4 - FONT_SIZE_TITLE, g.window_width, "center")
+
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.setFont(FONTS["subtitle"])
+    love.graphics.printf("These souls have left us forever:", 0, g.window_height / 4 + (FONT_SIZE_SUBTITLE), g.window_width, "center")
+
+    -- printing all deceased players and info about their death
+    for i, death in ipairs(g.cemetery) do 
+        love.graphics.printf(death["player"]..", killed by "..death["killer"].." for "..death["loot"].." gold,\n"..
+        "has found a final resting place in "..death["place"]..".",
+        0, g.window_height / 3.5 + (FONT_SIZE_SUBTITLE * (i * 3)), g.window_width, "center")
+    end
+
+    return new_canvas
+end
+
+function ui_manager_credits(credits_image)
+    -- generating a canvas of the proper size
+    local new_canvas  = love.graphics.newCanvas(g.window_width, g.window_height)
+    love.graphics.setCanvas(new_canvas)
+
+    -- this is simply an optimal proportion between the image size and the screen size
+    local scale = g.window_height / 1300
+    local credits_width = credits_image:getWidth()
+    local credits_height = credits_image:getHeight()
+
+    -- always keeping the image with its original proportions and in the screen center
+    love.graphics.draw(
+        credits_image,
+        g.window_width / 2 - (credits_width / 2 * scale), g.window_height / 2 - (credits_height / 2 * scale),
+        0, scale, scale
+    )
     return new_canvas
 end
 

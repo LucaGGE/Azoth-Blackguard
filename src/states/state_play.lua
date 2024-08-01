@@ -151,7 +151,7 @@ function StatePlay:refresh()
         end
     end
 
-    canvas_ui = ui_manager()
+    canvas_ui = ui_manager_play()
 
     -- reset default canvas to draw on it in draw() func
     love.graphics.setCanvas()

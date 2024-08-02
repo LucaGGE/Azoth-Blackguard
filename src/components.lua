@@ -8,6 +8,8 @@
 -- this is needed during dynamic code generation, since loadstring() is limited to global variables
 code_reference = nil
 
+local player_state
+
 -- this stores all the legal movement-tile_type pairings
 -- (see TILES_VALID_FEATURES in util.lua)
 local pairings = {
@@ -50,41 +52,77 @@ function Player:new()
             return true
         end,
         ["o"] = function(player)
-            print("observe")
-            local target_cell = g.grid[player.cell["grid_row"]][player.cell["grid_column"]]
-            print(target_cell.entity and target_cell.entity["id"] or "Nothing")
-            print(target_cell.entity and target_cell.entity["alive"])
-            return true
+            if not player_state then
+                player_state = "observing"
+                print("Observe where?")
+                return false
+            end
         end,
         ["p"] = function()
             print("pickup")
             return true
         end
     }
+    self.actions = {
+        ["observing"] = function(player, key)
+            local target_cell
+
+            if self.movement_inputs[key] and self.movement_inputs[key] == "stay" then
+                target_cell = g.grid[player.cell["grid_row"]][player.cell["grid_column"]]
+            elseif self.movement_inputs[key] then
+                target_cell = g.grid[player.cell["grid_row"] + self.movement_inputs[key][1]][player.cell["grid_column"] + self.movement_inputs[key][2]]
+            else
+                -- if input is not a valid direction, turn is not valid
+                return false
+            end
+
+            -- this will be printed to the game's UI console
+            print(target_cell.entity and target_cell.entity["id"] or "Nothing")
+            return true
+        end
+    }
 end
 
 function Player:input_management(entity, key)
-    -- checking if input is valid
-    if not self.movement_inputs[key] then
+    -- checking if player is trying to use hotkey
+    if not self.movement_inputs[key] and not player_state then
         -- return function() result if 'key' is valid
         return self.hotkeys[key] and self.hotkeys[key](entity)
     end
 
-    -- check if player is skipping turn (always possible, even without a mov comp)
-    if self.movement_inputs[key] == "stay" then
-        love.audio.stop(SOUNDS["wait"])
-        love.audio.play(SOUNDS["wait"])
-        return true
-    end
+    -- managing player_state mode of input, if active
+    if player_state then
+        -- reset any state with 'escape' key
+        if key == "escape" then player_state = nil print("mode quit") return false end
+        
+        -- if the player_state is valid (should always be), send input to self.actions
+        if self.actions[player_state] then
+            local action_validity = self.actions[player_state](entity, key)
+            if action_validity then player_state = nil end
 
-    -- Movable features can be modified/added/removed during gameplay, so always check
-    if not entity.features["movable"] then
-        print("INFO: The entity does not contain a movement component")
+            return action_validity
+        end
+        print("Check: wrong way")
+
+        -- if no valid input was received for the mode, return false
         return false
-    end
+    else
+        -- check if player is skipping turn (always possible, even without a mov comp)
+        if self.movement_inputs[key] == "stay" then
+            love.audio.stop(SOUNDS["wait"])
+            love.audio.play(SOUNDS["wait"])
+            return true
+        end
 
-    -- if no issues arised, then player can move
-    return entity.features["movable"]:move_entity(entity, self.movement_inputs[key])
+        -- Movable features can be modified/added/removed during gameplay, so always check
+        if not entity.features["movable"] then
+            print("INFO: The entity does not contain a movement component")
+            return false
+        end
+
+        -- if no issues arised, then player can move
+        return entity.features["movable"]:move_entity(entity, self.movement_inputs[key])
+    end
 end
 
 Movable = Object:extend()

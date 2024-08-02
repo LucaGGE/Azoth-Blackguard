@@ -77,10 +77,10 @@ function StatePlay:init(map, generate_players)
 end
 
 function StatePlay:update()
+    local valid_action 
     -- checking for input to resolve turns
     if g.keys_pressed[1] and not g.is_tweening then
         local current_player = g.players_party[current_turn]
-        local valid_action
         
         -- sending input to current player input_manager (if alive)
         if current_player then
@@ -88,10 +88,12 @@ function StatePlay:update()
                 valid_action = current_player["player_component"]:input_management(current_player["entity"], key)
                 -- removing input that was taken care of
                 table.remove(g.keys_pressed, i2)
+                -- skip rest of the code if action isn't valid
+                if not valid_action then return false end
             end
         end
 
-        -- checking if a valid action was taken. If not, turn is not over OR player died
+        -- at this point, a valid action was taken. If not, player died (g.players_party[current_turn] == nil)
         if valid_action or not g.players_party[current_turn] then
             current_turn = current_turn + 1
         end

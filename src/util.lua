@@ -126,9 +126,8 @@ function entities_spawner(blueprint, loc_row, loc_column)
         local new_feature = features_interface(comp_tags)
         instanced_features[comp_tags[1]] = new_feature
 
-        -- checking for components that need to be stored
+        -- checking for components that need to be stored in special groups for easier, faster calling
         if comp_tags[1] == "npc" then
-            -- NPCs need to be stored for easier, faster calling
             is_npc = true
             is_occupant = true
         elseif comp_tags[1] == "player" then
@@ -181,19 +180,19 @@ function entities_spawner(blueprint, loc_row, loc_column)
 
     -- occupying the cell appropriately depending on entity type
     if is_occupant then
-        instanced_entity.cell["cell"].occupant = instanced_entity
+        g.grid[loc_row][loc_column].occupant = instanced_entity
     else
-        instanced_entity.cell["cell"].entity = instanced_entity
+        g.grid[loc_row][loc_column].entity = instanced_entity
     end
     -- adding the entity to the g.render_group IF it is not invisible by default
     if not instanced_entity.features["invisible"] then
         -- adding entity in front or back depending if it is an occupant or a simple entity
         if is_occupant then
-            -- insert to front in drawing order
+            -- insert to front in drawing order (last in group)
             table.insert(g.render_group, instanced_entity)
         else
-            -- insert to back in drawing order
-            table.insert(g.render_group, #g.render_group, instanced_entity)
+            -- insert to back in drawing order (first in group)
+            table.insert(g.render_group, 1, instanced_entity)
         end
     else
         talbe.insert(g.invisible_group, instanced_entity)
@@ -205,7 +204,7 @@ end
     tiles are drawn once and stored for next drawing passes, so they get drawn only once and 
     function as a base canvas where dynamic entities will be drawn each loop.
 ]]
-function map_generator(map_values, regen_players)
+function map_generator(map_values, generate_players)
     local cell_x = 0
     local cell_y = 0
     local player_spawn_loc = {}
@@ -213,7 +212,7 @@ function map_generator(map_values, regen_players)
     local finalize_cell = function(tile_index, blueprint, i, j)
         -- extracting the quad for graphics
         g.grid[i][j].tile = tile_to_quad(tile_index)
-        -- checking if the map has an empty tile there (0 or < 0), and marking it as 'empty'
+        -- check if the map is 'empty' there (no tile, index == 0 or < 0), and mark it as 'empty'
         if tonumber(tile_index) > 0 then
             -- 'g.grid' reads STRINGS and NOT numbers! 
             g.grid[i][j].index = tile_index
@@ -245,9 +244,9 @@ function map_generator(map_values, regen_players)
 
                 finalize_cell(tile_index, blueprint, i, j)
             elseif tile_index == "x" and tile_value_2:match("%d") then
-                -- REMEMBER: values extracted from CSV (such as tile_value_2) are STRINGS!
+                -- if that's a spawn point, save locations for players to be spawned later
                 player_spawn_loc[tonumber(tile_value_2)] = {["row"] = i, ["column"] = j, ["cell"] = g.grid[i][j]}
-                -- if that's a spawn point, no need for more calculations, just go to next loop
+                -- no need for the finalize_cell() function, just set cell to 'empty'
                 g.grid[i][j].index = "empty"
             else
                 error_handler("Map: illegal cell value at row "..i.." column "..j..". Replaced with empty cell.")
@@ -301,7 +300,7 @@ function map_generator(map_values, regen_players)
     end
 
     -- not spawning the players again if we just changed level
-    if regen_players then
+    if generate_players then
         -- spawning players: in the menu we have inserted players entities but not their input_comp!
         local players_party_copy = g.players_party
         g.players_party = {}
@@ -327,7 +326,7 @@ function map_generator(map_values, regen_players)
     end
 end
 
-function map_reader(map, regen_players)
+function map_reader(map, generate_players)
     -- all the valid tiles features for TILES_VALID_FEATURES table (see pairings in components.lua)
     local TILES_VALID_FEATURES = {
     ["liquid"] = true,
@@ -379,7 +378,7 @@ function map_reader(map, regen_players)
         end
     end
     -- now generating the map with the extracted data
-    map_generator(map_values, regen_players)
+    map_generator(map_values, generate_players)
     -- if everything went fine, return true. Else, false.
     return true
 end

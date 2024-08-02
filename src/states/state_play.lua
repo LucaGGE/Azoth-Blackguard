@@ -30,7 +30,7 @@ function StatePlay:manage_input(key)
 end
 
 -- NOTE: StatePlay:init() is here to take level-related arguments and spawn them
-function StatePlay:init(map, regen_players)
+function StatePlay:init(map, generate_players)
     -- stopping previous soundtrack
     if g.game_track then
         love.audio.stop(g.game_track)
@@ -41,7 +41,7 @@ function StatePlay:init(map, regen_players)
     love.audio.play(g.game_track)
 
     -- feeding 'true' the first level, to regen players
-    local current_map = map_reader(map, regen_players)
+    local current_map = map_reader(map, generate_players)
 
     if current_map then
         -- setting BKG color

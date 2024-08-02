@@ -53,6 +53,7 @@ function Player:new()
             print("observe")
             local target_cell = g.grid[player.cell["grid_row"]][player.cell["grid_column"]]
             print(target_cell.entity and target_cell.entity["id"] or "Nothing")
+            print(target_cell.entity and target_cell.entity["alive"])
             return true
         end,
         ["p"] = function()

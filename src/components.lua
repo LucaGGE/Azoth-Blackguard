@@ -43,9 +43,12 @@ function Player:new()
             print("console")
             return false
         end,
-        ["u"] = function()
-            print("use")
-            return true
+        ["u"] = function(player)
+            if not player_state then
+                player_state = "use"
+                print("Use where?")
+                return false
+            end
         end,
         ["i"] = function()
             print("inventory")
@@ -58,9 +61,12 @@ function Player:new()
                 return false
             end
         end,
-        ["p"] = function()
-            print("pickup")
-            return true
+        ["p"] = function(player)
+            if not player_state then
+                player_state = "pickup"
+                print("Pickup where?")
+                return false
+            end
         end
     }
     self.actions = {
@@ -78,6 +84,84 @@ function Player:new()
             -- this will be printed to the game's UI console
             print(target_cell.occupant and target_cell.occupant["id"] or "Nothing")
             print(target_cell.entity and target_cell.entity["id"] or "Nothing")
+            return true
+        end,
+        ["pickup"] = function(player, key)
+            local target_cell
+            local target
+            local return_value
+
+            if self.movement_inputs[key] then
+                target_cell = g.grid[player.cell["grid_row"] + self.movement_inputs[key][1]]
+                [player.cell["grid_column"] + self.movement_inputs[key][2]]
+            else
+                -- if input is not a valid direction, turn is not valid
+                return false
+            end
+
+            -- store the target entity, if present
+            target = target_cell.entity
+
+            -- if no target is found, return a 'nothing found' message
+            if not target_cell.entity then
+                print("There's nothing there")
+                return false
+            end
+
+            -- if the target has a trigger 'triggeroncollision' comp, trigger immediately
+            if target.features["trigger"] and target.features["trigger"].triggeroncollision then
+                print("The object triggers!")
+                target.features["trigger"]:activate(target, player)
+                return_value = true
+            end
+
+            -- if no pickup target is found then warn player
+            if target_cell.entity.features["pickup"] then
+                target.features["pickup"]:activate(target, player)
+                print("You pickup " .. tostring(target.id))
+                return_value = true
+            end
+
+            return return_value
+        end,
+        ["use"] = function(player, key)
+            local target_cell
+            local target
+
+            if self.movement_inputs[key] then
+                target_cell = g.grid[player.cell["grid_row"] + self.movement_inputs[key][1]]
+                [player.cell["grid_column"] + self.movement_inputs[key][2]]
+            else
+                -- if input is not a valid direction, turn is not valid
+                return false
+            end
+
+            -- store the target entity, if present
+            target = target_cell.entity
+
+            -- if no target is found, return a 'nothing found' message
+            if not target_cell.entity then
+                print("There's nothing there")
+                return false
+            end
+
+            -- if the target has a trigger 'triggeroncollision' comp, trigger immediately
+            if target.features["trigger"] and target.features["trigger"].triggeroncollision then
+                print("The object triggers!")
+                target.features["trigger"]:activate(target, player)
+                return true
+            end
+
+            -- if no usable target is found then warn player
+            if not target_cell.entity.features["usable"] then
+                print("You can't use this")
+                return false
+            end
+
+            -- if the target is a trigger 'triggeroncollision' entity, trigger immediately
+            target.features["trigger"]:activate(target, player)
+            target.features["usable"]:activate(target, player)
+            print("You use " .. tostring(target))
             return true
         end
     }
@@ -98,11 +182,11 @@ function Player:input_management(entity, key)
         -- if the player_state is valid (should always be), send input to self.actions
         if self.actions[player_state] then
             local action_validity = self.actions[player_state](entity, key)
+            -- if action was valid, then quit from player_state
             if action_validity then player_state = nil end
 
             return action_validity
         end
-        print("Check: wrong way")
 
         -- if no valid input was received for the mode, return false
         return false
@@ -258,7 +342,8 @@ function Movable:move_entity(entity, direction)
     love.audio.play(SOUNDS[TILES_FEATURES_PAIRS[target_cell.index]])
 
     -- lastly, check if there's an entity in the new cell
-    if not target_cell.entity or not target_cell.entity.features["trigger"] then
+    if not target_cell.entity or not target_cell.entity.features["trigger"]
+    or not target_cell.entity.features["trigger"].triggeroncollision then
         return true
     end
 
@@ -382,7 +467,12 @@ end
 -- this comp warns the game when an entity behaves in a trigger volume fashion
 Trigger = Object:extend()
 function Trigger:new(args)
-    self.destroyontrigger = args[1]
+    local string_to_bool = {
+        ["false"] = false,
+        ["true"] = true
+    }
+    self.destroyontrigger = string_to_bool[args[1]]
+    self.triggeroncollision = string_to_bool[args[2]]
 end
 
 function Trigger:activate(owner, entity)
@@ -403,6 +493,43 @@ function Trigger:activate(owner, entity)
         -- if trigger was fired or not (ie critters cannot pick up gold), turn still counts
         return true
     end
+end
+
+-- Pickup is a 'flag' class, where its only utility is to let the game know an entity can be picked up
+Pickup = Object:extend()
+function Pickup:new()
+end
+
+function Pickup:activate(owner, entity)
+    print("Adding item to entity's inventory/hands")
+end
+
+-- Usable is a for all objects that can be used in some way and then trigger an event
+Usable = Object:extend()
+function Usable:new(args)
+    local string_to_bool = {
+        ["false"] = false,
+        ["true"] = true
+    }
+    self.destroyonuse = string_to_bool[args[1]]
+end
+
+function Usable:activate(owner, entity)
+    print("Object has been used")
+
+    -- A DECISION TABLE IS NEEDED HERE, WHERE DEPENDING ON ARGS[] INPUT AN OBJECT, WHEN USED, WILL TRIGGER OR DO SOMETHING ELSE (REMEMBER TRIGGER/SCRIPT SEPARATION) -------
+    if target.features["trigger"] then
+        print("The object triggers!")
+        target.features["trigger"]:activate(target, player)
+        return true
+    end
+
+    -- if destroyonuse, destroy used object (useful for consumables)
+    if self.destroyonuse then
+        owner.alive = false
+    end
+
+    return true
 end
 
 -- StatChange class is useful for things like gold or traps, since they change player's stats

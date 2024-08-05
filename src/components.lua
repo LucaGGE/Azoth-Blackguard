@@ -36,7 +36,7 @@ function Player:new()
         ["kp2"] = {1,0}, ["x"] = {1,0},
         ["kp1"] = {1,-1}, ["z"] = {1,-1},
         ["kp4"] = {0,-1}, ["a"] = {0,-1},
-        ["kp5"] = "stay", ["s"] = "stay"
+        ["kp5"] = {0, 0}, ["s"] = {0, 0}
         }
     self.hotkeys = {
         ["space"] = function()
@@ -67,16 +67,16 @@ function Player:new()
         ["observing"] = function(player, key)
             local target_cell
 
-            if self.movement_inputs[key] and self.movement_inputs[key] == "stay" then
-                target_cell = g.grid[player.cell["grid_row"]][player.cell["grid_column"]]
-            elseif self.movement_inputs[key] then
-                target_cell = g.grid[player.cell["grid_row"] + self.movement_inputs[key][1]][player.cell["grid_column"] + self.movement_inputs[key][2]]
+            if self.movement_inputs[key] then
+                target_cell = g.grid[player.cell["grid_row"] + self.movement_inputs[key][1]]
+                [player.cell["grid_column"] + self.movement_inputs[key][2]]
             else
                 -- if input is not a valid direction, turn is not valid
                 return false
             end
 
             -- this will be printed to the game's UI console
+            print(target_cell.occupant and target_cell.occupant["id"] or "Nothing")
             print(target_cell.entity and target_cell.entity["id"] or "Nothing")
             return true
         end
@@ -108,7 +108,7 @@ function Player:input_management(entity, key)
         return false
     else
         -- check if player is skipping turn (always possible, even without a mov comp)
-        if self.movement_inputs[key] == "stay" then
+        if self.movement_inputs[key][1] == 0 and self.movement_inputs[key][2] == 0 then
             love.audio.stop(SOUNDS["wait"])
             love.audio.play(SOUNDS["wait"])
             return true

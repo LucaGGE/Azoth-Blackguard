@@ -65,7 +65,7 @@ FONTS = {
     the classes and not executed until main.lua has finished loading everything.
 ]]
 
-FEATURES_TABLE = {
+COMPONENTS_TABLE = {
     ["player"] = Player,
     ["npc"] = Npc,
     ["stats"] = Stats,

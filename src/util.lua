@@ -32,10 +32,10 @@ end
     entity is composed of. The function below needs to be updated with each added feature!
 ]]
 function features_interface(tags)
-    if not FEATURES_TABLE[tags[1]] then return nil end
     -- tags[1] = feature id, others (if present) are their arguments
-    -- adding () to FEATURES_TABLE values, to turn them into functions
-    return FEATURES_TABLE[tags[1]](feature_tags(tags))
+    if not COMPONENTS_TABLE[tags[1]] then return nil end
+    -- adding () to COMPONENTS_TABLE value, to turn it into class
+    return COMPONENTS_TABLE[tags[1]](feature_tags(tags))
 end
 
 function strings_separator(line, separator, pos)
@@ -429,32 +429,47 @@ function love.resize(w, h)
 end
 
 function blueprints_generator(id, tile, features_list_input)
+    if BLUEPRINTS_LIST[id] then
+        error_handler('Blueprint "'..id..'" is not unique, duplicates ignored.')
+        return false
+    end
     -- features not implemented in features_interface will be ignored and flagged with a warning
-    local interface_tags = {}
+    local all_components = {}
+    -- this table stores which components have been saved to avoid duplicates
+    local stored_components = {}
     -- this will be the list of actual features to input as argument to new entity
-    local features_list = {}
+    local blueprint_components = {}
     for i, comp in ipairs(features_list_input) do
         -- pos is set to 1 by default and keeps track of the separator position inside the string
         local pos = 1
-        -- note that features and their arguments are separated with commas
+        -- note that features names and their arguments are separated with commas
         -- this variable contains every input of the component
-        local feature_with_optional_inputs = strings_separator(comp, ",", pos)
-        -- interface_tags contains tables with a comp tag and its optional arguments tags
-        table.insert(interface_tags, feature_with_optional_inputs)
+        local component_tags = strings_separator(comp, ",", pos)
+        -- all_components contains tables with a comp tag and its optional arguments tags
+        table.insert(all_components, component_tags)
     end             
-    for i, comp_tags in ipairs(interface_tags) do
+    for i, comp_tags in ipairs(all_components) do
         -- translating features tags into actual components thanks to features_interface
-        local new_feature = features_interface(comp_tags)
-        if new_feature ~= nil then
+        local new_component = features_interface(comp_tags)
+        -- check for duplicate components (comp_tags[1] = component's name)
+        if stored_components[comp_tags[1]] then
+            error_handler('Component "'..comp_tags[1]..'" for blueprint "'..id..'" is not unique, duplicates ignored.')
+            goto continue
+        end
+
+        -- check for component validity and in case insert it
+        if new_component then
             -- at this stage, we don't store any component, only its data for later use
-            table.insert(features_list, comp_tags)
+            table.insert(blueprint_components, comp_tags)
+            stored_components[comp_tags[1]] = true
         else
             -- warning with console if an invalid feature was found inside CSV
-            print('Invalid feature: "'..comp_tags[1]..'" was ignored.')
             error_handler('Invalid feature: "'..comp_tags[1]..'" was ignored.')
         end
+        ::continue::
     end
-    local new_blueprint = Entity(id, tile, features_list)
+    -- create final blueprint from entity and its components and save it in BLUEPRINTS_LIST
+    local new_blueprint = Entity(id, tile, blueprint_components)
     BLUEPRINTS_LIST[id] = new_blueprint
 end
 
@@ -486,6 +501,7 @@ function blueprints_manager()
         -- passing the new entity with the data extracted from the CSV file (id, tile, features)
         blueprints_generator(entities_csv[i][1], entities_csv[i][2], entity_features)
     end
+
     return true
 end
 

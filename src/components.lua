@@ -1,8 +1,7 @@
 --[[
-    Implemented features. NOTE: some will be checked for when a blueprint is created (i.e. drawable, input...),
+    Implemented components. NOTE: some will be checked for when a blueprint is created (i.e. npc, player),
     as they will be added to special groups, needed to avoid searching for specific components each time
     an event is fired (i.e. when Player gives input, or the Player position).
-    This is no different than looking for them each update, but much less computationally expensive.
 ]]
 
 -- this is needed during dynamic code generation, since loadstring() is limited to global variables
@@ -20,7 +19,7 @@ local pairings = {
     ["fly"] = "untraversable"
 }
 
--- note this is NOT found in FEATURES_TABLE, as it is restricted to the game menu
+-- note this is NOT found in BLUEPRINTS_TABLE, as it is restricted to the game menu
 Player = Object:extend()
 function Player:new()
     -- players are automatically part of this group
@@ -108,14 +107,14 @@ function Player:new()
             end
 
             -- if the target has a trigger 'triggeroncollision' comp, trigger immediately
-            if target.features["trigger"] and target.features["trigger"].triggeroncollision then
+            if target.components["trigger"] and target.components["trigger"].triggeroncollision then
                 print("The object triggers!")
-                target.features["trigger"]:activate(target, player)
+                target.components["trigger"]:activate(target, player)
             end
 
             -- if no pickup target is found then warn player
-            if target_cell.entity.features["pickup"] then
-                target.features["pickup"]:activate(target, player)
+            if target_cell.entity.components["pickup"] then
+                target.components["pickup"]:activate(target, player)
                 print("You pickup " .. tostring(target.id))
             else
                 print("You can't pick this up")
@@ -145,15 +144,15 @@ function Player:new()
             end
 
             -- if the target has a trigger 'triggeroncollision' comp, trigger immediately
-            if target.features["trigger"] and target.features["trigger"].triggeroncollision then
+            if target.components["trigger"] and target.components["trigger"].triggeroncollision then
                 print("The object triggers!")
-                target.features["trigger"]:activate(target, player)
+                target.components["trigger"]:activate(target, player)
             end
 
             -- if no usable target is found then warn player
-            if target_cell.entity.features["usable"] then
+            if target_cell.entity.components["usable"] then
                 print("You use " .. tostring(target))
-                target.features["usable"]:activate(target, player)
+                target.components["usable"]:activate(target, player)
             else
                 print("You can't use this")
             end
@@ -194,14 +193,14 @@ function Player:input_management(entity, key)
             return true
         end
 
-        -- Movable features can be modified/added/removed during gameplay, so always check
-        if not entity.features["movable"] then
+        -- Movable component can be modified/added/removed during gameplay, so always check
+        if not entity.components["movable"] then
             print("INFO: The entity does not contain a movement component")
             return false
         end
 
         -- if no issues arised, then player can move
-        return entity.features["movable"]:move_entity(entity, self.movement_inputs[key])
+        return entity.components["movable"]:move_entity(entity, self.movement_inputs[key])
     end
 end
 
@@ -216,9 +215,9 @@ end
 
 --[[
     NOTE: if something can move, it can attack. Moving against an entity = attacking it.
-    This also means that something can have no mov features but if it is movable, it can
-    still attack - think of a living tree that can bash players with its branches but
-    cannot move around (this is the 'wiggle' mov type)!
+    This also means that something can have a movable component but no movement_type,
+    and it can still attack - think of a living tree that can bash players with its branches but
+    cannot move around!
 ]]
 function Movable:move_entity(entity, direction)
     local target_cell
@@ -282,12 +281,12 @@ function Movable:move_entity(entity, direction)
         end
 
         -- checking if entity has stats and can take damage
-        if not target_cell.occupant.features["stats"] then
+        if not target_cell.occupant.components["stats"] then
             print("NPC has no Stats component")
             return false
         end
 
-        local target_stats = target_cell.occupant.features["stats"].stats
+        local target_stats = target_cell.occupant.components["stats"].stats
         if not target_stats["hp"] then
             print("This NPC has no HP and cannot die")
             return false
@@ -298,7 +297,7 @@ function Movable:move_entity(entity, direction)
         local successful_attack = dice_roll({1, 12, 1}, score_to_succeed)
         
         -- entities without dice sets roll 1d1
-        local damage = dice_roll(entity.features["dies"].dies["atk"] or {1, 1})
+        local damage = dice_roll(entity.components["dies"].dies["atk"] or {1, 1})
         target_stats["hp"] = target_stats["hp"] - (successful_attack and damage or 0)
 
         if successful_attack then 
@@ -313,10 +312,10 @@ function Movable:move_entity(entity, direction)
             -- entity will be removed from render_group and cell automatically in StatePlay:refresh()
             target_cell.occupant.alive = false
             -- if a player just died, save all deceased's relevant info in cemetery for Game Over screen
-            if target_cell.occupant.features["player"] then
+            if target_cell.occupant.components["player"] then
                 local deceased = {["player"] = target_cell.occupant.name,
                 ["killer"] = entity.name,
-                ["loot"] = target_cell.occupant.features["stats"].stats["gold"],
+                ["loot"] = target_cell.occupant.components["stats"].stats["gold"],
                 ["place"] = "Black Swamps"
                 }
                 table.insert(g.cemetery, deceased)
@@ -338,13 +337,13 @@ function Movable:move_entity(entity, direction)
     love.audio.play(SOUNDS[TILES_FEATURES_PAIRS[target_cell.index]])
 
     -- lastly, check if there's an entity in the new cell
-    if not target_cell.entity or not target_cell.entity.features["trigger"]
-    or not target_cell.entity.features["trigger"].triggeroncollision then
+    if not target_cell.entity or not target_cell.entity.components["trigger"]
+    or not target_cell.entity.components["trigger"].triggeroncollision then
         return true
     end
 
     -- check if that's a trigger. It may work or not, but entity still moved, so return true
-    target_cell.entity.features["trigger"]:activate(target_cell.entity, entity)
+    target_cell.entity.components["trigger"]:activate(target_cell.entity, entity)
     return true
 end
 
@@ -390,7 +389,7 @@ end
 
 function Npc:activate(entity)
     -- this code is in draft state... I beg thee pardon
-    if entity.features["movable"] then
+    if entity.components["movable"] then
         if self.nature == "aggressive" then
             local search_row = entity.cell["grid_row"] - 2
             local search_col
@@ -404,7 +403,7 @@ function Npc:activate(entity)
                     else
                         local other_entity = g.grid[search_row][search_col].occupant
                         if other_entity then
-                            other_entity = other_entity.features["npc"] or other_entity.features["player"]
+                            other_entity = other_entity.components["npc"] or other_entity.components["player"]
                         end
                         if other_entity then
                             if other_entity.group ~= self.group then
@@ -432,7 +431,7 @@ function Npc:activate(entity)
 
                                 local direction = {out_row, out_col}
 
-                                entity.features["movable"]:move_entity(entity, direction)
+                                entity.components["movable"]:move_entity(entity, direction)
                                 return true
                             end
                         end
@@ -473,15 +472,15 @@ end
 
 function Trigger:activate(owner, entity)
     -- stepping into an exit means turn isn't valid and stuff has to be reset!
-    if owner.features["exit"] then
-        owner.features["exit"]:activate(owner, entity)
+    if owner.components["exit"] then
+        owner.components["exit"]:activate(owner, entity)
         return false
     end
 
-    if owner.features["statchange"] then
-        local trigger_fired = owner.features["statchange"]:activate(entity)
+    if owner.components["statchange"] then
+        local trigger_fired = owner.components["statchange"]:activate(entity)
         -- if owner is to 'destroyontrigger', destroy it
-        if owner.features["trigger"].destroyontrigger and trigger_fired then
+        if owner.components["trigger"].destroyontrigger and trigger_fired then
             -- will be removed from render_group and cell automatically in StatePlay:refresh()
             owner.alive = false
         end
@@ -514,9 +513,9 @@ function Usable:activate(owner, entity)
     print("Object has been used")
 
     -- A DECISION TABLE IS NEEDED HERE, WHERE DEPENDING ON ARGS[] INPUT AN OBJECT, WHEN USED, WILL TRIGGER OR DO SOMETHING ELSE (REMEMBER TRIGGER/SCRIPT SEPARATION) -------
-    if target.features["trigger"] then
+    if target.components["trigger"] then
         print("The object triggers!")
-        target.features["trigger"]:activate(target, player)
+        target.components["trigger"]:activate(target, player)
         return true
     end
 
@@ -538,8 +537,8 @@ end
 
 function StatChange:activate(entity)
     -- entities without the stat of interest won't be affected
-    if entity.features["stats"].stats[self.stat] then
-        code_reference = entity.features["stats"].stats
+    if entity.components["stats"].stats[self.stat] then
+        code_reference = entity.components["stats"].stats
 
         -- creating final string for code conversion
         local codeblock = 'code_reference["' .. self.stat .. '"]'
@@ -570,7 +569,7 @@ end
 
 -- Simple class to jump between levels or from game to menu (game end)
 function Exit:activate(owner, entity)
-    if entity.features["player"] then
+    if entity.components["player"] then
         if owner.name ~= "menu" then
             g.game_state:exit()
             print("Exit id: "..owner.id)

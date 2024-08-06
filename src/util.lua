@@ -11,31 +11,31 @@ function error_handler(error_input_1, error_input_2)
     end
 end
 
--- this simple function returns all the optional arguments of features
-function feature_tags(tags)
+-- this simple function returns all the optional arguments of components
+function component_tags(tags)
     if not tags then return nil end
-    local feature_tags = {}
+    local component_tags = {}
 
     for i,v in ipairs(tags) do
-        -- avoiding first tag, as it is the id of the feature!
+        -- avoiding first tag, as it is the id of the component!
         if i ~= 1 then
-            table.insert(feature_tags, v)
+            table.insert(component_tags, v)
         end
     end
 
-    return feature_tags
+    return component_tags
 end
 
 --[[
-    Features interface. Used to link features and their optional args to the actual components.
+    Components interface. Used to link components and their optional args to the actual components.
     These are the the strings you feed inside the 'entities.csv' to explain to the engine what an
-    entity is composed of. The function below needs to be updated with each added feature!
+    entity is composed of. The function below needs to be updated with each added component!
 ]]
-function features_interface(tags)
-    -- tags[1] = feature id, others (if present) are their arguments
+function components_interface(tags)
+    -- tags[1] = component id, others (if present) are their arguments
     if not COMPONENTS_TABLE[tags[1]] then return nil end
     -- adding () to COMPONENTS_TABLE value, to turn it into class
-    return COMPONENTS_TABLE[tags[1]](feature_tags(tags))
+    return COMPONENTS_TABLE[tags[1]](component_tags(tags))
 end
 
 function strings_separator(line, separator, pos)
@@ -118,32 +118,32 @@ function entities_spawner(blueprint, loc_row, loc_column)
     }
 
     -- now create component instances to feed to new entity
-    local instanced_features = {}
+    local instanced_components = {}
     local instanced_entity = nil
 
-    for i, comp_tags in ipairs(blueprint["bp"].features) do
-        -- translating features tags into actual components thanks to features_interface
-        local new_feature = features_interface(comp_tags)
-        instanced_features[comp_tags[1]] = new_feature
+    for i, comp_tags in ipairs(blueprint["bp"].components) do
+        -- translating components tags into actual components thanks to components_interface
+        local new_component = components_interface(comp_tags)
+        instanced_components[comp_tags[1]] = new_component
 
         -- checking for components that need to be stored in special groups for easier, faster calling
         if comp_tags[1] == "npc" then
             is_npc = true
             is_occupant = true
         elseif comp_tags[1] == "player" then
-            new_player["player_component"] = new_feature
+            new_player["player_component"] = new_component
             is_occupant = true
         elseif comp_tags[1] == "bulky" then
             is_occupant = true
         end
     end
 
-    instanced_entity = Entity(blueprint["bp"].id, blueprint["bp"].tile, instanced_features, blueprint["name"])
+    instanced_entity = Entity(blueprint["bp"].id, blueprint["bp"].tile, instanced_components, blueprint["name"])
 
     -- once special components are stored, finish entityt identity 
     if is_npc then
         -- save NPC controller in entity.controller
-        instanced_entity.controller = instanced_entity.features["npc"]
+        instanced_entity.controller = instanced_entity.components["npc"]
         table.insert(g.npcs_group, instanced_entity)
     -- if one uses a 'Npc' comp with a player, it just becomes a Npc!
     elseif instanced_entity.id == "player" and not is_npc then
@@ -158,15 +158,15 @@ function entities_spawner(blueprint, loc_row, loc_column)
         end
 
         -- save Player controller in entity.controller
-        instanced_entity.controller = instanced_entity.features["player"]
+        instanced_entity.controller = instanced_entity.components["player"]
         -- immediately check if player has Stats() component with "hp". If not, add it/them
-        if not instanced_entity.features["stats"] then
-            local stat_feature = features_interface({"stats", "hp:1"})
-            instanced_entity.features["stats"] = stat_feature
+        if not instanced_entity.components["stats"] then
+            local stat_component = components_interface({"stats", "hp:1"})
+            instanced_entity.components["stats"] = stat_component
         end
 
-        if not instanced_entity.features["stats"].stats["hp"] then
-            instanced_entity.features["stats"].stats["hp"] = 1
+        if not instanced_entity.components["stats"].stats["hp"] then
+            instanced_entity.components["stats"].stats["hp"] = 1
         end
 
         new_player["entity"] = instanced_entity
@@ -185,7 +185,7 @@ function entities_spawner(blueprint, loc_row, loc_column)
         g.grid[loc_row][loc_column].entity = instanced_entity
     end
     -- adding the entity to the g.render_group IF it is not invisible by default
-    if not instanced_entity.features["invisible"] then
+    if not instanced_entity.components["invisible"] then
         -- adding entity in front or back depending if it is an occupant or a simple entity
         if is_occupant then
             -- insert to front in drawing order (last in group)
@@ -428,29 +428,29 @@ function love.resize(w, h)
     g.game_state:refresh()
 end
 
-function blueprints_generator(id, tile, features_list_input)
+function blueprints_generator(id, tile, components_list_input)
     if BLUEPRINTS_LIST[id] then
         error_handler('Blueprint "'..id..'" is not unique, duplicates ignored.')
         return false
     end
-    -- features not implemented in features_interface will be ignored and flagged with a warning
+    -- components not implemented in components_interface will be ignored and flagged with a warning
     local all_components = {}
     -- this table stores which components have been saved to avoid duplicates
     local stored_components = {}
-    -- this will be the list of actual features to input as argument to new entity
+    -- this will be the list of actual components to input as argument to new entity
     local blueprint_components = {}
-    for i, comp in ipairs(features_list_input) do
+    for i, comp in ipairs(components_list_input) do
         -- pos is set to 1 by default and keeps track of the separator position inside the string
         local pos = 1
-        -- note that features names and their arguments are separated with commas
+        -- note that components names and their arguments are separated with commas
         -- this variable contains every input of the component
         local component_tags = strings_separator(comp, ",", pos)
         -- all_components contains tables with a comp tag and its optional arguments tags
         table.insert(all_components, component_tags)
     end             
     for i, comp_tags in ipairs(all_components) do
-        -- translating features tags into actual components thanks to features_interface
-        local new_component = features_interface(comp_tags)
+        -- translating components tags into actual components thanks to components_interface
+        local new_component = components_interface(comp_tags)
         -- check for duplicate components (comp_tags[1] = component's name)
         if stored_components[comp_tags[1]] then
             error_handler('Component "'..comp_tags[1]..'" for blueprint "'..id..'" is not unique, duplicates ignored.')
@@ -463,8 +463,8 @@ function blueprints_generator(id, tile, features_list_input)
             table.insert(blueprint_components, comp_tags)
             stored_components[comp_tags[1]] = true
         else
-            -- warning with console if an invalid feature was found inside CSV
-            error_handler('Invalid feature: "'..comp_tags[1]..'" was ignored.')
+            -- warning with console if an invalid component was found inside CSV
+            error_handler('Invalid component: "'..comp_tags[1]..'" was ignored.')
         end
         ::continue::
     end
@@ -484,22 +484,22 @@ function blueprints_manager()
     end
 
     for i, line in ipairs(entities_csv) do
-        -- keeping track of all the entity features and counting
+        -- keeping track of all the entity components and counting
         local n_of_elements = 0
-        local entity_features = {}
+        local entity_components = {}
         -- counting number of components contained in each line
         for i2, component in ipairs(line) do
             n_of_elements = n_of_elements + 1
         end
-        -- using j to index elements assigned to entity_features, starting from 1
+        -- using j to index elements assigned to entity_components, starting from 1
         local j = 1
-        -- storing features starting from the third, since the first two elements are id and tile
+        -- storing components starting from the third, since the first two elements are id and tile
         for k = 3, n_of_elements do
-            entity_features[j] = entities_csv[i][k]
+            entity_components[j] = entities_csv[i][k]
             j = j + 1
         end
-        -- passing the new entity with the data extracted from the CSV file (id, tile, features)
-        blueprints_generator(entities_csv[i][1], entities_csv[i][2], entity_features)
+        -- passing the new entity with the data extracted from the CSV file (id, tile, components)
+        blueprints_generator(entities_csv[i][1], entities_csv[i][2], entity_components)
     end
 
     return true
@@ -549,7 +549,7 @@ function turns_manager(current_player, npc_turn)
         for i, npc in ipairs(g.npcs_group) do
             -- check if the NPC is alive or needs to be removed from game
             if npc.alive then
-                g.npcs_group[i].features["npc"]:activate(g.npcs_group[i])
+                g.npcs_group[i].components["npc"]:activate(g.npcs_group[i])
             end
         end
 
@@ -576,11 +576,11 @@ function ui_manager_play()
         FONT_SIZE_SUBTITLE, g.window_height - (FONT_SIZE_SUBTITLE * 3.5)
     )
     love.graphics.print(
-        "Life "..g.camera["entity"].features["stats"].stats["hp"],
+        "Life "..g.camera["entity"].components["stats"].stats["hp"],
         FONT_SIZE_SUBTITLE, g.window_height - (FONT_SIZE_SUBTITLE * 2.5)
     )
     love.graphics.print(
-        "Gold "..g.camera["entity"].features["stats"].stats["gold"], -- WARNING: gold is not forced and will therefore crash game if not explicitly input in entities.csv. UI system should be modular and adapt to dynamic stats!  
+        "Gold "..g.camera["entity"].components["stats"].stats["gold"], -- WARNING: gold is not forced and will therefore crash game if not explicitly input in entities.csv. UI system should be modular and adapt to dynamic stats!  
         FONT_SIZE_SUBTITLE, g.window_height - (FONT_SIZE_SUBTITLE * 1.5)
     )
     
@@ -681,7 +681,7 @@ end
 
 function entity_kill(entity, index, group)
     table.remove(group, index)
-    if entity.features["bulky"] or entity.features["player"] or entity.features["npc"] then
+    if entity.components["bulky"] or entity.components["player"] or entity.components["npc"] then
         print("Bulky entity destroyed")
         entity.cell["cell"].occupant = nil
     else

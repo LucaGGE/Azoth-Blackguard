@@ -86,8 +86,8 @@ local INPUT_DTABLE2 = {
 
             -- checking if modders did not create a player blueprint to avoid a crash
             if player_blueprint == nil then
-                error_handler("entities.csv does NOT contain a blueprint to spawn players!",
-                "entities.csv always needs a blueprint with id = player (all lowercase).")
+                error_handler("blueprints.csv does NOT contain a blueprint to spawn players!",
+                "blueprints.csv always needs a blueprint with id = player (all lowercase).")
                 g.game_state:exit()
                 g.game_state = StateFatalError()
                 g.game_state:init()

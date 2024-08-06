@@ -59,7 +59,7 @@ FONTS = {
 }
 
 --[[
-    All the valid features for FEATURES_INTERFACE function.
+    All the valid components for COMPONENTS_INTERFACE function.
     NOTE: this table requires components.lua to be required first.
     Still, components can use constants.lua variables since they're called inside
     the classes and not executed until main.lua has finished loading everything.

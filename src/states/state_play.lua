@@ -150,22 +150,31 @@ function StatePlay:refresh()
         end
     end
     
-    -- removing dead entities (no special group, contains also NPCs and players)
+    -- removing visible dead entities (no special group, contains also NPCs and players)
     for i, entity in ipairs(g.render_group) do
+        -- entities can have their properties changed, that's why this check is needed each refresh() cycle
         if not tile_to_quad(entity.tile) then
-            -- entities can have their properties changed, that's why this check is needed each refresh() cycle
-            error_handler(entity.id.." has invalid tile index and cannot be drawn. Removed from render_group")
+            error_handler(entity.id.." has invalid tile index and cannot be drawn, removed.")
             table.remove(g.render_group, i)
+            entity.alive = false
         end
 
-        if entity.alive == false then
-            table.remove(g.render_group, i)
-            if entity.features["block"] or entity.features["player"] or entity.features["npc"] then
-                print("block destroyed")
-                entity.cell["cell"].occupant = nil
-            else
-                entity.cell["cell"].entity = nil
-            end
+        if not entity.alive then
+            entity_kill(entity, i, g.render_group)
+        end
+    end
+
+    -- removing invisible dead entities (no special group, contains also NPCs and players)
+    for i, entity in ipairs(g.invisible_group) do
+        -- entities can have their properties changed, that's why this check is needed each refresh() cycle
+        if not tile_to_quad(entity.tile) then
+            error_handler(entity.id.." has invalid tile index and cannot be drawn, removed.")
+            table.remove(g.invisible_group, i)
+            entity.alive = false
+        end
+
+        if not entity.alive then
+            entity_kill(entity, i, g.invisible_group)
         end
     end
 

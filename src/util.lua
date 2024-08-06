@@ -133,7 +133,7 @@ function entities_spawner(blueprint, loc_row, loc_column)
         elseif comp_tags[1] == "player" then
             new_player["player_component"] = new_feature
             is_occupant = true
-        elseif comp_tags[1] == "block" then
+        elseif comp_tags[1] == "bulky" then
             is_occupant = true
         end
     end
@@ -195,7 +195,7 @@ function entities_spawner(blueprint, loc_row, loc_column)
             table.insert(g.render_group, 1, instanced_entity)
         end
     else
-        talbe.insert(g.invisible_group, instanced_entity)
+        table.insert(g.invisible_group, instanced_entity)
     end
 end
 
@@ -661,4 +661,14 @@ function text_input(valid_input, key, input_string, max_length)
     end
 
     return input_string
+end
+
+function entity_kill(entity, index, group)
+    table.remove(group, index)
+    if entity.features["bulky"] or entity.features["player"] or entity.features["npc"] then
+        print("Bulky entity destroyed")
+        entity.cell["cell"].occupant = nil
+    else
+        entity.cell["cell"].entity = nil
+    end
 end

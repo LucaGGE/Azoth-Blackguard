@@ -89,7 +89,6 @@ function Player:new()
         ["pickup"] = function(player, key)
             local target_cell
             local target
-            local return_value
 
             if self.movement_inputs[key] then
                 target_cell = g.grid[player.cell["grid_row"] + self.movement_inputs[key][1]]
@@ -104,25 +103,25 @@ function Player:new()
 
             -- if no target is found, return a 'nothing found' message
             if not target_cell.entity then
-                print("There's nothing there")
-                return false
+                print("There's nothing to pick up there")
+                return true
             end
 
             -- if the target has a trigger 'triggeroncollision' comp, trigger immediately
             if target.features["trigger"] and target.features["trigger"].triggeroncollision then
                 print("The object triggers!")
                 target.features["trigger"]:activate(target, player)
-                return_value = true
             end
 
             -- if no pickup target is found then warn player
             if target_cell.entity.features["pickup"] then
                 target.features["pickup"]:activate(target, player)
                 print("You pickup " .. tostring(target.id))
-                return_value = true
+            else
+                print("You can't pick this up")
             end
 
-            return return_value
+            return true
         end,
         ["use"] = function(player, key)
             local target_cell
@@ -141,27 +140,24 @@ function Player:new()
 
             -- if no target is found, return a 'nothing found' message
             if not target_cell.entity then
-                print("There's nothing there")
-                return false
+                print("Nothing to use there")
+                return true
             end
 
             -- if the target has a trigger 'triggeroncollision' comp, trigger immediately
             if target.features["trigger"] and target.features["trigger"].triggeroncollision then
                 print("The object triggers!")
                 target.features["trigger"]:activate(target, player)
-                return true
             end
 
             -- if no usable target is found then warn player
-            if not target_cell.entity.features["usable"] then
+            if target_cell.entity.features["usable"] then
+                print("You use " .. tostring(target))
+                target.features["usable"]:activate(target, player)
+            else
                 print("You can't use this")
-                return false
             end
 
-            -- if the target is a trigger 'triggeroncollision' entity, trigger immediately
-            target.features["trigger"]:activate(target, player)
-            target.features["usable"]:activate(target, player)
-            print("You use " .. tostring(target))
             return true
         end
     }
@@ -460,8 +456,8 @@ function Inventory:new()
 end
 
 -- for all the entities that are not Players but occupy it entirely (trees, boulders...)
-Block = Object:extend()
-function Block:new()
+Bulky = Object:extend()
+function Bulky:new()
 end
 
 -- this comp warns the game when an entity behaves in a trigger volume fashion

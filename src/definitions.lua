@@ -6,7 +6,7 @@ cell = {
     tile = nil, -- represented by a quad on the tileset. 
     index = nil, -- tile index. Most entities are unable to traverse solid tiles, but some can climb trees.
     trigger = nil, -- a special slot reserved to triggers (ie next-level triggers)
-    occupant = nil, -- a player/npc or an entity with a 'Block' feature, occupying the cell
+    occupant = nil, -- a player/npc or an entity with a 'Bulky' feature, occupying the cell
     entity = nil -- any entity that is not a 'occupant'. Limited to one per cell
 }
 

@@ -7,8 +7,6 @@
 -- this is needed during dynamic code generation, since loadstring() is limited to global variables
 code_reference = nil
 
-local player_state
-
 -- this stores all the legal movement-tile_type pairings
 -- (see TILES_VALID_FEATURES in util.lua)
 local pairings = {
@@ -24,6 +22,7 @@ Player = Object:extend()
 function Player:new()
     -- players are automatically part of this group
     self.group = "players"
+    self.input_mode = nil
 
     -- this variable contains all the movement inputs key-values for keypad and keyboard, with key = (row, column)
     self.movement_inputs = {
@@ -39,12 +38,15 @@ function Player:new()
         }
     self.hotkeys = {
         ["space"] = function()
-            print("console")
-            return false
+            if not self.input_mode then
+                self.input_mode = "console"
+                print("Input to console:")
+                return false
+            end
         end,
         ["u"] = function(player)
-            if not player_state then
-                player_state = "use"
+            if not self.input_mode then
+                self.input_mode = "use"
                 print("Use where?")
                 return false
             end
@@ -54,15 +56,15 @@ function Player:new()
             return true
         end,
         ["o"] = function(player)
-            if not player_state then
-                player_state = "observing"
+            if not self.input_mode then
+                self.input_mode = "observing"
                 print("Observe where?")
                 return false
             end
         end,
         ["p"] = function(player)
-            if not player_state then
-                player_state = "pickup"
+            if not self.input_mode then
+                self.input_mode = "pickup"
                 print("Pickup where?")
                 return false
             end
@@ -83,7 +85,9 @@ function Player:new()
             -- this will be printed to the game's UI console
             print(target_cell.occupant and target_cell.occupant["id"] or "Nothing")
             print(target_cell.entity and target_cell.entity["id"] or "Nothing")
-            return true
+            -- being a free action it always returns nil, so it needs to set self.input_mode = nil
+            self.input_mode = nil
+            return false
         end,
         ["pickup"] = function(player, key)
             local target_cell
@@ -158,27 +162,39 @@ function Player:new()
             end
 
             return true
+        end,
+        ["console"] = function(player, key)
+            g.console_string = "Thy action: " .. tostring(key)
+            print(g.console_string)
+            g.game_state:refresh()
+            return false
         end
     }
 end
 
 function Player:input_management(entity, key)
     -- checking if player is trying to use hotkey
-    if not self.movement_inputs[key] and not player_state then
+    if not self.movement_inputs[key] and not self.input_mode then
         -- return function() result if 'key' is valid
         return self.hotkeys[key] and self.hotkeys[key](entity)
     end
 
-    -- managing player_state mode of input, if active
-    if player_state then
+    -- managing self.input_mode mode of input, if active
+    if self.input_mode then
         -- reset any state with 'escape' key
-        if key == "escape" then player_state = nil print("mode quit") return false end
+        if key == "escape" then
+            self.input_mode = nil print("mode quit")
+            -- also erase console_string and refresh screen
+            g.console_string = nil
+            g.game_state:refresh()
+            return false
+        end
         
-        -- if the player_state is valid (should always be), send input to self.actions
-        if self.actions[player_state] then
-            local action_validity = self.actions[player_state](entity, key)
-            -- if action was valid, then quit from player_state
-            if action_validity then player_state = nil end
+        -- if the self.input_mode is valid (should always be), send input to self.actions
+        if self.actions[self.input_mode] then
+            local action_validity = self.actions[self.input_mode](entity, key)
+            -- if action was valid, then quit from self.input_mode
+            if action_validity then self.input_mode = nil end
 
             return action_validity
         end

@@ -184,6 +184,8 @@ function StatePlay:refresh()
     end
 
     canvas_ui = ui_manager_play()
+    -- finally, reset the consome message
+    g.console_string = nil
 
     -- reset default canvas to draw on it in draw() func
     love.graphics.setCanvas()

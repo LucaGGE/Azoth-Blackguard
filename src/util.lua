@@ -580,9 +580,15 @@ function ui_manager_play()
         FONT_SIZE_SUBTITLE, g.window_height - (FONT_SIZE_SUBTITLE * 2.5)
     )
     love.graphics.print(
-        "Gold "..g.camera["entity"].components["stats"].stats["gold"], -- WARNING: gold is not forced and will therefore crash game if not explicitly input in entities.csv. UI system should be modular and adapt to dynamic stats!  
+        "Gold "..g.camera["entity"].components["stats"].stats["gold"], -- WARNING: stats component is not forced and therefore 'gold' will crash game. UI system should be modular and adapt to dynamic stats!  
         FONT_SIZE_SUBTITLE, g.window_height - (FONT_SIZE_SUBTITLE * 1.5)
     )
+
+    if g.console_string then
+        print("yeaa")
+        love.graphics.printf(g.console_string, 0,
+        g.window_height - (FONT_SIZE_SUBTITLE * 1.5), g.window_width, "center")
+    end
     
     -- restoring default RGBA, since this function influences ALL graphics
     love.graphics.setColor(1, 1, 1, 1)

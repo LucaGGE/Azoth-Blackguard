@@ -126,14 +126,15 @@ INPUT_DTABLE2["'"] = INPUT_DTABLE1["'"]
 
 function StateMenu:init()
     -- resetting every global variable but BLUEPRINTS_LIST, as it's set once in main.load() 
-    g.npcs_group = {}
     g.players_party = {}
     g.camera["entity"] = nil
+    g.npcs_group = {}
     g.render_group = {}
+    g.invisible_group = {}
     g.canvas_base  = nil
     g.canvas_final = nil
-    g.is_tweening = false
     g.cemetery = {}
+    g.is_tweening = false
         
     input_phase = 1
     n_of_players = 1

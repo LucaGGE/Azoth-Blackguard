@@ -22,8 +22,40 @@ Player = Object:extend()
 function Player:new()
     -- players are automatically part of this group
     self.group = "players"
-    self.input_mode = nil
+    self.action_state = nil
+    self.valid_input = "qwertyuiopasdfghjklzxcvbnm"
+    self.local_string = ""
+    -- table used for the console key input
+    self.INPUT_DTABLE = {
+        ["enter"] = function()
+            print("check input dtable")
+            local return_value
+            -- reset console related values
+            self.action_state = nil
+            
+            love.audio.stop(SOUNDS["button_select"])
+            love.audio.play(SOUNDS["button_select"])
 
+            -- check action commang, note that 'console' action is forbidden
+            if self.local_string == "space" then
+                self.local_string = ""
+
+                return false
+            end
+
+            -- if function received valid command, execute action and return true
+            return_value = player_commands(self, self.local_string)
+            self.local_string = ""
+
+            return return_value and true or false
+        end,
+        ["backspace"] = function()
+            self.local_string = text_backspace(self.local_string)
+            -- return false, since player is typing action
+            return false
+        end
+    }
+    self.INPUT_DTABLE["return"] = self.INPUT_DTABLE["enter"]
     -- this variable contains all the movement inputs key-values for keypad and keyboard, with key = (row, column)
     self.movement_inputs = {
         ["kp7"] = {-1,-1}, ["q"] = {-1,-1},
@@ -35,166 +67,35 @@ function Player:new()
         ["kp1"] = {1,-1}, ["z"] = {1,-1},
         ["kp4"] = {0,-1}, ["a"] = {0,-1},
         ["kp5"] = {0, 0}, ["s"] = {0, 0}
-        }
-    self.hotkeys = {
-        ["space"] = function()
-            if not self.input_mode then
-                self.input_mode = "console"
-                print("Input to console:")
-                return false
-            end
-        end,
-        ["u"] = function(player)
-            if not self.input_mode then
-                self.input_mode = "use"
-                print("Use where?")
-                return false
-            end
-        end,
-        ["i"] = function()
-            print("inventory")
-            return true
-        end,
-        ["o"] = function(player)
-            if not self.input_mode then
-                self.input_mode = "observing"
-                print("Observe where?")
-                return false
-            end
-        end,
-        ["p"] = function(player)
-            if not self.input_mode then
-                self.input_mode = "pickup"
-                print("Pickup where?")
-                return false
-            end
-        end
-    }
-    self.actions = {
-        ["observing"] = function(player, key)
-            local target_cell
-
-            if self.movement_inputs[key] then
-                target_cell = g.grid[player.cell["grid_row"] + self.movement_inputs[key][1]]
-                [player.cell["grid_column"] + self.movement_inputs[key][2]]
-            else
-                -- if input is not a valid direction, turn is not valid
-                return false
-            end
-
-            -- this will be printed to the game's UI console
-            print(target_cell.occupant and target_cell.occupant["id"] or "Nothing")
-            print(target_cell.entity and target_cell.entity["id"] or "Nothing")
-            -- being a free action it always returns nil, so it needs to set self.input_mode = nil
-            self.input_mode = nil
-            return false
-        end,
-        ["pickup"] = function(player, key)
-            local target_cell
-            local target
-
-            if self.movement_inputs[key] then
-                target_cell = g.grid[player.cell["grid_row"] + self.movement_inputs[key][1]]
-                [player.cell["grid_column"] + self.movement_inputs[key][2]]
-            else
-                -- if input is not a valid direction, turn is not valid
-                return false
-            end
-
-            -- store the target entity, if present
-            target = target_cell.entity
-
-            -- if no target is found, return a 'nothing found' message
-            if not target_cell.entity then
-                print("There's nothing to pick up there")
-                return true
-            end
-
-            -- if the target has a trigger 'triggeroncollision' comp, trigger immediately
-            if target.components["trigger"] and target.components["trigger"].triggeroncollision then
-                print("The object triggers!")
-                target.components["trigger"]:activate(target, player)
-            end
-
-            -- if no pickup target is found then warn player
-            if target_cell.entity.components["pickup"] then
-                target.components["pickup"]:activate(target, player)
-                print("You pickup " .. tostring(target.id))
-            else
-                print("You can't pick this up")
-            end
-
-            return true
-        end,
-        ["use"] = function(player, key)
-            local target_cell
-            local target
-
-            if self.movement_inputs[key] then
-                target_cell = g.grid[player.cell["grid_row"] + self.movement_inputs[key][1]]
-                [player.cell["grid_column"] + self.movement_inputs[key][2]]
-            else
-                -- if input is not a valid direction, turn is not valid
-                return false
-            end
-
-            -- store the target entity, if present
-            target = target_cell.entity
-
-            -- if no target is found, return a 'nothing found' message
-            if not target_cell.entity then
-                print("Nothing to use there")
-                return true
-            end
-
-            -- if the target has a trigger 'triggeroncollision' comp, trigger immediately
-            if target.components["trigger"] and target.components["trigger"].triggeroncollision then
-                print("The object triggers!")
-                target.components["trigger"]:activate(target, player)
-            end
-
-            -- if no usable target is found then warn player
-            if target_cell.entity.components["usable"] then
-                print("You use " .. tostring(target))
-                target.components["usable"]:activate(target, player)
-            else
-                print("You can't use this")
-            end
-
-            return true
-        end,
-        ["console"] = function(player, key)
-            g.console_string = "Thy action: " .. tostring(key)
-            print(g.console_string)
-            g.game_state:refresh()
-            return false
-        end
     }
 end
 
 function Player:input_management(entity, key)
     -- checking if player is trying to use hotkey
-    if not self.movement_inputs[key] and not self.input_mode then
-        -- return function() result if 'key' is valid
-        return self.hotkeys[key] and self.hotkeys[key](entity)
+    if not self.movement_inputs[key] and not self.action_state then
+        -- note that hotkeys allow access only to a few states
+        -- also note the difference between 'self' (this comp) and 'entity' (the player entity)
+        return player_commands(self, key)
     end
 
-    -- managing self.input_mode mode of input, if active
-    if self.input_mode then
+    -- managing self.action_state mode of input, if active
+    if self.action_state then
         -- reset any state with 'escape' key
         if key == "escape" then
-            self.input_mode = nil print("mode quit")
+            print("mode quit")
+            self.action_state = nil
             -- also erase console_string and refresh screen
             g.console_string = nil
+            self.local_string = ""
             g.game_state:refresh()
             return false
         end
         
-        -- if the self.input_mode is valid (should always be), send input to self.actions
-        if self.actions[self.input_mode] then
-            local action_validity = self.actions[self.input_mode](entity, key)
-            -- if action was valid, then quit from self.input_mode
-            if action_validity then self.input_mode = nil end
+        -- if the self.action_state is valid (should always be), send input to IO_DTABLE
+        if IO_DTABLE[self.action_state] then
+            local action_validity = IO_DTABLE[self.action_state](self, entity, key)
+            -- if action was valid, then quit from self.action_state
+            if action_validity then self.action_state = nil end
 
             return action_validity
         end

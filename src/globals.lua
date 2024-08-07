@@ -4,6 +4,7 @@ g = {
     window_height = 720,
     canvas_base, -- game canvases: base for statics, and final for statics + dynamics
     canvas_final,
+    canvas_ui, -- used only during state_play because of state stacking
     grid = {}, -- grid system main data
     grid_x = 0, -- this is established by the CSV files containing the map
     grid_y = 0, -- this is established by the CSV files containing the map

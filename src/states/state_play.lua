@@ -6,9 +6,6 @@ local HALF_TILE = (mod.TILE_SIZE or 20) / 2 -- used when centering the screen on
 -- this variable stores the current turn
 local current_turn = 1
 
--- ui dedicated canvas (state_play only)
-local canvas_ui
-
 --[[
     Here's where we accumulate key inputs for players, to contain their number.
     This is done to make the game feel more responsive.
@@ -183,12 +180,7 @@ function StatePlay:refresh()
         love.graphics.draw(g.TILESET, tile_to_quad(entity.tile), entity.cell["cell"].x, entity.cell["cell"].y)
     end
 
-    canvas_ui = ui_manager_play()
-    -- finally, reset the consome message
-    g.console_string = nil
-
-    -- reset default canvas to draw on it in draw() func
-    love.graphics.setCanvas()
+    g.canvas_ui = ui_manager_play()
 end
 
 function StatePlay:draw()
@@ -207,7 +199,7 @@ function StatePlay:draw()
         love.graphics.draw(g.canvas_final, 0, 0, 0, SIZE_MULTIPLIER, SIZE_MULTIPLIER)
     end
     -- drawing UI dedicated canvas on top of everything, always locked on screen
-    love.graphics.draw(canvas_ui, 0, 0)
+    love.graphics.draw(g.canvas_ui, 0, 0)
 end
 
 function StatePlay:exit()

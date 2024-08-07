@@ -80,3 +80,130 @@ COMPONENTS_TABLE = {
     ["dies"] = Dies,
     ["invisible"] = Invisible
 }
+
+-- the Input/Output dtable manages the action states that players can activate by hotkey or console command
+-- note that the 'console' mode is reserved for 'space' hotkey, to avoid looping through consoles.
+-- Lastly, be aware that player = player_component, and entity = player entity
+IO_DTABLE = {
+    ["observe"] = function(player_comp, entity, key)
+        local target_cell
+
+        g.console_string = "Observe where?"
+        g.canvas_ui = ui_manager_play()
+        
+        if player_comp.movement_inputs[key] then
+            target_cell = g.grid[entity.cell["grid_row"] + player_comp.movement_inputs[key][1]]
+            [entity.cell["grid_column"] + player_comp.movement_inputs[key][2]]
+        else
+            -- if input is not a valid direction, turn is not valid
+            return false
+        end
+
+        -- this will be printed to the game's UI console
+        print(target_cell.occupant and target_cell.occupant["id"] or "Nothing")
+        print(target_cell.entity and target_cell.entity["id"] or "Nothing")
+        -- being a free action it always returns nil, so it needs to set player_comp.action_state = nil
+        player_comp.action_state = nil
+        return false
+    end,
+    ["pickup"] = function(player_comp, entity, key)
+        local target_cell
+        local target
+
+        g.console_string = "Pickup where?"
+        g.canvas_ui = ui_manager_play()
+        
+        if player_comp.movement_inputs[key] then
+            target_cell = g.grid[entity.cell["grid_row"] + player_comp.movement_inputs[key][1]]
+            [entity.cell["grid_column"] + player_comp.movement_inputs[key][2]]
+        else
+            -- if input is not a valid direction, turn is not valid
+            return false
+        end
+
+        -- store the target entity, if present
+        target = target_cell.entity
+
+        -- if no target is found, return a 'nothing found' message
+        if not target_cell.entity then
+            print("There's nothing to pick up there")
+            return true
+        end
+
+        -- if the target has a trigger 'triggeroncollision' comp, trigger immediately
+        if target.components["trigger"] and target.components["trigger"].triggeroncollision then
+            print("The object triggers!")
+            target.components["trigger"]:activate(target, entity)
+        end
+
+        -- if no pickup target is found then warn player
+        if target_cell.entity.components["pickup"] then
+            target.components["pickup"]:activate(target, entity)
+            print("You pickup " .. tostring(target.id))
+        else
+            print("You can't pick this up")
+        end
+
+        return true
+    end,
+    ["use"] = function(player_comp, entity, key)
+        local target_cell
+        local target
+
+        g.console_string = "Use where?"
+        g.canvas_ui = ui_manager_play()
+        
+        if player_comp.movement_inputs[key] then
+            target_cell = g.grid[entity.cell["grid_row"] + player_comp.movement_inputs[key][1]]
+            [entity.cell["grid_column"] + player_comp.movement_inputs[key][2]]
+        else
+            -- if input is not a valid direction, turn is not valid
+            return false
+        end
+
+        -- store the target entity, if present
+        target = target_cell.entity
+
+        -- if no target is found, return a 'nothing found' message
+        if not target_cell.entity then
+            print("Nothing to use there")
+            return true
+        end
+
+        -- if the target has a trigger 'triggeroncollision' comp, trigger immediately
+        if target.components["trigger"] and target.components["trigger"].triggeroncollision then
+            print("The object triggers!")
+            target.components["trigger"]:activate(target, entity)
+        end
+
+        -- if no usable target is found then warn player
+        if target_cell.entity.components["usable"] then
+            print("You use " .. tostring(target))
+            target.components["usable"]:activate(target, entity)
+        else
+            print("You can't use this")
+        end
+
+        return true
+    end,
+    ["console"] = function(player_comp, entity, key)
+        print("called...")
+        local key_output
+        local return_value
+        
+        key_output = player_comp.INPUT_DTABLE[key] or function()
+            player_comp.local_string = text_input(player_comp.valid_input, key, player_comp.local_string, 9)
+            
+            -- always return false, since player is typing action
+            return false
+        end
+        -- call INPUT_DTABLE func or function()
+        return_value = key_output()
+        print(player_comp.local_string)
+        g.console_string = "Thy action: " .. player_comp.local_string
+        -- immediately show console string on screen
+        g.canvas_ui = ui_manager_play()
+
+        return return_value
+    end
+}

@@ -25,37 +25,6 @@ function Player:new()
     self.action_state = nil
     self.valid_input = "qwertyuiopasdfghjklzxcvbnm"
     self.local_string = ""
-    -- table used for the console key input
-    self.INPUT_DTABLE = {
-        ["enter"] = function()
-            print("check input dtable")
-            local return_value
-            -- reset console related values
-            self.action_state = nil
-            
-            love.audio.stop(SOUNDS["button_select"])
-            love.audio.play(SOUNDS["button_select"])
-
-            -- check action commang, note that 'console' action is forbidden
-            if self.local_string == "space" then
-                self.local_string = ""
-
-                return false
-            end
-
-            -- if function received valid command, execute action and return true
-            return_value = player_commands(self, self.local_string)
-            self.local_string = ""
-
-            return return_value and true or false
-        end,
-        ["backspace"] = function()
-            self.local_string = text_backspace(self.local_string)
-            -- return false, since player is typing action
-            return false
-        end
-    }
-    self.INPUT_DTABLE["return"] = self.INPUT_DTABLE["enter"]
     -- this variable contains all the movement inputs key-values for keypad and keyboard, with key = (row, column)
     self.movement_inputs = {
         ["kp7"] = {-1,-1}, ["q"] = {-1,-1},
@@ -71,38 +40,23 @@ function Player:new()
 end
 
 function Player:input_management(entity, key)
-    -- checking if player is trying to use hotkey
-    if not self.movement_inputs[key] and not self.action_state then
-        -- note that hotkeys allow access only to a few states
-        -- also note the difference between 'self' (this comp) and 'entity' (the player entity)
-        return player_commands(self, key)
+    if key == "escape" then 
+        print("Action mode quit...")
+        self.action_state = nil
+        g.local_string = nil
+        g.console_string = nil
+
+        return false
     end
 
-    -- managing self.action_state mode of input, if active
-    if self.action_state then
-        -- reset any state with 'escape' key
-        if key == "escape" then
-            print("mode quit")
-            self.action_state = nil
-            -- also erase console_string and refresh screen
-            g.console_string = nil
-            self.local_string = ""
-            g.game_state:refresh()
-            return false
+    if not self.action_state then
+        -- checking if player is trying to use a hotkey
+        if not self.movement_inputs[key] and not self.action_state then
+            -- note that hotkeys allow access only to a few states
+            -- also note the difference between 'self' (this comp) and 'entity' (the player entity)
+            return player_commands(self, key)
         end
-        
-        -- if the self.action_state is valid (should always be), send input to IO_DTABLE
-        if IO_DTABLE[self.action_state] then
-            local action_validity = IO_DTABLE[self.action_state](self, entity, key)
-            -- if action was valid, then quit from self.action_state
-            if action_validity then self.action_state = nil end
-
-            return action_validity
-        end
-
-        -- if no valid input was received for the mode, return false
-        return false
-    else
+    
         -- check if player is skipping turn (always possible, even without a mov comp)
         if self.movement_inputs[key][1] == 0 and self.movement_inputs[key][2] == 0 then
             love.audio.stop(SOUNDS["wait"])
@@ -110,15 +64,24 @@ function Player:input_management(entity, key)
             return true
         end
 
-        -- Movable component can be modified/added/removed during gameplay, so always check
+        -- 'Movable' component can be modified/added/removed during gameplay, so always check
         if not entity.components["movable"] then
             print("INFO: The entity does not contain a movement component")
             return false
         end
 
-        -- if no issues arised, then player can move
+        -- if no guard statements were activated, player is legally trying to move
         return entity.components["movable"]:move_entity(entity, self.movement_inputs[key])
     end
+
+    -- managing self.action_state mode of input  
+    if IO_DTABLE[self.action_state] then
+        return IO_DTABLE[self.action_state](self, entity, key)
+    end
+
+    -- if no valid input was received for the mode, return false
+    print("Called IO_DTABLE[self.action_state] where self.action_state is an invalid key!")
+    return false
 end
 
 Movable = Object:extend()

@@ -555,6 +555,9 @@ function turns_manager(current_player, npc_turn)
 
         ::continue::
         g.is_tweening = false
+        -- canceling previous player values in global strings
+        g.local_string = nil
+        g.console_string = nil
         g.game_state:refresh()        
     end)
 end
@@ -695,54 +698,4 @@ function entity_kill(entity, index, group)
     else
         entity.cell["cell"].entity = nil
     end
-end
-
--- this function contains a table that links commands/console commands to actual action states
-function player_commands(player_comp, key)
-    local commands = {
-        ["space"] = function()
-            if not player_comp.action_state then
-                player_comp.action_state = "console"
-
-                -- immediately show console and update ui canvas
-                g.console_string = "Thy action: "
-                g.canvas_ui = ui_manager_play()
-
-                return false
-            end
-        end,
-        ["use"] = function(player_comp)
-            if not player_comp.action_state then
-                player_comp.action_state = "use"
-                return false
-            end
-        end,
-        ["inventory"] = function()
-            g.console_string = "inventory"
-            return true
-        end,
-        ["observe"] = function(player_comp)
-            if not player_comp.action_state then
-                player_comp.action_state = "observe"
-                return false
-            end
-        end,
-        ["pickup"] = function(player_comp)
-            if not player_comp.action_state then
-                player_comp.action_state = "pickup"
-                return false
-            end
-        end
-    }
-    commands["u"] = commands["use"]
-    commands["i"] = commands["inventory"]
-    commands["o"] = commands["observe"]
-    commands["p"] = commands["pickup"]
-
-    -- if key is invalid, return false
-    if not commands[key] then
-        return false
-    end
-
-    return commands[key](player_comp)
 end

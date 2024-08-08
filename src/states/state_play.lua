@@ -92,6 +92,7 @@ function StatePlay:update()
 
         -- at this point, a valid action was taken. If not, player died (g.players_party[current_turn] == nil)
         if valid_action or not g.players_party[current_turn] then
+            current_player["player_component"].action_state = nil -- a successful action quits the action mode
             current_turn = current_turn + 1
         end
 
@@ -119,6 +120,7 @@ function StatePlay:update()
             g.is_tweening = true
             turns_manager(g.players_party[current_turn], false)
         end
+        -- pre-tween refresh
         g.game_state:refresh()
         ::continue_statechange::
     end

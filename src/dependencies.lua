@@ -9,6 +9,7 @@ Timer = require "lib.knife.timer" -- useful micro-modules https://github.com/ale
 require "math"
 require "modding.mods"
 require "src.globals"
+require "src.action_modes"
 require "src.components"
 require "src.constants"
 require "src.util"

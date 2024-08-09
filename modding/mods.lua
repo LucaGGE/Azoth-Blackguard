@@ -31,6 +31,8 @@ mod = {
     FONT_SIZE_TITLE = false,
     FONT_SIZE_SUBTITLE = false,
     FONT_SIZE_DEFAULT = false,
+    -- padding size (the space used to position strings inside the window)
+    PADDING = false,
 
     -- this lets you choose if maps are loaded sequentially (false) or generated (true)
     GENERATION = false,

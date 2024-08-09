@@ -18,6 +18,11 @@ g = {
     TILESET = love.graphics.newImage(mod.PATH_TO_TILESET or "graphics/tileset.png"),
     game_state, -- the current game state
     error_messages = {}, -- holds all error messages to be print on screen
-    console_string = nil, -- console's content
+    console = {
+        ["string"] = nil,
+        ["event1"] = "You suck thee horse arse",
+        ["event2"] = "Thy actions enraged the norse gods. Now they'll spit on thee",
+        ["event3"] = "Th'air dampens..."
+    }, -- console's content
     keys_pressed = {} -- variable for storing and clearing keys pressed each update
 }

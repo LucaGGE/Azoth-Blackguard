@@ -557,12 +557,12 @@ function turns_manager(current_player, npc_turn)
         g.is_tweening = false
         -- canceling previous player values in global strings
         g.local_string = nil
-        g.console_string = nil
+        console_cmd(nil)
         g.game_state:refresh()        
     end)
 end
 
-function ui_manager_play()
+function ui_manager_play(font_color)
     -- generating a canvas of the proper size
     local new_canvas  = love.graphics.newCanvas(g.window_width, g.window_height)
     love.graphics.setCanvas(new_canvas)
@@ -574,23 +574,38 @@ function ui_manager_play()
     -- making the UI semi-transparent
     love.graphics.setColor(0.78, 0.96, 0.94, 1)
     
+    -- print player stats
     love.graphics.print(
         g.camera["entity"].name,
-        FONT_SIZE_SUBTITLE, g.window_height - (FONT_SIZE_SUBTITLE * 3.5)
+        PADDING, g.window_height - (PADDING * 3.5)
     )
     love.graphics.print(
         "Life "..g.camera["entity"].components["stats"].stats["hp"],
-        FONT_SIZE_SUBTITLE, g.window_height - (FONT_SIZE_SUBTITLE * 2.5)
+        PADDING, g.window_height - (PADDING * 2.5)
     )
     love.graphics.print(
         "Gold "..g.camera["entity"].components["stats"].stats["gold"], -- WARNING: stats component is not forced and therefore 'gold' will crash game. UI system should be modular and adapt to dynamic stats!  
-        FONT_SIZE_SUBTITLE, g.window_height - (FONT_SIZE_SUBTITLE * 1.5)
+        PADDING, g.window_height - (PADDING * 1.5)
     )
 
-    if g.console_string then
-        love.graphics.printf(g.console_string, 0,
-        g.window_height - (FONT_SIZE_SUBTITLE * 1.5), g.window_width, "center")
+    -- if present, print console["string"]
+    if g.console["string"] then
+        love.graphics.printf(g.console["string"], 0,
+        g.window_height - (PADDING * 1.5), g.window_width, "center")
     end
+
+    -- print console events
+    if font_color then love.graphics.setColor(font_color[1], font_color[2], font_color[3], 1) end
+
+    love.graphics.print(
+        g.console["event3"], PADDING, (PADDING)
+    )
+    love.graphics.print(
+        g.console["event2"], PADDING, (PADDING * 2)
+    )
+    love.graphics.print(
+        g.console["event1"], PADDING, (PADDING * 3)
+    )
     
     -- restoring default RGBA, since this function influences ALL graphics
     love.graphics.setColor(1, 1, 1, 1)
@@ -611,10 +626,10 @@ function ui_manager_menu(text, input_phase, n_of_players, current_player, input_
 
     love.graphics.setFont(FONTS["subtitle"])
     if input_phase == 1 then
-        love.graphics.printf(text[input_phase] .. n_of_players, 0, g.window_height / 5 + (FONT_SIZE_TITLE * 2), g.window_width, "center")
+        love.graphics.printf(text[input_phase] .. n_of_players, 0, g.window_height / 5 + (PADDING * 4), g.window_width, "center")
     else
         love.graphics.printf(text[input_phase] .. text[current_player + 2] .. "rogue:\n" .. input_name,
-        0, g.window_height / 5 + (FONT_SIZE_TITLE * 2), g.window_width, "center")
+        0, g.window_height / 5 + (PADDING * 4), g.window_width, "center")
     end
 
     return new_canvas
@@ -627,17 +642,17 @@ function ui_manager_gameover()
 
     love.graphics.setColor(1, 0, 0, 1)
     love.graphics.setFont(FONTS["title"])
-    love.graphics.printf("Game Over", 0, g.window_height / 4 - FONT_SIZE_TITLE, g.window_width, "center")
+    love.graphics.printf("Game Over", 0, g.window_height / 4 - PADDING, g.window_width, "center")
 
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.setFont(FONTS["subtitle"])
-    love.graphics.printf("These souls have left us forever:", 0, g.window_height / 4 + (FONT_SIZE_SUBTITLE), g.window_width, "center")
+    love.graphics.printf("These souls have left us forever:", 0, g.window_height / 4 + (PADDING), g.window_width, "center")
 
     -- printing all deceased players and info about their death
     for i, death in ipairs(g.cemetery) do 
         love.graphics.printf(death["player"]..", killed by "..death["killer"].." for "..death["loot"].." gold,\n"..
         "has found a final resting place in "..death["place"]..".",
-        0, g.window_height / 3.5 + (FONT_SIZE_SUBTITLE * (i * 3)), g.window_width, "center")
+        0, g.window_height / 3.5 + (PADDING * (i * 3)), g.window_width, "center")
     end
 
     return new_canvas
@@ -698,4 +713,17 @@ function entity_kill(entity, index, group)
     else
         entity.cell["cell"].entity = nil
     end
+end
+
+-- this func registers game events and chronologially displays them
+function console_event(event)
+    g.console["event3"] = g.console["event2"]
+    g.console["event2"] = g.console["event1"]
+    g.console["event1"] = event
+    g.canvas_ui = ui_manager_play()
+end
+
+function console_cmd(cmd)
+    g.console["string"] = cmd
+    g.canvas_ui = ui_manager_play()
 end

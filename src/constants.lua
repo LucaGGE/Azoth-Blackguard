@@ -24,6 +24,7 @@ TWEENING_TIME = 0.25
 FONT_SIZE_TITLE = mod.font_size_title or 60
 FONT_SIZE_SUBTITLE = mod.font_size_subtitle or 30
 FONT_SIZE_DEFAULT = mod.font_size_default or 24
+PADDING = mod.padding or 32
 
 MUSIC = {
     ["swamp"] = love.audio.newSource("sfx/st_swamp.ogg", "static"),

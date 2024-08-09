@@ -8,7 +8,7 @@ local INPUT_DTABLE = {
         local return_value
         print("check input dtable")
         -- reset console related values (action_state is set in player_commands())
-        g.console_string = nil
+        console_cmd(nil)
         player_comp.action_state = nil
         
         love.audio.stop(SOUNDS["button_select"])
@@ -50,6 +50,8 @@ IO_DTABLE = {
         print(target_cell.entity and target_cell.entity["id"] or "Nothing")
         -- being a free action it always returns nil, so it needs to set player_comp.action_state = nil
         player_comp.action_state = nil
+        console_cmd(nil)
+
         return false
     end,
     ["pickup"] = function(player_comp, entity, key)
@@ -131,9 +133,8 @@ IO_DTABLE = {
 
         if not INPUT_DTABLE[key] then
             player_comp.local_string = text_input(player_comp.valid_input, key, player_comp.local_string, 9)
-            g.console_string = "Thy action: " .. player_comp.local_string
             -- immediately show console string on screen
-            g.canvas_ui = ui_manager_play()
+            console_cmd("Thy action: " .. player_comp.local_string)
             print(player_comp.local_string)
             
             -- always return false, since player is typing action
@@ -144,8 +145,7 @@ IO_DTABLE = {
         return_value = INPUT_DTABLE[key](player_comp)
 
         if return_value then
-            g.console_string = "Thy action: " .. return_value
-            g.canvas_ui = ui_manager_play()
+            console_cmd("Thy action: " .. return_value)
         else
             -- reset local_string and enter new action_mode
             player_comp.local_string = ""
@@ -162,10 +162,8 @@ function player_commands(player_comp, key)
         [":"] = function()
             if not player_comp.action_state then
                 player_comp.action_state = "console"
-
                 -- immediately show console and update ui canvas
-                g.console_string = "Thy action: "
-                g.canvas_ui = ui_manager_play()
+                console_cmd("Thy action: ")
 
                 return false
             end
@@ -173,28 +171,25 @@ function player_commands(player_comp, key)
         ["use"] = function(player_comp)
             if not player_comp.action_state then
                 player_comp.action_state = "use"
-                g.console_string = "Use where?"
-                g.canvas_ui = ui_manager_play()                
+                console_cmd("Use where?")            
                 return false
             end
         end,
         ["inventory"] = function()
-            g.console_string = "inventory"
+            print("WARNING: inventory func in development")
             return true
         end,
         ["observe"] = function(player_comp)
             if not player_comp.action_state then
                 player_comp.action_state = "observe"
-                g.console_string = "Observe where?"
-                g.canvas_ui = ui_manager_play()                
+                console_cmd("Observe where?")             
                 return false
             end
         end,
         ["pickup"] = function(player_comp)
             if not player_comp.action_state then
                 player_comp.action_state = "pickup"
-                g.console_string = "Pickup where?"
-                g.canvas_ui = ui_manager_play()                
+                console_cmd("Pickup where?")          
                 return false
             end
         end
@@ -207,10 +202,10 @@ function player_commands(player_comp, key)
     commands["p"] = commands["pickup"]
     commands["space"] = commands[":"] -- note how console is under an inaccesible key
 
-    -- if key is invalid, erase eventual console_string and return false
+    -- if key is invalid, erase eventual console["string"] and return false
     if not commands[key] then
-        g.console_string = ""
-        g.canvas_ui = ui_manager_play()
+        console_cmd(nil)
+
         return false
     end
 

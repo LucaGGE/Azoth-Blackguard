@@ -43,9 +43,8 @@ function Player:input_management(entity, key)
     if key == "escape" then 
         print("Action mode quit...")
         self.action_state = nil
-        g.local_string = nil
-        g.console_string = nil
-        g.canvas_ui = ui_manager_play()
+        self.local_string = ""
+        console_cmd(nil)
 
         return false
     end

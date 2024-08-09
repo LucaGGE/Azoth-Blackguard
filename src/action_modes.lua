@@ -6,7 +6,6 @@
 local INPUT_DTABLE = {
     ["enter"] = function(player_comp)
         local return_value
-        print("check input dtable")
         -- reset console related values (action_state is set in player_commands())
         console_cmd(nil)
         player_comp.action_state = nil
@@ -39,15 +38,39 @@ INPUT_DTABLE["return"] = INPUT_DTABLE["enter"]
 IO_DTABLE = {
     ["observe"] = function(player_comp, entity, key)
         local target_cell
+        local occupant_ref
+        local entity_ref
         
         if player_comp.movement_inputs[key] then
             target_cell = g.grid[entity.cell["grid_row"] + player_comp.movement_inputs[key][1]]
             [entity.cell["grid_column"] + player_comp.movement_inputs[key][2]]
         end
 
-        -- this will be printed to the game's UI console
-        print(target_cell.occupant and target_cell.occupant["id"] or "Nothing")
-        print(target_cell.entity and target_cell.entity["id"] or "Nothing")
+        -- note that and entity's name equale to a personal name or its id
+        occupant_ref = target_cell.occupant and target_cell.occupant["name"] or nil
+        entity_ref = target_cell.entity and target_cell.entity["id"] or nil
+
+        -- checking if player is observing himself
+        if target_cell.occupant == entity then
+            occupant_ref = nil
+        end
+
+        if not occupant_ref and not entity_ref then
+            console_event("Thee observe nothing")
+        end
+
+        if not occupant_ref and entity_ref then
+            console_event("Thee observe ain " .. entity_ref)
+        end
+
+        if occupant_ref and not entity_ref then
+            console_event("Thee observe " .. occupant_ref)
+        end
+
+        if occupant_ref and entity_ref then
+            console_event("Thee observe " .. occupant_ref .. ", standing don somethende")
+        end
+
         -- being a free action it always returns nil, so it needs to set player_comp.action_state = nil
         player_comp.action_state = nil
         console_cmd(nil)
@@ -71,7 +94,8 @@ IO_DTABLE = {
 
         -- if no target is found, return a 'nothing found' message
         if not target_cell.entity then
-            print("There's nothing to pick up there")
+            console_event("There's non-other to pick up h're")
+            print("There's nothing to pick up h'ere")
             return true
         end
 
@@ -84,9 +108,9 @@ IO_DTABLE = {
         -- if no pickup target is found then warn player
         if target_cell.entity.components["pickup"] then
             target.components["pickup"]:activate(target, entity)
-            print("You pickup " .. tostring(target.id))
+            console_event("Thee pick up " .. target.id)
         else
-            print("You can't pick this up")
+            console_event("Thee art unable to pick hider up")
         end
 
         return true
@@ -108,7 +132,7 @@ IO_DTABLE = {
 
         -- if no target is found, return a 'nothing found' message
         if not target_cell.entity then
-            print("Nothing to use there")
+            console_event("There is non-other usaeble h're")
             return true
         end
 
@@ -120,10 +144,10 @@ IO_DTABLE = {
 
         -- if no usable target is found then warn player
         if target_cell.entity.components["usable"] then
-            print("You use " .. tostring(target))
+            console_event("Thee usae " .. target)
             target.components["usable"]:activate(target, entity)
         else
-            print("You can't use this")
+            console_event("Thee can't usae this")
         end
 
         return true
@@ -134,9 +158,7 @@ IO_DTABLE = {
         if not INPUT_DTABLE[key] then
             player_comp.local_string = text_input(player_comp.valid_input, key, player_comp.local_string, 9)
             -- immediately show console string on screen
-            console_cmd("Thy action: " .. player_comp.local_string)
-            print(player_comp.local_string)
-            
+            console_cmd("Thy action: " .. player_comp.local_string)            
             -- always return false, since player is typing action
             return false
         end

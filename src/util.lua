@@ -717,8 +717,15 @@ end
 
 -- this func registers game events and chronologially displays them
 function console_event(event)
-    g.console["event3"] = g.console["event2"]
-    g.console["event2"] = g.console["event1"]
+    local events_table = {}
+    -- extracting values from g.console. In Lua, tables are passed as ref, not as value!
+    for i, v in pairs(g.console) do
+        events_table[i] = v
+    end
+    
+    -- assigning new values to global values
+    g.console["event3"] = events_table["event2"]
+    g.console["event2"] = events_table["event1"]
     g.console["event1"] = event
     g.canvas_ui = ui_manager_play()
 end

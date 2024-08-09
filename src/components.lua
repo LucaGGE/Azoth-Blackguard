@@ -348,9 +348,11 @@ function Trigger:new(args)
     }
     self.destroyontrigger = string_to_bool[args[1]]
     self.triggeroncollision = string_to_bool[args[2]]
+    self.event_string = args[3]
 end
 
 function Trigger:activate(owner, entity)
+    console_event(self.event_string)
     -- stepping into an exit means turn isn't valid and stuff has to be reset!
     if owner.components["exit"] then
         owner.components["exit"]:activate(owner, entity)

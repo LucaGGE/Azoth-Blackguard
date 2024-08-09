@@ -20,9 +20,9 @@ g = {
     error_messages = {}, -- holds all error messages to be print on screen
     console = {
         ["string"] = nil,
-        ["event1"] = "You suck thee horse arse",
-        ["event2"] = "Thy actions enraged the norse gods. Now they'll spit on thee",
-        ["event3"] = "Th'air dampens..."
+        ["event1"] = "event 1",
+        ["event2"] = "event 2",
+        ["event3"] = "event 3"
     }, -- console's content
     keys_pressed = {} -- variable for storing and clearing keys pressed each update
 }

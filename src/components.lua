@@ -45,6 +45,7 @@ function Player:input_management(entity, key)
         self.action_state = nil
         g.local_string = nil
         g.console_string = nil
+        g.canvas_ui = ui_manager_play()
 
         return false
     end

@@ -352,9 +352,9 @@ function map_reader(map, generate_players)
         end
     end
 
-    -- initializing game canvases (g.canvas_base  with tiles, g.canvas_final adds entities)
-    g.canvas_final = love.graphics.newCanvas(g.grid_x * TILE_SIZE, g.grid_y * TILE_SIZE)
-    g.canvas_base  = love.graphics.newCanvas(g.grid_x * TILE_SIZE, g.grid_y * TILE_SIZE)
+    -- initializing game canvases (g.canvas_static  with tiles, g.canvas_dynamic adds entities)
+    g.canvas_static  = love.graphics.newCanvas(g.grid_x * TILE_SIZE, g.grid_y * TILE_SIZE)
+    g.canvas_dynamic = love.graphics.newCanvas(g.grid_x * TILE_SIZE, g.grid_y * TILE_SIZE)
 
     -- getting tiles features groups from the specific CSV file
     local tiles_features_csv = csv_reader(PATH_TO_CSV .. "tiles_features.csv")

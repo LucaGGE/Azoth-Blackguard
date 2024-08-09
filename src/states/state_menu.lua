@@ -131,8 +131,8 @@ function StateMenu:init()
     g.npcs_group = {}
     g.render_group = {}
     g.invisible_group = {}
-    g.canvas_base  = nil
-    g.canvas_final = nil
+    g.canvas_static  = nil
+    g.canvas_dynamic = nil
     g.cemetery = {}
     g.is_tweening = false
         

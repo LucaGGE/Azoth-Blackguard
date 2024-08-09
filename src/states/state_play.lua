@@ -47,10 +47,10 @@ function StatePlay:init(map, generate_players)
         -- setting the state's font
         love.graphics.setFont(FONTS["default"])
 
-        -- preliminary drawing pass on g.canvas_base, to avoid re-drawing statics each time 
-        love.graphics.setCanvas(g.canvas_base)
+        -- preliminary drawing pass on g.canvas_static, to avoid re-drawing statics each time 
+        love.graphics.setCanvas(g.canvas_static)
 
-        -- using g.canvas_base with static tiles to create a base for final, updated drawing
+        -- using g.canvas_static with static tiles to create a base for final, updated drawing
         for i, v in ipairs(g.grid) do
             for i2, v2 in ipairs(v) do
                 if g.grid[i][i2].tile ~= nil then
@@ -127,11 +127,11 @@ function StatePlay:update()
 end
 
 function StatePlay:refresh()
-    -- setting canvas to g.canvas_final, to give effects and offset before
-    love.graphics.setCanvas(g.canvas_final)
-    -- erase canvas with BKG color and draw g.canvas_base as a base to draw upon
+    -- setting canvas to g.canvas_dynamic, to give effects and offset before
+    love.graphics.setCanvas(g.canvas_dynamic)
+    -- erase canvas with BKG color and draw g.canvas_static as a base to draw upon
     love.graphics.clear((mod.BKG_R or 12) / 255, (mod.BKG_G or 8) / 255, (mod.BKG_B or 42) / 255)
-    love.graphics.draw(g.canvas_base, 0, 0)
+    love.graphics.draw(g.canvas_static, 0, 0)
 
     -- removing dead players from g.players_party
     for i, player_ref in ipairs(g.players_party) do
@@ -186,10 +186,10 @@ function StatePlay:refresh()
 end
 
 function StatePlay:draw()
-    -- draw g.canvas_final on the screen, with g.camera offset.
+    -- draw g.canvas_dynamic on the screen, with g.camera offset.
     if g.camera["entity"] then
-        -- screen is drawn on g.canvas_final with player perfectly at the center of it
-        love.graphics.draw(g.canvas_final,
+        -- screen is drawn on g.canvas_dynamic with player perfectly at the center of it
+        love.graphics.draw(g.canvas_dynamic,
         (g.window_width / 2) - (g.camera["x"] * SIZE_MULTIPLIER) - HALF_TILE,
         (g.window_height / 2) - (g.camera["y"] * SIZE_MULTIPLIER) - HALF_TILE,
         0,
@@ -198,7 +198,7 @@ function StatePlay:draw()
         )
     else
         -- if for any reason there's no player, g.camera points 0,0 with its left upper corner
-        love.graphics.draw(g.canvas_final, 0, 0, 0, SIZE_MULTIPLIER, SIZE_MULTIPLIER)
+        love.graphics.draw(g.canvas_dynamic, 0, 0, 0, SIZE_MULTIPLIER, SIZE_MULTIPLIER)
     end
     -- drawing UI dedicated canvas on top of everything, always locked on screen
     love.graphics.draw(g.canvas_ui, 0, 0)

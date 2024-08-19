@@ -562,7 +562,7 @@ function turns_manager(current_player, npc_turn)
     end)
 end
 
-function ui_manager_play(font_color)
+function ui_manager_play()
     -- generating a canvas of the proper size
     local new_canvas  = love.graphics.newCanvas(g.window_width, g.window_height)
     love.graphics.setCanvas(new_canvas)
@@ -595,14 +595,15 @@ function ui_manager_play(font_color)
     end
 
     -- print console events
-    if font_color then love.graphics.setColor(font_color[1], font_color[2], font_color[3], 1) end
-
+    love.graphics.setColor(g.console["color3"][1], g.console["color3"][2], g.console["color3"][3], 1)
     love.graphics.print(
         g.console["event3"], PADDING, (PADDING)
     )
+    love.graphics.setColor(g.console["color2"][1], g.console["color2"][2], g.console["color2"][3], 1)
     love.graphics.print(
         g.console["event2"], PADDING, (PADDING * 2)
     )
+    love.graphics.setColor(g.console["color1"][1], g.console["color1"][2], g.console["color1"][3], 1)
     love.graphics.print(
         g.console["event1"], PADDING, (PADDING * 3)
     )
@@ -716,14 +717,19 @@ function entity_kill(entity, index, group)
 end
 
 -- this func registers game events and chronologially displays them
-function console_event(event)
+function console_event(event, font_color)
     local events_table = {}
     -- extracting values from g.console. In Lua, tables are passed as ref, not as value!
     for i, v in pairs(g.console) do
         events_table[i] = v
     end
+
+    -- assigning new values to global colors
+    g.console["color3"] = events_table["color2"]
+    g.console["color2"] = events_table["color1"]
+    g.console["color1"] = font_color or {[1] = 0.78, [2] = 0.96, [3] = 0.94,}
     
-    -- assigning new values to global values
+    -- assigning new values to global strings
     g.console["event3"] = events_table["event2"]
     g.console["event2"] = events_table["event1"]
     g.console["event1"] = event

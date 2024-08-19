@@ -191,6 +191,7 @@ function Movable:move_entity(entity, direction)
             target_stats["hp"] = 0
             -- entity will be removed from render_group and cell automatically in StatePlay:refresh()
             target_cell.occupant.alive = false
+            print("Player set as dead")
             -- if a player just died, save all deceased's relevant info in cemetery for Game Over screen
             if target_cell.occupant.components["player"] then
                 local deceased = {["player"] = target_cell.occupant.name,
@@ -199,6 +200,11 @@ function Movable:move_entity(entity, direction)
                 ["place"] = "Black Swamps"
                 }
                 table.insert(g.cemetery, deceased)
+                -- send a 'game over' string to console in red color
+                console_event(deceased["player"] .. " got slain by " .. deceased["killer"], {[1] = 1, [2] = 0, [3] = 0})
+            else
+                -- send a 'creature killed' string to console in visible color
+                console_event(target_cell.occupant.name .. " got slain by " .. entity.name, {[1] = 1, [2] = 1, [3] = 0})
             end
         end
 

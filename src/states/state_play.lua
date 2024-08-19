@@ -32,7 +32,7 @@ function StatePlay:init(map, generate_players)
     if g.game_track then
         love.audio.stop(g.game_track)
     end
-    -- startin soundtrack
+    -- starting soundtrack
     g.game_track = MUSIC["swamp"]
     g.game_track:setLooping(true)
     love.audio.play(g.game_track)

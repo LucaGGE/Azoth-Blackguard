@@ -20,9 +20,12 @@ g = {
     error_messages = {}, -- holds all error messages to be print on screen
     console = {
         ["string"] = nil,
-        ["event1"] = "event 1",
-        ["event2"] = "event 2",
-        ["event3"] = "event 3"
+        ["event1"] = nil,
+        ["event2"] = nil,
+        ["event3"] = nil,
+        ["color1"] = {[1] = 0.78, [2] = 0.96, [3] = 0.94},
+        ["color2"] = {[1] = 0.78, [2] = 0.96, [3] = 0.94},
+        ["color3"] = {[1] = 0.78, [2] = 0.96, [3] = 0.94}
     }, -- console's content
     keys_pressed = {} -- variable for storing and clearing keys pressed each update
 }

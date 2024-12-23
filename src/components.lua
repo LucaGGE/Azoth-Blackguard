@@ -341,8 +341,8 @@ function Inventory:new()
 end
 
 -- for all the entities that are not Players but occupy it entirely (trees, boulders...)
-Bulky = Object:extend()
-function Bulky:new()
+Obstacle = Object:extend()
+function Obstacle:new()
 end
 
 -- this comp warns the game when an entity behaves in a trigger volume fashion

@@ -564,7 +564,7 @@ end
     and multiple compatible slots are accepted (i.e. right hand, left hand...).
     Also note that once equipped, objects will trigger/statchange/apply effects.
     The last simply artificially changes Player's characteristics.
-]]--
+]]
 Equipable = Object:extend()
 function Equipable:new(args)
     local string_to_bool = {
@@ -584,21 +584,83 @@ function Equipable:new(args)
     end
 end
 
--- useful component for applying effects in a variety of scenarios (i.e. a helmet of
--- protection, a magic ring, being on fire, poison...)
+-- this component allows entities to be subjected through a variety of effects give by the Power comp
+-- these effects are validated by EFFECTS_TABLE and executed by apply_effect() function
 Effect = Object:extend()
-function Effect:new()
-    self.effects = {}
-    -- this is how effects are paired: 
-    for i, stat in ipairs(stats_table) do
-        local assigned_effects = strings_separator(stat, ":", 1)
-        -- checking that second arg is a valid number and assigning it to effect
-        if assigned_effects[2]:match("%d") then
-            assigned_effects[2] = tonumber(assigned_effects[2])
-            -- code below translates as "self.effects[effect_name] = effect_value"
-            self.effects[assigned_effects[1]] = assigned_effects[2]
-        else
-            error_handler('In component "Effect" tried to assign non numerical value to effect, ignored')
+function Effect:new(input_effects)
+    print(input_effects)
+    self.active_effects = {}
+
+    -- immediately add optional effects and effect immunities on comp creation
+    self:add(input_effects)
+end
+
+function Effect:add(input_effects)
+    for i, effect in ipairs(input_effects) do
+        local assigned_effect = strings_separator(effect, ":", 1)
+        -- checking that first arg is a valid effect
+        if not EFFECTS_TABLE[assigned_effect[1]] then
+            error_handler('In component "Effect" tried to input invalid effect, ignored')
+            goto continue
         end
+        -- checking if entity is assigned as immune to an effect
+        if assigned_effect[2] == "immune" then
+            self.active_effects[assigned_effect[1]] = assigned_effect[2]
+        end
+        -- checking if entity is immune to effect (will skip rest of loop after new immune assignment)
+        if self.active_effects[assigned_effect[1]] == "immune" then
+            print("Entity is immune to "..assigned_effect[1])
+            goto continue
+        end
+        -- checking if an effect is assigned permanent
+        if assigned_effect[2] == "permanent" then
+            -- some effects can be given as permanent effects
+            self.active_effects[assigned_effect[1]] = assigned_effect[2]
+        end
+        -- check if permanent and therefore cannot be modified (will skip rest of loop after new permanent assignment)
+        if assigned_effect[1] == "permanent" then
+            print("Effect is permanent and therefore its duration cannot be modified normally")
+            goto continue
+        end
+        -- checking if second arg is a valid number and assigning it
+        if assigned_effect[2]:match("%d") then
+            assigned_effect[2] = tonumber(assigned_effect[2])
+            -- transforming possibly nil values to arithmetic values
+            if self.active_effects[assigned_effect[1]] == nil then self.active_effects[assigned_effect[1]] = 0 end
+            -- code below translates as "self.active_effects[effect_name] = existing_value + new_value"
+            -- please note that this can be given a negative value, reducing effect duration
+            self.active_effects[assigned_effect[1]] = self.active_effects[assigned_effect[1]] + assigned_effect[2]
+        else
+            error_handler('In component "Effect" tried to assign invalid value to effect, ignored')
+        end
+
+        ::continue::
     end
+end
+
+-- this is called each turn when the effect component is present, and kills the comp if nothing is active anymore
+function Effect:activate(owner)
+    for i,effect in ipairs(self.active_effects) do
+        if effect == "immune" then
+            goto continue
+        end
+
+        -- apply effect, since validity is already checked on Effect:add()
+        apply_effect(owner, i)
+
+        -- if the effect is not permanent, reduce duration by 1 and eventually cancel effect
+        if effect ~= "permanent" then
+            self.active_effects[i] = self.active_effects[i] - 1
+            if self.active_effects[i] <= 0 then self.active_effects[i] = nil end
+        end
+
+        ::continue::
+    end
+end
+
+-- this component is the one which will allow entities to apply effects to each other. The effects
+-- available are dictated by EFFECTS_TABLE and are applied to individual entities after each turn 
+Power = Object:extend()
+function Power:new(input_effects)
+
 end

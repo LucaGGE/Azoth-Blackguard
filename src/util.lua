@@ -741,3 +741,7 @@ function console_cmd(cmd)
     g.console["string"] = cmd
     g.canvas_ui = ui_manager_play()
 end
+
+function apply_effect(target, effect)
+    -- all the valid effects from EFFECTS_TABLE will have a dedicated function
+end

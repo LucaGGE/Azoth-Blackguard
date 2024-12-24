@@ -710,6 +710,7 @@ function entity_kill(entity, index, group)
     table.remove(group, index)
     if entity.components["obstacle"] or entity.components["player"] or entity.components["npc"] then
         print("Obstacle entity destroyed")
+
         entity.cell["cell"].occupant = nil
     else
         entity.cell["cell"].entity = nil

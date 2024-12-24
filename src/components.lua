@@ -343,6 +343,7 @@ end
 -- for all the entities that are not Players but occupy it entirely (trees, boulders...)
 Obstacle = Object:extend()
 function Obstacle:new()
+
 end
 
 -- this comp warns the game when an entity behaves in a trigger volume fashion
@@ -529,4 +530,75 @@ end
 -- for all entities that are invisible by default (i.e. traps, invisible creatures)
 Invisible = Object:extend()
 function Invisible:new()
+end
+
+-- simple component that stores a key and triggers an entity with corresponding name,
+-- i.e. self.key_value = door_a45 triggers door entity with name = door_a45
+-- can also used to activate golems, unlock quests, etc
+Key = Object:extend()
+function Key:new(arg)
+    self.key_value = arg[1]
+end
+
+-- for all entities that can store items (i.e. Players, NPCs, chests, libraries...)
+Inventory = Object:extend()
+function Inventory:new(arg)
+    -- setting Inventory's capacity as n of entities
+    self.space = arg[1]
+end
+
+-- for all entities that can equip Equipable entities, matches Equipable comp tags
+-- with own tags (i.e. Equipable on: horns works with Slots : horns)
+Slots = Object:extend()
+function Slots:new(args)
+    self.slots = {}
+    for i,v in ipairs(args) do
+        -- adding all input slots from args
+        table.insert(self.slots, v)
+    end
+end
+
+--[[
+    For all entities that can be equipped (i.e. rings, amulets, crowns...),
+    need to know in which slot they're supposed to fit (i.e. head, hand, tentacle...)
+    and multiple compatible slots are accepted (i.e. right hand, left hand...).
+    Also note that once equipped, objects will trigger/statchange/apply effects.
+    The last simply artificially changes Player's characteristics.
+]]--
+Equipable = Object:extend()
+function Equipable:new(args)
+    local string_to_bool = {
+        ["false"] = false,
+        ["true"] = true
+    }
+    -- cursed objects cannot be normally unequipped
+    self.cursed = string_to_bool[args[1]]
+    -- now remove the frist arg, as it becomes useless
+    table.remove(args, 1)
+
+    self.compatible_slots = {}
+
+    for i,v in ipairs(args) do
+        -- adding all compatible slots for an Equipable
+        table.insert(self.compatible_slots, v)
+    end
+end
+
+-- useful component for applying effects in a variety of scenarios (i.e. a helmet of
+-- protection, a magic ring, being on fire, poison...)
+Effect = Object:extend()
+function Effect:new()
+    self.effects = {}
+    -- this is how effects are paired: 
+    for i, stat in ipairs(stats_table) do
+        local assigned_effects = strings_separator(stat, ":", 1)
+        -- checking that second arg is a valid number and assigning it to effect
+        if assigned_effects[2]:match("%d") then
+            assigned_effects[2] = tonumber(assigned_effects[2])
+            -- code below translates as "self.effects[effect_name] = effect_value"
+            self.effects[assigned_effects[1]] = assigned_effects[2]
+        else
+            error_handler('In component "Effect" tried to assign non numerical value to effect, ignored')
+        end
+    end
 end

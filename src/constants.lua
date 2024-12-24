@@ -79,5 +79,8 @@ COMPONENTS_TABLE = {
     ["statchange"] = StatChange,
     ["exit"] = Exit,
     ["dies"] = Dies,
-    ["invisible"] = Invisible
+    ["invisible"] = Invisible,
+    ["effect"] = Effect,
+    ["slots"] = Slots,
+    ["equipable"] = Equipable
 }

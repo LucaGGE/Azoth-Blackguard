@@ -59,13 +59,21 @@ FONTS = {
     ["narration"] = love.graphics.newFont("fonts/Pixellove.ttf", FONT_SIZE_DEFAULT),
 }
 
+-- valid effects for the that can be applied to entities with consequence
+EFFECTS_TABLE = {
+    ["poison"] = true,
+    ["venom"] = true,
+    ["burning"] = true,
+    ["confused"] = true,
+    ["invisible"] = true
+}
+
 --[[
     All the valid components for COMPONENTS_INTERFACE function.
     NOTE: this table requires components.lua to be required first.
     Still, components can use constants.lua variables since they're called inside
     the classes and not executed until main.lua has finished loading everything.
 ]]
-
 COMPONENTS_TABLE = {
     ["player"] = Player,
     ["npc"] = Npc,
@@ -79,5 +87,8 @@ COMPONENTS_TABLE = {
     ["statchange"] = StatChange,
     ["exit"] = Exit,
     ["dies"] = Dies,
-    ["invisible"] = Invisible
+    ["invisible"] = Invisible,
+    ["effect"] = Effect,
+    ["slots"] = Slots,
+    ["equipable"] = Equipable
 }

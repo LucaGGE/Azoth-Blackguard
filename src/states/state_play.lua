@@ -74,6 +74,18 @@ function StatePlay:init(map, generate_players)
 end
 
 function StatePlay:update()
+
+    --[[
+         TO DO TO DO TO DO TO DO TO DO-------------------- WIP, TO INSERT IN StatePlay:update() --------------------TO DO TO DO TO DO TO DO TO DO
+        After each player and each NPCs turn, eventual individual Effect components
+        must be called with Effect:activate(owner).
+        This means that effects will apply at the end of each interested entity.
+        This translates in players being able to cure themselves from poison or
+        putting flames off before they actually take damage from the effect.
+        Note that to this date, only Players and NPCs will be able to have effects
+        applied, since it's a turn-based activation.
+    ]]
+
     local valid_action 
     -- checking for input to resolve turns
     if g.keys_pressed[1] and not g.is_tweening then

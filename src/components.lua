@@ -351,6 +351,7 @@ end
 -- for all the entities that are not Players but occupy it entirely (trees, boulders...)
 Obstacle = Object:extend()
 function Obstacle:new()
+
 end
 
 -- this comp warns the game when an entity behaves in a trigger volume fashion
@@ -534,4 +535,137 @@ end
 -- for all entities that are invisible by default (i.e. traps, invisible creatures)
 Invisible = Object:extend()
 function Invisible:new()
+end
+
+-- simple component that stores a key and triggers an entity with corresponding name,
+-- i.e. self.key_value = door_a45 triggers door entity with name = door_a45
+-- can also used to activate golems, unlock quests, etc
+Key = Object:extend()
+function Key:new(arg)
+    self.key_value = arg[1]
+end
+
+-- for all entities that can store items (i.e. Players, NPCs, chests, libraries...)
+Inventory = Object:extend()
+function Inventory:new(arg)
+    -- setting Inventory's capacity as n of entities
+    self.space = arg[1]
+end
+
+-- for all entities that can equip Equipable entities, matches Equipable comp tags
+-- with own tags (i.e. Equipable on: horns works with Slots : horns)
+Slots = Object:extend()
+function Slots:new(args)
+    self.slots = {}
+    for i,v in ipairs(args) do
+        -- adding all input slots from args
+        table.insert(self.slots, v)
+    end
+end
+
+--[[
+    For all entities that can be equipped (i.e. rings, amulets, crowns...),
+    need to know in which slot they're supposed to fit (i.e. head, hand, tentacle...)
+    and multiple compatible slots are accepted (i.e. right hand, left hand...).
+    Also note that once equipped, objects will trigger/statchange/apply effects.
+    The last simply artificially changes Player's characteristics.
+]]
+Equipable = Object:extend()
+function Equipable:new(args)
+    local string_to_bool = {
+        ["false"] = false,
+        ["true"] = true
+    }
+    -- cursed objects cannot be normally unequipped
+    self.cursed = string_to_bool[args[1]]
+    -- now remove the frist arg, as it becomes useless
+    table.remove(args, 1)
+
+    self.compatible_slots = {}
+
+    for i,v in ipairs(args) do
+        -- adding all compatible slots for an Equipable
+        table.insert(self.compatible_slots, v)
+    end
+end
+
+-- this component allows entities to be subjected through a variety of effects give by the Power comp
+-- these effects are validated by EFFECTS_TABLE and executed by apply_effect() function
+Effect = Object:extend()
+function Effect:new(input_effects)
+    print(input_effects)
+    self.active_effects = {}
+
+    -- immediately add optional effects and effect immunities on comp creation
+    self:add(input_effects)
+end
+
+function Effect:add(input_effects)
+    for i, effect in ipairs(input_effects) do
+        local assigned_effect = strings_separator(effect, ":", 1)
+        -- checking that first arg is a valid effect
+        if not EFFECTS_TABLE[assigned_effect[1]] then
+            error_handler('In component "Effect" tried to input invalid effect, ignored')
+            goto continue
+        end
+        -- checking if entity is assigned as immune to an effect
+        if assigned_effect[2] == "immune" then
+            self.active_effects[assigned_effect[1]] = assigned_effect[2]
+        end
+        -- checking if entity is immune to effect (will skip rest of loop after new immune assignment)
+        if self.active_effects[assigned_effect[1]] == "immune" then
+            print("Entity is immune to "..assigned_effect[1])
+            goto continue
+        end
+        -- checking if an effect is assigned permanent
+        if assigned_effect[2] == "permanent" then
+            -- some effects can be given as permanent effects
+            self.active_effects[assigned_effect[1]] = assigned_effect[2]
+        end
+        -- check if permanent and therefore cannot be modified (will skip rest of loop after new permanent assignment)
+        if assigned_effect[1] == "permanent" then
+            print("Effect is permanent and therefore its duration cannot be modified normally")
+            goto continue
+        end
+        -- checking if second arg is a valid number and assigning it
+        if assigned_effect[2]:match("%d") then
+            assigned_effect[2] = tonumber(assigned_effect[2])
+            -- transforming possibly nil values to arithmetic values
+            if self.active_effects[assigned_effect[1]] == nil then self.active_effects[assigned_effect[1]] = 0 end
+            -- code below translates as "self.active_effects[effect_name] = existing_value + new_value"
+            -- please note that this can be given a negative value, reducing effect duration
+            self.active_effects[assigned_effect[1]] = self.active_effects[assigned_effect[1]] + assigned_effect[2]
+        else
+            error_handler('In component "Effect" tried to assign invalid value to effect, ignored')
+        end
+
+        ::continue::
+    end
+end
+
+-- this is called each turn when the effect component is present, and kills the comp if nothing is active anymore
+function Effect:activate(owner)
+    for i,effect in ipairs(self.active_effects) do
+        if effect == "immune" then
+            goto continue
+        end
+
+        -- apply effect, since validity is already checked on Effect:add()
+        apply_effect(owner, i)
+
+        -- if the effect is not permanent, reduce duration by 1 and eventually cancel effect
+        if effect ~= "permanent" then
+            self.active_effects[i] = self.active_effects[i] - 1
+            if self.active_effects[i] <= 0 then self.active_effects[i] = nil end
+        end
+
+        ::continue::
+    end
+end
+
+-- this component is the one which will allow entities to apply effects to each other. The effects
+-- available are dictated by EFFECTS_TABLE and are applied to individual entities after each turn 
+Power = Object:extend()
+function Power:new(input_effects)
+
 end

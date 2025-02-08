@@ -28,7 +28,7 @@ end
 
 --[[
     Components interface. Used to link components and their optional args to the actual components.
-    These are the the strings you feed inside the 'entities.csv' to explain to the engine what an
+    These are the the strings you feed inside the 'blueprints.csv' to explain to the engine what an
     entity is composed of. The function below needs to be updated with each added component!
 ]]
 function components_interface(tags)
@@ -475,11 +475,11 @@ end
 
 function blueprints_manager()
     -- all game entities are managed by a single CSV file.
-    local entities_csv = csv_reader(PATH_TO_CSV .. "entities.csv")
+    local entities_csv = csv_reader(PATH_TO_CSV .. "blueprints.csv")
 
     -- check if operation went right; if not, activate error_handler
     if type(entities_csv) == "string" then
-        error_handler(entities_csv, "The above error was triggered while trying to read entities.csv")
+        error_handler(entities_csv, "The above error was triggered while trying to read blueprints.csv")
         return false
     end
 
@@ -535,19 +535,20 @@ function dice_roll(die_set, success)
 end
 
 function turns_manager(current_player, npc_turn)
-    -- updating current_player to next entity for tweening purposes
+    -- setting current_player coords for camera tweening
     local x_for_tweening = current_player["entity"].cell["cell"].x
     local y_for_tweening = current_player["entity"].cell["cell"].y
-    -- set next (or first) player as the g.camera entity
+    -- set this next (or first) player as the g.camera entity
     g.camera["entity"] = current_player["entity"]
-    -- tween between previous and current active player
+    -- tween camera between previous and current active player
     Timer.tween(TWEENING_TIME, {
         [g.camera] =  {x = x_for_tweening, y = y_for_tweening}
     }):finish(function ()
-        if not npc_turn and not g.npcs_group then goto continue end
+        -- if it's not the NPCs turn, skip single NPC activation
+        if not npc_turn then goto continue end
 
         for i, npc in ipairs(g.npcs_group) do
-            -- check if the NPC is alive or needs to be removed from game
+            -- check if the NPC is alive or is waiting to be removed from game
             if npc.alive then
                 g.npcs_group[i].components["npc"]:activate(g.npcs_group[i])
             end
@@ -555,8 +556,6 @@ function turns_manager(current_player, npc_turn)
 
         ::continue::
         g.is_tweening = false
-        -- canceling previous player values in global strings
-        g.local_string = nil
         console_cmd(nil)
         g.game_state:refresh()        
     end)

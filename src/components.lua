@@ -223,14 +223,22 @@ function Movable:move_entity(entity, direction)
     love.audio.play(SOUNDS[TILES_FEATURES_PAIRS[target_cell.index]])
 
     -- lastly, check if there's an entity in the new cell
-    if not target_cell.entity or not target_cell.entity.components["trigger"]
-    or not target_cell.entity.components["trigger"].triggeroncollision then
+    if not target_cell.entity then
         return true
     end
 
-    -- check if that's a trigger. It may work or not, but entity still moved, so return true
-    target_cell.entity.components["trigger"]:activate(target_cell.entity, entity)
-    return true
+    -- see if the entity is an exit
+    if target_cell.entity.components["exit"] then
+        target_cell.entity.components["exit"]:activate(target_cell.entity, entity)
+        return true
+    end
+
+    -- see if entity is has trigger component
+    if target_cell.entity.components["trigger"] then
+        -- trigger may work or not, but entity still moved, so return true
+        target_cell.entity.components["trigger"]:activate(target_cell.entity, entity)
+        return true
+    end
 end
 
 Npc = Object:extend()
@@ -358,12 +366,8 @@ function Trigger:new(args)
 end
 
 function Trigger:activate(owner, entity)
+    -- print trigger event string (i.e. 'A trap activates!')
     console_event(self.event_string)
-    -- stepping into an exit means turn isn't valid and stuff has to be reset!
-    if owner.components["exit"] then
-        owner.components["exit"]:activate(owner, entity)
-        return false
-    end
 
     if owner.components["statchange"] then
         local trigger_fired = owner.components["statchange"]:activate(entity)
@@ -372,9 +376,6 @@ function Trigger:activate(owner, entity)
             -- will be removed from render_group and cell automatically in StatePlay:refresh()
             owner.alive = false
         end
-
-        -- if trigger was fired or not (ie critters cannot pick up gold), turn still counts
-        return true
     end
 end
 
@@ -452,12 +453,16 @@ function StatChange:activate(entity)
 end
 
 Exit = Object:extend()
-function Exit:new()
+function Exit:new(args)
+    -- string to print on level change
+    self.event_string = args[1]
 end
 
 -- Simple class to jump between levels or from game to menu (game end)
 function Exit:activate(owner, entity)
+    console_event(self.event_string)
     if entity.components["player"] then
+        -- the entity's name indicates the level to load
         if owner.name ~= "menu" then
             g.game_state:exit()
             print("Exit id: "..owner.id)

@@ -13,6 +13,7 @@ g = {
     invisible_group = {}, -- contains all the invisible entities
     players_party = {}, -- contains both the entities reacting to input and their Player component
     npcs_group = {}, -- contains all the NPCs
+    entities_group = {}, -- contains all the other entities, ref needed to apply effects on
     cemetery = {}, -- a table containing deaths data (player, killer, gold...)
     is_tweening = false, -- suspends player input during animations
     TILESET = love.graphics.newImage(mod.PATH_TO_TILESET or "graphics/tileset.png"),

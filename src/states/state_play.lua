@@ -85,7 +85,7 @@ function StatePlay:update()
                 valid_action = current_player["player_component"]:input_management(current_player["entity"], key)
                 -- removing input that was taken care of
                 table.remove(g.keys_pressed, i2)
-                -- skip rest of the code if action isn't valid
+                -- if action isn't returned as valid, skip rest of func and wait for valid return
                 if not valid_action then return false end
             end
         end

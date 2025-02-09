@@ -2,6 +2,7 @@
 local TILESET_WIDTH = g.TILESET:getWidth()
 local TILESET_HEIGHT = g.TILESET:getHeight()
 local TILE_SIZE = mod.TILE_SIZE or 20 -- used for cell size/tileset slicing.
+local sprites_groups = {}
 
 -- simple, user-friendly error message handler
 function error_handler(error_input_1, error_input_2)
@@ -73,7 +74,8 @@ end
     and if we call it in main.lua we can output some more info about the error
 ]]
 function csv_reader(input_csv, separator)
-    local new_table = {} -- final table
+    -- this final table will contain all lines from the CSV
+    local new_table = {}
 
     if not input_csv then
         new_table = "ERROR READING CSV: Missing input"
@@ -106,6 +108,37 @@ function csv_reader(input_csv, separator)
 
     -- returning results only if the whole operation went right
     return new_table
+end
+
+function sprites_groups_manager()
+    -- all sprites groups are managed by a single CSV file
+    local sprites_groups_csv = csv_reader(PATH_TO_CSV .. "sprites_groups.csv")
+
+    -- check if operation went right; if not, activate error_handler
+    if type(sprites_groups_csv) == "string" then
+        error_handler("The above error was triggered while trying to read sprites_groups.csv")
+        return false
+    end
+
+    for i, line in ipairs(sprites_groups_csv) do
+        local current_group = {}
+        local group_name = ""
+        -- for each line in the csv, store its data in util.lua local sprites_groups
+        current_group = strings_separator(line[1], ",", 1)
+        for i2, value in ipairs(current_group) do
+            -- first value is the group's name
+            if i2 == 1 then
+                group_name = value
+                sprites_groups[group_name] = {}
+                sprites_groups[group_name .. "_length"] = 0
+            else
+                table.insert(sprites_groups[group_name], tonumber(value))
+                sprites_groups[group_name .. "_length"] = sprites_groups[group_name .. "_length"] + 1
+            end
+        end
+    end
+    
+    return true
 end
 
 function entities_spawner(blueprint, loc_row, loc_column)
@@ -339,8 +372,8 @@ function map_reader(map, generate_players)
     local map_values = csv_reader(PATH_TO_CSV .. "map_"..map..".csv")
 
     -- check if operation went right; if not, activate error_handler and return
-    if not type(map_values) == "string" then
-        error_handler(map_values, "The above error was triggered while trying to read map.csv")
+    if type(map_values) == "string" then
+        error_handler("The above error was triggered while trying to read map.csv")
         return false
     end
 
@@ -361,7 +394,7 @@ function map_reader(map, generate_players)
 
     -- check if operation went right; if not, activate error_handler and return
     if type(tiles_features_csv) == "string" then
-        error_handler(tiles_features_csv, "The above error was triggered while trying to read tiles_features.csv")
+        error_handler("The above error was triggered while trying to read tiles_features.csv")
         return false
     end
 
@@ -439,6 +472,8 @@ function blueprints_generator(id, tile, components_list_input)
     local stored_components = {}
     -- this will be the list of actual components to input as argument to new entity
     local blueprint_components = {}
+    -- this variable will store eventual multi-value input for tile index or a pool name
+    local group_name = {}
     for i, comp in ipairs(components_list_input) do
         -- pos is set to 1 by default and keeps track of the separator position inside the string
         local pos = 1
@@ -468,6 +503,56 @@ function blueprints_generator(id, tile, components_list_input)
         end
         ::continue::
     end
+
+    -- an entity can have a fixed tile, or a random tile from a group in sprites_groups.
+    -- In the latter case, the selected tile will be removed from the pool once used.
+    -- Now it is being checked if the Entity has a fixed tile or a random one from a group.
+    group_name = strings_separator(tile, ":", 1)
+    -- if char ':' was found, then there's a group...
+    if group_name[2] then
+        -- number of values in the group, counted later
+        local num_of_values = 0
+        -- selected random index
+        local selected_index = 0
+        -- selected group length
+        local group_length = 0
+
+        -- check if group is valid or not (char ':' may have been manually misused)
+        if not sprites_groups[group_name[2]] then
+            error_handler("Trying to assign sprite to an Entity from a non-existing sprites_group")
+            g.game_state:exit()
+            g.game_state = StateFatalError()
+            g.game_state:init()
+
+            return false
+        end
+
+        -- checking the group length, stored beforehand in sprites_groups_manager()
+        group_length = sprites_groups[group_name[2] .. "_length"]
+
+        -- check if there are still sprites available in selected group
+        if group_length <= 0 then
+            error_handler("Trying to assign sprite to an Entity from a depleted sprites_group (more entities than available sprites)")
+            g.game_state:exit()
+            g.game_state = StateFatalError()
+            g.game_state:init()
+
+            return false
+        end
+
+        -- saving the random index, otherwise different results will be output when setting/removing
+        for i = 1, math.random(group_length) do
+            selected_index = selected_index + 1
+        end            
+
+        -- setting randomly chosen sprite
+        tile = sprites_groups[group_name[2]][selected_index]
+        -- removing randomly chosen sprite from its group
+        table.remove(sprites_groups[group_name[2]], selected_index)
+        -- length of the group was reduced by one
+        sprites_groups[group_name[2] .. "_length"] = group_length - 1
+    end
+
     -- create final blueprint from entity and its components and save it in BLUEPRINTS_LIST
     local new_blueprint = Entity(id, tile, blueprint_components)
     BLUEPRINTS_LIST[id] = new_blueprint
@@ -479,7 +564,7 @@ function blueprints_manager()
 
     -- check if operation went right; if not, activate error_handler
     if type(entities_csv) == "string" then
-        error_handler(entities_csv, "The above error was triggered while trying to read blueprints.csv")
+        error_handler("The above error was triggered while trying to read blueprints.csv")
         return false
     end
 

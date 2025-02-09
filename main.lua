@@ -33,12 +33,17 @@ function love.keypressed(key)
 end
 
 function love.load()
+    -- first thing first, use OS time to obtain unpredictable random numbers
+    math.randomseed(os.time())
     -- game screen and tile settings
     GAME_SCREEN = love.window.setMode(g.window_width, g.window_height, 
     {resizable=true, vsync=0, minwidth=400, minheight=300}
     )
 
-    -- immediately create and store all blueprints
+    -- immediately store in util.lua all sprites_groups for entities blueprints
+    sprites_groups_manager()
+
+    -- then create and store all blueprints
     local blueprints = blueprints_manager()
 
     -- if something went wrong, immediately go in StateFatalError()

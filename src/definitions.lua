@@ -26,8 +26,34 @@ function Entity:new(id, tile, components, name)
     self.tile = tile
     -- completely optional. This is where all entity components are defined, in an Object Aggregation fashion
     self.components = components or {}
+    -- completely optional. This is where all entity powers (abilities) are defined
+    self.powers = powers or {}
     -- completely optional. Used for Players names and special NPCs/objects
     self.name = name or id
+end
+
+-- Powers are built with Effects, and can be applied on self/target by Entities
+-- they can be simple or complex and they range from damage to teleport and hallucination
+Power = Object:extend()
+
+function Power:new(string, inputs, input_effects)
+    -- string printed on console when power is used
+    self.string = string or error_handler("Power error: no string")
+    -- self.effects is a table = {['effect_name'] = proper_input_table, ...}
+    self.effects = {}
+    -- input_effects is a 3D table = {[1] = {1d1, 2d3, 1d6}, [2] = {2d4, 1d2}, ...}
+    -- with this loop, each effect is assigned the proper table of input values
+    for i, effect in ipairs(input_effects) do
+        self.effects[effect] = inputs[i]
+    end
+end
+
+function Power:activate(target)
+    console_event(self.string)
+    -- for each effect in self.effects, call effect function and feed proper input
+    for effect,input in pairs(self.effects) do
+        EFFECTS_TABLE[effect](target, input)
+    end
 end
 
 -- base state definition

@@ -1,7 +1,7 @@
 -- variable containing the path to the necessary CSV files
 -- the two current local paths I use are "F:/Development/Dev_Games/GOBLET/source/rogue24-goblet/modding/" or "C:/Users/foxre/"
 -- you'll need to modify these to your local path since the system, to date, cannot find other than LUA files in the relative path
-PATH_TO_CSV = mod.path_to_csv or "F:/Development/Dev_Games/GOBLET/source/rogue24-goblet/modding/"
+PATH_TO_CSV = mod.path_to_csv or "F:/Development/Dev_Games/GOBLET/source/azoth!_blackguard/modding/"
 
 GAME_TITLE = type(mod.game_title) == "string" and mod.game_title or "GOBLET"
 
@@ -57,15 +57,6 @@ FONTS = {
     ["subtitle"] = love.graphics.newFont("fonts/Bitmgothic.ttf", FONT_SIZE_SUBTITLE),
     ["default"] = love.graphics.newFont("fonts/BitPotion.ttf", FONT_SIZE_DEFAULT),
     ["narration"] = love.graphics.newFont("fonts/Pixellove.ttf", FONT_SIZE_DEFAULT),
-}
-
--- valid effects for the that can be applied to entities with consequence
-EFFECTS_TABLE = {
-    ["poison"] = true,
-    ["venom"] = true,
-    ["burning"] = true,
-    ["confused"] = true,
-    ["invisible"] = true
 }
 
 --[[

@@ -252,7 +252,7 @@ function Npc:new(args)
         ["hearing"] = true
     }
     for i, var in ipairs(args) do
-        local new_var = strings_separator(var, ":", 1)
+        local new_var = strings_separator(var, "=", 1)
         -- if it is a valid table variable, assign values to it
         if not variables_group[new_var[1]] then
             goto continue
@@ -483,7 +483,7 @@ Stats = Object:extend()
 function Stats:new(stats_table)
     self.stats = {}
     for i, stat in ipairs(stats_table) do
-        local new_stat = strings_separator(stat, ":", 1)
+        local new_stat = strings_separator(stat, "=", 1)
         -- automatically convert numerical stats to numbers
         if new_stat[2]:match("%d") then
             new_stat[2] = tonumber(new_stat[2])
@@ -500,7 +500,7 @@ function Dies:new(dies_table)
     self.dies = {}
     for i, stat in ipairs(dies_table) do
         -- new_set[1] == set name; new_set[2] == set
-        local new_set = strings_separator(stat, ":", 1)
+        local new_set = strings_separator(stat, "=", 1)
         -- set_values == all of the set's values but name
         local set_values = {}
         -- set_data == n of dies, type of die + (optional) modifier
@@ -602,7 +602,7 @@ end
 
 function Effect:add(input_effects)
     for i, effect in ipairs(input_effects) do
-        local assigned_effect = strings_separator(effect, ":", 1)
+        local assigned_effect = strings_separator(effect, "=", 1)
         -- checking that first arg is a valid effect
         if not EFFECTS_TABLE[assigned_effect[1]] then
             error_handler('In component "Effect" tried to input invalid effect, ignored')

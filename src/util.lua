@@ -70,8 +70,9 @@ function strings_separator(line, separator, pos)
 end
 
 --[[
-    note that the error_handler is never called in csv_reader, since it is called various times
-    and if we call it in main.lua we can output some more info about the error
+    csv_reader() returns a 3D table like 'table[line number] = {line value 1, line value 2, ...}'
+    Note that the error_handler is never called in csv_reader, since it is called various times
+    and if we call it in main.lua we can output some more info about the error.
 ]]
 function csv_reader(input_csv, separator)
     -- this final table will contain all lines from the CSV
@@ -461,11 +462,9 @@ function love.resize(w, h)
     g.game_state:refresh()
 end
 
-function blueprints_generator(id, tile, components_list_input)
-    if BLUEPRINTS_LIST[id] then
-        error_handler('Blueprint "'..id..'" is not unique, duplicates ignored.')
-        return false
-    end
+function blueprints_generator(input_table)
+    local id
+    local tile
     -- components not implemented in components_interface will be ignored and flagged with a warning
     local all_components = {}
     -- this table stores which components have been saved to avoid duplicates
@@ -473,16 +472,103 @@ function blueprints_generator(id, tile, components_list_input)
     -- this will be the list of actual components to input as argument to new entity
     local blueprint_components = {}
     -- this variable will store eventual multi-value input for tile index or a pool name
-    local group_name = {}
-    for i, comp in ipairs(components_list_input) do
+    local index_value = {}
+
+    for i, element in ipairs(input_table) do
+        -- useful copy of element, used for element type check
+        local raw_element
+        -- only used for components, not for id, tile or power values
         -- pos is set to 1 by default and keeps track of the separator position inside the string
         local pos = 1
-        -- note that components names and their arguments are separated with commas
-        -- this variable contains every input of the component
-        local component_tags = strings_separator(comp, ",", pos)
-        -- all_components contains tables with a comp tag and its optional arguments tags
+        -- only used for components. Note that components names and their arguments are separated
+        -- with commas. This variable stores every input of the component
+        local component_tags = {}
+
+        -- checking if the element is the Blueprint's name
+        raw_element = strings_separator(element, "@", 1)
+        
+        if raw_element[2] then
+            print("id: " .. raw_element[2])
+            id = raw_element[2]
+            --print(id)
+
+            -- checking to ensure Blueprint id uniqueness
+            if BLUEPRINTS_LIST[id] then
+                error_handler('Blueprint "'..id..'" is not unique, duplicates ignored.')
+                return false
+            end
+
+            goto continue
+        end
+
+        -- checking if the element is the Blueprint's tile/tile_group
+        raw_element = strings_separator(element, ":", 1)
+        -- an entity can have a fixed tile, or a random tile from a group in sprites_groups.
+        -- In the latter case, the selected tile will be removed from the pool once used.
+        -- Now it is being checked if the Entity has a fixed tile or a random one from a group.
+        if raw_element[2] then
+            print("tile: " .. raw_element[2])
+            -- number of values in the group, counted later
+            local num_of_values = 0
+            -- selected random index
+            local selected_index = 0
+            -- selected group length
+            local group_length = 0
+
+            -- checking if it's a single index or a group
+            if tonumber(raw_element[2]) then
+                tile = raw_element[2]
+                goto continue
+            end
+
+            -- check if group is valid or not (char ':' may have been manually misused)
+            if not sprites_groups[raw_element[2]] then
+                error_handler("Trying to assign sprite to an Entity from a non-existing sprites_group")
+                g.game_state:exit()
+                g.game_state = StateFatalError()
+                g.game_state:init()
+
+                return false
+            end
+
+            -- checking the group length, stored beforehand in sprites_groups_manager()
+            group_length = sprites_groups[raw_element[2] .. "_length"]
+
+            -- check if there are still sprites available in selected group
+            if group_length <= 0 then
+                error_handler("Trying to assign sprite to an Entity from a depleted sprites_group (more entities than available sprites)")
+                g.game_state:exit()
+                g.game_state = StateFatalError()
+                g.game_state:init()
+
+                return false
+            end
+
+            -- saving the random index, otherwise different results will be output when setting/removing
+            for j = 1, math.random(group_length) do
+                selected_index = selected_index + 1
+            end            
+
+            -- setting randomly chosen sprite
+            tile = sprites_groups[raw_element[2]][selected_index]
+            -- removing randomly chosen sprite from its group
+            table.remove(sprites_groups[raw_element[2]], selected_index)
+            -- length of the group was reduced by one
+            sprites_groups[raw_element[2] .. "_length"] = group_length - 1
+
+            goto continue
+        end
+    
+
+        -- if nothing of the above is true, then input must be a component
+
+        component_tags = strings_separator(element, ",", pos)
+        -- all_components contains tables with a element tag and its optional arguments tags
         table.insert(all_components, component_tags)
-    end             
+
+        ::continue::
+    end 
+
     for i, comp_tags in ipairs(all_components) do
         -- translating components tags into actual components thanks to components_interface
         local new_component = components_interface(comp_tags)
@@ -502,55 +588,6 @@ function blueprints_generator(id, tile, components_list_input)
             error_handler('Invalid component: "'..comp_tags[1]..'" was ignored.')
         end
         ::continue::
-    end
-
-    -- an entity can have a fixed tile, or a random tile from a group in sprites_groups.
-    -- In the latter case, the selected tile will be removed from the pool once used.
-    -- Now it is being checked if the Entity has a fixed tile or a random one from a group.
-    group_name = strings_separator(tile, ":", 1)
-    -- if char ':' was found, then there's a group...
-    if group_name[2] then
-        -- number of values in the group, counted later
-        local num_of_values = 0
-        -- selected random index
-        local selected_index = 0
-        -- selected group length
-        local group_length = 0
-
-        -- check if group is valid or not (char ':' may have been manually misused)
-        if not sprites_groups[group_name[2]] then
-            error_handler("Trying to assign sprite to an Entity from a non-existing sprites_group")
-            g.game_state:exit()
-            g.game_state = StateFatalError()
-            g.game_state:init()
-
-            return false
-        end
-
-        -- checking the group length, stored beforehand in sprites_groups_manager()
-        group_length = sprites_groups[group_name[2] .. "_length"]
-
-        -- check if there are still sprites available in selected group
-        if group_length <= 0 then
-            error_handler("Trying to assign sprite to an Entity from a depleted sprites_group (more entities than available sprites)")
-            g.game_state:exit()
-            g.game_state = StateFatalError()
-            g.game_state:init()
-
-            return false
-        end
-
-        -- saving the random index, otherwise different results will be output when setting/removing
-        for i = 1, math.random(group_length) do
-            selected_index = selected_index + 1
-        end            
-
-        -- setting randomly chosen sprite
-        tile = sprites_groups[group_name[2]][selected_index]
-        -- removing randomly chosen sprite from its group
-        table.remove(sprites_groups[group_name[2]], selected_index)
-        -- length of the group was reduced by one
-        sprites_groups[group_name[2] .. "_length"] = group_length - 1
     end
 
     -- create final blueprint from entity and its components and save it in BLUEPRINTS_LIST
@@ -573,18 +610,18 @@ function blueprints_manager()
         local n_of_elements = 0
         local entity_components = {}
         -- counting number of components contained in each line
-        for i2, component in ipairs(line) do
+        for _, component in ipairs(line) do
             n_of_elements = n_of_elements + 1
         end
         -- using j to index elements assigned to entity_components, starting from 1
         local j = 1
-        -- storing components starting from the third, since the first two elements are id and tile
-        for k = 3, n_of_elements do
+        -- storing components
+        for k = 1, n_of_elements do
             entity_components[j] = entities_csv[i][k]
             j = j + 1
         end
-        -- passing the new entity with the data extracted from the CSV file (id, tile, components)
-        blueprints_generator(entities_csv[i][1], entities_csv[i][2], entity_components)
+        -- passing the new entity with the data extracted from the CSV file
+        blueprints_generator(entity_components)
     end
 
     return true
@@ -824,8 +861,4 @@ end
 function console_cmd(cmd)
     g.console["string"] = cmd
     g.canvas_ui = ui_manager_play()
-end
-
-function apply_effect(target, effect)
-    -- all the valid effects from EFFECTS_TABLE will have a dedicated function
 end

@@ -13,6 +13,7 @@ require "src.action_modes"
 require "src.components"
 require "src.constants"
 require "src.util"
+require "src.effects"
 require "src.definitions"
 
 -- importing states

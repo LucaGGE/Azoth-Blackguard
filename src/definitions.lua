@@ -13,7 +13,7 @@ cell = {
 -- entity definition. Entities are very simple containers for components!
 Entity = Object:extend()
 
-function Entity:new(id, tile, components, name)
+function Entity:new(id, tile, components, powers, name)
     -- can be either a player or a NPC component. Used to check groups
     self.controller = nil
     -- checked everytime an entity gets drawn, to see if it need to be eliminated
@@ -27,7 +27,7 @@ function Entity:new(id, tile, components, name)
     -- completely optional. This is where all entity components are defined, in an Object Aggregation fashion
     self.components = components or {}
     -- completely optional. This is where all entity powers (abilities) are defined
-    self.powers = powers or {}
+    self.powers = powers or false
     -- completely optional. Used for Players names and special NPCs/objects
     self.name = name or id
 end
@@ -36,22 +36,25 @@ end
 -- they can be simple or complex and they range from damage to teleport and hallucination
 Power = Object:extend()
 
-function Power:new(string, inputs, input_effects)
-    -- string printed on console when power is used
-    self.string = string or error_handler("Power error: no string")
+function Power:new(input)
+    -- power's name is already store in player's Entity.powers[power_name] = Power(input)
     -- self.effects is a table = {['effect_name'] = proper_input_table, ...}
     self.effects = {}
-    -- input_effects is a 3D table = {[1] = {1d1, 2d3, 1d6}, [2] = {2d4, 1d2}, ...}
-    -- with this loop, each effect is assigned the proper table of input values
-    for i, effect in ipairs(input_effects) do
-        self.effects[effect] = inputs[i]
+
+    -- assigning effect = own input table values
+    for i, effect in ipairs(input) do
+        -- first element of the table is power's name, skip
+        if i ~= 1 then
+            local effect_input = strings_separator(effect, "=", 1)
+            self.effects[effect_input[1]] = effect_input[2]
+            print("Effect: " .. effect_input[1] .. " with " .. effect_input[2])
+        end
     end
 end
 
 function Power:activate(target)
-    console_event(self.string)
     -- for each effect in self.effects, call effect function and feed proper input
-    for effect,input in pairs(self.effects) do
+    for effect, input in pairs(self.effects) do
         EFFECTS_TABLE[effect](target, input)
     end
 end

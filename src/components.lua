@@ -49,6 +49,20 @@ function Player:input_management(entity, key)
         return false
     end
 
+    -- TEMPORARY CODE, USED TO DEBUG -----------------------------------------------------------------------------------------------------
+    if key == "v" then
+        if entity.powers then
+            for power, power_class in pairs(entity.powers) do
+                print(power)
+                for effect, input in pairs(power_class.effects) do
+                    print(effect .. " = " .. input)
+                end
+            end
+        else
+            print("No powers for Entity " .. self.name)
+        end
+    end
+
     if not self.action_state then
         -- checking if player is trying to use a hotkey
         if not self.movement_inputs[key] and not self.action_state then
@@ -96,8 +110,8 @@ end
 --[[
     NOTE: if something can move, it can attack. Moving against an entity = attacking it.
     This also means that something can have a movable component but no movement_type,
-    and it can still attack - think of a living tree that can bash players with its branches but
-    cannot move around!
+    and it can still attack - think of a living tree that can bash players with its branches
+    but cannot move around!
 ]]
 function Movable:move_entity(entity, direction)
     local target_cell

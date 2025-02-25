@@ -142,7 +142,7 @@ function sprites_groups_manager()
     return true
 end
 
-function entities_spawner(blueprint, loc_row, loc_column)
+function entities_spawner(blueprint, loc_row, loc_column, name)
     local player_num = 1
     local is_occupant = false
     local is_npc = false
@@ -172,7 +172,7 @@ function entities_spawner(blueprint, loc_row, loc_column)
         end
     end
 
-    instanced_entity = Entity(blueprint["bp"].id, blueprint["bp"].tile, instanced_components, blueprint["name"])
+    instanced_entity = Entity(blueprint["bp"].id, blueprint["bp"].tile, instanced_components, blueprint["bp"].powers, name)
 
     -- once special components are stored, finish entityt identity 
     if is_npc then
@@ -241,6 +241,7 @@ end
 function map_generator(map_values, generate_players)
     local cell_x = 0
     local cell_y = 0
+    local entity_name -- optional entity name, tanken from third cell arg
     local player_spawn_loc = {}
     -- function dedicated to finalize cell generation with tile/entity
     local finalize_cell = function(tile_index, blueprint, i, j)
@@ -256,7 +257,7 @@ function map_generator(map_values, generate_players)
 
         -- spawning the entity from a blueprint
         if blueprint then
-            entities_spawner(blueprint, i, j)
+            entities_spawner(blueprint, i, j, entity_name)
         end
     end
     -- decision table for entity/no entity cells chain of action
@@ -271,7 +272,7 @@ function map_generator(map_values, generate_players)
                 if BLUEPRINTS_LIST[tile_value_2] then
                     blueprint = {["bp"] = BLUEPRINTS_LIST[tile_value_2]}
                     -- checking if a special name for the entity was fed in the map
-                    blueprint["name"] = tile_value_3
+                    entity_name = tile_value_3
                 else
                     error_handler("Map: illegal entity at row "..i.." column "..j..". Ignored.")
                 end
@@ -288,6 +289,8 @@ function map_generator(map_values, generate_players)
             end
         end,
         [false] = function(tile_value_1, i, j)
+            -- reset entity_name value
+            entity_name = nil
             local tile_index = tile_value_1
             -- if tile_index == nil then there must be a blank line or the value is unreadable
             -- if tile index doesn't match a number ("%d") then there is an illegal value
@@ -347,7 +350,7 @@ function map_generator(map_values, generate_players)
                 g.game_state:init()
                 break
             end
-            entities_spawner(player_blueprint, player_spawn_loc[i]["row"], player_spawn_loc[i]["column"])
+            entities_spawner(player_blueprint, player_spawn_loc[i]["row"], player_spawn_loc[i]["column"], entity_name)
         end
     else
         for i, player in ipairs(g.players_party)  do
@@ -463,10 +466,12 @@ function love.resize(w, h)
 end
 
 function blueprints_generator(input_table)
-    local id
-    local tile
+    local id -- blueprint's id
+    local tile -- blueprint's tile
     -- components not implemented in components_interface will be ignored and flagged with a warning
     local all_components = {}
+    -- this table stores which powers have been saved to avoid duplicates
+    local blueprint_powers = {}
     -- this table stores which components have been saved to avoid duplicates
     local stored_components = {}
     -- this will be the list of actual components to input as argument to new entity
@@ -476,21 +481,20 @@ function blueprints_generator(input_table)
 
     for i, element in ipairs(input_table) do
         -- useful copy of element, used for element type check
-        local raw_element
+        local element_output
         -- only used for components, not for id, tile or power values
         -- pos is set to 1 by default and keeps track of the separator position inside the string
         local pos = 1
-        -- only used for components. Note that components names and their arguments are separated
+        -- only used for components. Note that components ids and their arguments are separated
         -- with commas. This variable stores every input of the component
         local component_tags = {}
 
-        -- checking if the element is the Blueprint's name
-        raw_element = strings_separator(element, "@", 1)
+        -- checking if the element is the Blueprint's id
+        element_output = strings_separator(element, "@", 1)
         
-        if raw_element[2] then
-            print("id: " .. raw_element[2])
-            id = raw_element[2]
-            --print(id)
+        if element_output[2] then
+            print("id: " .. element_output[2])
+            id = element_output[2]
 
             -- checking to ensure Blueprint id uniqueness
             if BLUEPRINTS_LIST[id] then
@@ -502,12 +506,12 @@ function blueprints_generator(input_table)
         end
 
         -- checking if the element is the Blueprint's tile/tile_group
-        raw_element = strings_separator(element, ":", 1)
+        element_output = strings_separator(element, ":", 1)
         -- an entity can have a fixed tile, or a random tile from a group in sprites_groups.
         -- In the latter case, the selected tile will be removed from the pool once used.
         -- Now it is being checked if the Entity has a fixed tile or a random one from a group.
-        if raw_element[2] then
-            print("tile: " .. raw_element[2])
+        if element_output[2] then
+            print("tile: " .. element_output[2])
             -- number of values in the group, counted later
             local num_of_values = 0
             -- selected random index
@@ -516,13 +520,13 @@ function blueprints_generator(input_table)
             local group_length = 0
 
             -- checking if it's a single index or a group
-            if tonumber(raw_element[2]) then
-                tile = raw_element[2]
+            if tonumber(element_output[2]) then
+                tile = element_output[2]
                 goto continue
             end
 
             -- check if group is valid or not (char ':' may have been manually misused)
-            if not sprites_groups[raw_element[2]] then
+            if not sprites_groups[element_output[2]] then
                 error_handler("Trying to assign sprite to an Entity from a non-existing sprites_group")
                 g.game_state:exit()
                 g.game_state = StateFatalError()
@@ -532,7 +536,7 @@ function blueprints_generator(input_table)
             end
 
             -- checking the group length, stored beforehand in sprites_groups_manager()
-            group_length = sprites_groups[raw_element[2] .. "_length"]
+            group_length = sprites_groups[element_output[2] .. "_length"]
 
             -- check if there are still sprites available in selected group
             if group_length <= 0 then
@@ -550,17 +554,37 @@ function blueprints_generator(input_table)
             end            
 
             -- setting randomly chosen sprite
-            tile = sprites_groups[raw_element[2]][selected_index]
+            tile = sprites_groups[element_output[2]][selected_index]
             -- removing randomly chosen sprite from its group
-            table.remove(sprites_groups[raw_element[2]], selected_index)
+            table.remove(sprites_groups[element_output[2]], selected_index)
             -- length of the group was reduced by one
-            sprites_groups[raw_element[2] .. "_length"] = group_length - 1
+            sprites_groups[element_output[2] .. "_length"] = group_length - 1
 
             goto continue
         end
-    
 
-        -- if nothing of the above is true, then input must be a component
+        -- checking if the element is a power
+        element_output = strings_separator(element, "*", 1)
+
+        if element_output[2] then
+            -- only used for powers. Structure is like components, but effects are functions
+            local power_effects = strings_separator(element_output[2], ",", pos)
+            
+            -- check power name uniqueness
+            if blueprint_powers[power_effects[1]] then
+                error_handler('Power"'..power_effects[1]..'" for blueprint "'..id..'" is not unique, duplicates ignored.')
+                goto continue
+            end
+            
+            print("Power: " .. power_effects[1])
+
+            -- store newly added power in blueprint_powers, to add to final Entity
+            blueprint_powers[power_effects[1]] = Power(power_effects)
+
+            goto continue
+        end    
+
+        -- if nothing of the above is true, then element must be a component
 
         component_tags = strings_separator(element, ",", pos)
         -- all_components contains tables with a element tag and its optional arguments tags
@@ -587,11 +611,12 @@ function blueprints_generator(input_table)
             -- warning with console if an invalid component was found inside CSV
             error_handler('Invalid component: "'..comp_tags[1]..'" was ignored.')
         end
+
         ::continue::
     end
 
     -- create final blueprint from entity and its components and save it in BLUEPRINTS_LIST
-    local new_blueprint = Entity(id, tile, blueprint_components)
+    local new_blueprint = Entity(id, tile, blueprint_components, blueprint_powers)
     BLUEPRINTS_LIST[id] = new_blueprint
 end
 

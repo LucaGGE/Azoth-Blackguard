@@ -48,8 +48,14 @@ function Power:new(input)
         -- first element of the table is power's name, skip
         if i ~= 1 then
             local effect_input = strings_separator(effect, "=", 1)
-            self.effects[effect_input[1]] = effect_input[2]
-            print("Effect: " .. effect_input[1] .. " with " .. effect_input[2])
+
+            -- checking effects validity, storing valid ones
+            if EFFECTS_TABLE[effect_input[1]] then
+                self.effects[effect_input[1]] = effect_input[2]
+                print("Effect: " .. effect_input[1] .. "(" .. effect_input[2] .. ")")
+            else
+                error_handler(effect_input[1] .. ": this effect doesn't exist, ignored")
+            end
         end
     end
 end
@@ -61,10 +67,19 @@ function Power:activate(target)
     end
 end
 
--- this stores the effect func and its duration, called by each Entity just before turn
-function Effect:new(target, input)
+-- this stores lasting effects and their duration. Called by owner Entity just before turn
+EffectTag = Object:extend()
+
+function EffectTag:new(target, input, duration, func)
     self.target = target
     self.input = input
+    self.duration = duration -- number of turns that the EffectTag will last
+    self.func = func -- func to call. Not equal to the initial function
+end
+
+function EffectTag:activate()
+    self.duration = self.duration - 1
+    self.func(self.target, self.input)
 end
 
 -- base state definition

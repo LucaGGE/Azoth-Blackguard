@@ -493,7 +493,7 @@ function blueprints_generator(input_table)
         element_output = strings_separator(element, "@", 1)
         
         if element_output[2] then
-            print("id: " .. element_output[2])
+            --print("id: " .. element_output[2])
             id = element_output[2]
 
             -- checking to ensure Blueprint id uniqueness
@@ -511,7 +511,7 @@ function blueprints_generator(input_table)
         -- In the latter case, the selected tile will be removed from the pool once used.
         -- Now it is being checked if the Entity has a fixed tile or a random one from a group.
         if element_output[2] then
-            print("tile: " .. element_output[2])
+            --print("tile: " .. element_output[2])
             -- number of values in the group, counted later
             local num_of_values = 0
             -- selected random index
@@ -574,15 +574,6 @@ function blueprints_generator(input_table)
             if blueprint_powers[power_effects[1]] then
                 error_handler('Power"'..power_effects[1]..'" for blueprint "'..id..'" is not unique, duplicates ignored.')
                 goto continue
-            end
-
-            -- checking effects validity
-            for j, effect in ipairs(power_effects) do
-                if j ~= 1 then
-                    if not EFFECTS_TABLE[effect] then
-                        print("this effect doesn't exist")
-                    end
-                end
             end
             
             print("Power: " .. power_effects[1])
@@ -702,14 +693,38 @@ function turns_manager(current_player, npc_turn)
         [g.camera] =  {x = x_for_tweening, y = y_for_tweening}
     }):finish(function ()
         -- if it's not the NPCs turn, skip single NPC activation
-        if not npc_turn then goto continue end
+        if not npc_turn then
+            for i, effect_tag in ipairs(current_player.effects) do
+                -- activate lasting effects for current_player
+                effect_tag:activate()
+                -- remove concluded effects from current_player.effects
+                if effect_tag.duration <= 0 then
+                    table.remove(current_player.effects, i)
+                end
+            end
+            goto continue
+        end
 
         for i, npc in ipairs(g.npcs_group) do
             -- check if the NPC is alive or is waiting to be removed from game
             if npc.alive then
+                for j, effect_tag in ipairs(npc.effects) do
+                    -- activate lasting effects for each npc
+                    effect_tag:activate()
+                    -- remove concluded effects from each npc.effects
+                    if effect_tag.duration <= 0 then
+                        table.remove(npc.effects, j)
+                    end
+                end
+            end
+            -- double check if NPC is still alive after the receiving lasting effects
+            if npc.alive then
                 g.npcs_group[i].components["npc"]:activate(g.npcs_group[i])
             end
         end
+
+        -- activate lasting effects for all the non-player non-NPC Entities
+        -- WIP TO DO WIP TO DO WIP TO DO WIP TO DO WIP TO DO WIP TO DO WIP TO DO WIP TO DO WIP TO DO WIP TO DO WIP TO DO WIP TO DO WIP TO DO 
 
         ::continue::
         g.is_tweening = false

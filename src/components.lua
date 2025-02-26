@@ -197,6 +197,10 @@ function Movable:move_entity(entity, direction)
         if successful_attack then 
             love.audio.stop(SOUNDS["hit_blow"])
             love.audio.play(SOUNDS["hit_blow"])
+            for power_tag, power_class in pairs(entity.powers) do
+                print(power_tag)
+                power_class:activate(target_cell.occupant)
+            end
         else
             love.audio.play(SOUNDS["hit_miss"])
         end

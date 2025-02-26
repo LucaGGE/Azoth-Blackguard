@@ -187,11 +187,11 @@ function Movable:move_entity(entity, direction)
         end
 
         -- dices get rolled to identify successful hit and eventual damage
-        local score_to_succeed = 7
-        local successful_attack = dice_roll({1, 12, 1}, score_to_succeed)
+        local score_to_succeed = "7"
+        local successful_attack = dice_roll("1d12+1", score_to_succeed)
         
-        -- entities without dice sets roll 1d1
-        local damage = dice_roll(entity.components["dies"].dies["atk"] or {1, 1})
+        -- entities without dice sets have constant 1 damage
+        local damage = dice_roll("1")
         target_stats["hp"] = target_stats["hp"] - (successful_attack and damage or 0)
 
         if successful_attack then 

@@ -663,21 +663,54 @@ function camera_setting()
 end
 
 -- a simple dice throwing function accepting any number of any type of dice
-function dice_roll(die_set, success)
-    local throws = die_set[1]
-    local dies_value = die_set[2]
-    local modifier = die_set[3] or 0
+-- WARNING: this function ONLY ACCEPTS STRINGS
+function dice_roll(die_set_input, success_input)
+    local die_set -- contains: n of throws, value of dice, optional modifier
+    local throws
+    local die_value
+    local modifier = false
+    local value_modifier_couple
     local result = 0
+    local success = tonumber(success_input)
+
+    -- immediately check if it's a dice set or a constant
+    die_set = strings_separator(die_set_input, "d", 1)
+
+    -- die_set_input is constant
+    if not die_set[2] then
+        result = tonumber(die_set_input)
+        modifier = 0
+
+        -- if it's constant value, immediately return it as result
+        return result
+    end
+
+    -- die_set_input is an actual die set, store all data
+    throws = tonumber(die_set[1])
+
+    -- check if actual die set has positive modifier
+    value_modifier_couple = strings_separator(die_set[2], "+", 1)
+    if value_modifier_couple[2] then
+        die_value = tonumber(value_modifier_couple[1])
+        modifier = tonumber(value_modifier_couple[2])
+    end
+    -- check if actual die set has negative modifier
+    if modifier == false then
+        value_modifier_couple = strings_separator(die_set[2], "-", 1)
+        die_value = tonumber(value_modifier_couple[1])
+        modifier = tonumber(value_modifier_couple[2]) * -1 or 0
+    end
 
     for i = 1, throws do
-        result = result + math.random(1, dies_value)
+        result = result + math.random(1, die_value)
     end
     -- apply modifier
     result = result + modifier
     -- if success is request, it must be >= 0 or return false
     if success and success - result < 0 then result = false end
     -- numerical results can't be < 0
-    if result and result < 0 then result = 0 end 
+    if result and result < 0 then result = 0 end
+
     return result
 end
 
@@ -768,15 +801,15 @@ function ui_manager_play()
     -- print console events
     love.graphics.setColor(g.console["color3"][1], g.console["color3"][2], g.console["color3"][3], 1)
     love.graphics.print(
-        g.console["event3"], PADDING, (PADDING)
+        g.console["event3"] or "Error: fed nothing to console_event() func", PADDING, (PADDING)
     )
     love.graphics.setColor(g.console["color2"][1], g.console["color2"][2], g.console["color2"][3], 1)
     love.graphics.print(
-        g.console["event2"], PADDING, (PADDING * 2)
+        g.console["event2"] or "Error: fed nothing to console_event() func", PADDING, (PADDING * 2)
     )
     love.graphics.setColor(g.console["color1"][1], g.console["color1"][2], g.console["color1"][3], 1)
     love.graphics.print(
-        g.console["event1"], PADDING, (PADDING * 3)
+        g.console["event1"] or "Error: fed nothing to console_event() func", PADDING, (PADDING * 3)
     )
     
     -- restoring default RGBA, since this function influences ALL graphics
@@ -880,7 +913,7 @@ end
 function entity_kill(entity, index, group)
     table.remove(group, index)
     if entity.components["obstacle"] or entity.components["player"] or entity.components["npc"] then
-        print("Obstacle entity destroyed")
+        print("Occupant entity destroyed")
 
         entity.cell["cell"].occupant = nil
     else

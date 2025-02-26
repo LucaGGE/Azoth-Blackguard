@@ -3,15 +3,25 @@
 -- is structured, all these funcs need (target, input) even when (target) is useless
 
 function poison(target, input)
-    print(target.name .. " gets poisoned for the first time")
+    print("Poisoning: " .. target.name)
     -- applies a tag to entity.effects that will activate and get 'consumed' after x turns
     -- when an effect only has immediate effect or for the first application,
     -- the effect is immediately applied by the function
-    table.insert(target.effects, EffectTag(target, input, 3, poisoned))
+    table.insert(target.effects, EffectTag(target, input, dice_roll("1d3+2"), poisoned))
 end
 
+-- applied as a multiple-turns duration effect
 function poisoned(target, input)
+    local target_hp = target.components["stats"].stats["hp"]
+    -- cannot damage an Entity without hp
+    if not target_hp then return false end
+
     print(target.name .. " is poisoned")
+    target_hp = target_hp - 3
+    if target_hp <= 0 then
+        target.alive = false
+        console_event(target.name .. " got killed by poison", {[1] = 1, [2] = 1, [3] = 0})
+    end
 end
 
 function slash(target, input)

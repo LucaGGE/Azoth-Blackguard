@@ -575,6 +575,15 @@ function blueprints_generator(input_table)
                 error_handler('Power"'..power_effects[1]..'" for blueprint "'..id..'" is not unique, duplicates ignored.')
                 goto continue
             end
+
+            -- checking effects validity
+            for j, effect in ipairs(power_effects) do
+                if j ~= 1 then
+                    if not EFFECTS_TABLE[effect] then
+                        print("this effect doesn't exist")
+                    end
+                end
+            end
             
             print("Power: " .. power_effects[1])
 
@@ -681,6 +690,7 @@ function dice_roll(die_set, success)
     return result
 end
 
+-- manages turns and applies effects before Entity activation
 function turns_manager(current_player, npc_turn)
     -- setting current_player coords for camera tweening
     local x_for_tweening = current_player["entity"].cell["cell"].x

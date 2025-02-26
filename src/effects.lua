@@ -4,6 +4,9 @@
 
 function poison(target, input)
     print(target)
+    -- applies a tag to entity.effects that will activate and get 'consumed' after x turns
+    -- when an effect only has immediate effect or for the first application,
+    -- the effect is immediately applied by the function
 end
 
 function slash(target, input)

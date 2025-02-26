@@ -26,6 +26,8 @@ function Entity:new(id, tile, components, powers, name)
     self.tile = tile
     -- completely optional. This is where all entity components are defined, in an Object Aggregation fashion
     self.components = components or {}
+    -- effects applied on Entity by other Entities powers. Activated before Entity turn
+    self.effects = {} 
     -- completely optional. This is where all entity powers (abilities) are defined
     self.powers = powers or false
     -- completely optional. Used for Players names and special NPCs/objects
@@ -57,6 +59,12 @@ function Power:activate(target)
     for effect, input in pairs(self.effects) do
         EFFECTS_TABLE[effect](target, input)
     end
+end
+
+-- this stores the effect func and its duration, called by each Entity just before turn
+function Effect:new(target, input)
+    self.target = target
+    self.input = input
 end
 
 -- base state definition

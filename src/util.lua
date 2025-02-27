@@ -945,3 +945,23 @@ function console_cmd(cmd)
     g.console["string"] = cmd
     g.canvas_ui = ui_manager_play()
 end
+
+function death_check(target, damage, message)
+    -- this is needed to output messages on screen in yellow or red
+    local event_color = {
+        [false] = {[1] = 1, [2] = 1, [3] = 0},
+        [true] = {[1] = 1, [2] = 0, [3] = 0}
+    }
+    local target_stats = target.components["stats"].stats
+    -- choose color depending on player (red) or npc (yellow)
+    local target_type = target.components["player"] or false
+
+    -- cannot damage an Entity without hp
+    if not target_stats["hp"] then return false end
+
+    target_stats["hp"] = target_stats["hp"] - dice_roll(damage)
+    if target_stats["hp"] <= 0 then
+        target.alive = false
+        console_event(target.name .. " " .. message, event_color[target_type])
+    end
+end

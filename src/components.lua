@@ -191,14 +191,13 @@ function Movable:move_entity(entity, direction)
         local successful_attack = dice_roll("1d12+1", score_to_succeed)
         
         -- entities without dice sets have constant 1 damage
-        local damage = dice_roll("1")
-        target_stats["hp"] = target_stats["hp"] - (successful_attack and damage or 0)
+        --local damage = dice_roll("1")
+        --target_stats["hp"] = target_stats["hp"] - (successful_attack and damage or 0)
 
         if successful_attack then 
             love.audio.stop(SOUNDS["hit_blow"])
             love.audio.play(SOUNDS["hit_blow"])
             for power_tag, power_class in pairs(entity.powers) do
-                print(power_tag)
                 power_class:activate(target_cell.occupant)
             end
         else

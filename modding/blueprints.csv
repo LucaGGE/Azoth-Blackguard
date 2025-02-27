@@ -1,5 +1,5 @@
-@player|:players|player|stats,hp=10,gold=0|movable,walk|dies,atk=1d4|*slash,str=Player slashes,poison=1d10,bleed=2d4,ass=2d4|*slash
-@lemure|:65|stats,hp=10|npc,group=self,enemies=none,nature=neutral,sight=15,hearing=5|movable,walk,climb|dies,atk=1d4
+@player|:players|player|stats,hp=10,gold=0|movable,walk|dies,atk=1d4|*slash,str=Player slashes,poison=1d10,bleed=2d4,ass=2d4
+@lemure|:65|stats,hp=5|npc,group=self,enemies=none,nature=neutral,sight=15,hearing=5|movable,walk,climb|dies,atk=1d4
 @crab|:67|stats,hp=15,en=10|npc,group=crabs,enemies=none,nature=aggressive,sight=5,hearing=1|movable,walk,swim|dies,atk=1d2+1|*grab,str=It grabs!
 @gold|:81|trigger,true,true,Thee collect th' gold|statchange,gold,10,sfx_gold
 @exit|:110|exit,Thee travel to another level

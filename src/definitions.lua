@@ -77,7 +77,7 @@ function EffectTag:new(target, input, duration, func)
     self.func = func -- func to call. Not equal to the initial function
 end
 
-function EffectTag:activate()
+function EffectTag:activate(target)
     self.duration = self.duration - 1
     self.func(self.target, self.input)
 end

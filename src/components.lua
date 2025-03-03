@@ -384,16 +384,25 @@ function Trigger:new(args)
 end
 
 function Trigger:activate(owner, entity)
-    -- print trigger event string (i.e. 'A trap activates!')
-    console_event(self.event_string)
+    self.success = false
+    
+    -- check if owner Entity has a dedicated power flagged as 'trigger'
+    if owner.powers["trigger"] then
+        -- if something goes wrong (i.e. monster stepping on gold), do not destroy on trigger
+        success = owner.powers["trigger"]:activate(entity)
+    else
+        print("Blank trigger: a destroyontrigger Entity has no 'trigger' power to activate")
+    end
 
-    if owner.components["statchange"] then
-        local trigger_fired = owner.components["statchange"]:activate(entity)
-        -- if owner is to 'destroyontrigger', destroy it
-        if owner.components["trigger"].destroyontrigger and trigger_fired then
-            -- will be removed from render_group and cell automatically in StatePlay:refresh()
-            owner.alive = false
-        end
+    if success then
+        -- print trigger event string (i.e. 'A trap activates!')
+        console_event(self.event_string)
+    end
+    
+    -- if owner is to 'destroyontrigger', destroy it
+    if self.destroyontrigger and success then
+        -- will be removed from render_group and cell automatically in StatePlay:refresh()
+        owner.alive = false
     end
 end
 
@@ -550,13 +559,14 @@ function Dies:new(dies_table)
 end
 
 -- for all entities that are invisible by default (i.e. traps, invisible creatures)
+-- simple 'tag' component telling system 'do not draw me by default'
 Invisible = Object:extend()
 function Invisible:new()
 end
 
 -- simple component that stores a key and triggers an entity with corresponding name,
 -- i.e. self.key_value = door_a45 triggers door entity with name = door_a45
--- can also used to activate golems, unlock quests, etc
+-- can also used to activate golems, unlock quests, etc. Requires 'Usable' to be used
 Key = Object:extend()
 function Key:new(arg)
     self.key_value = arg[1]
@@ -573,10 +583,11 @@ end
 -- with own tags (i.e. Equipable on: horns works with Slots : horns)
 Slots = Object:extend()
 function Slots:new(args)
+    -- slot is available if == true and ~= Entity
     self.slots = {}
-    for i,v in ipairs(args) do
-        -- adding all input slots from args
-        table.insert(self.slots, v)
+    for _,slot in ipairs(args) do
+        -- adding all input slots from args (true = available)
+        self.slots[slot] = true
     end
 end
 
@@ -680,9 +691,29 @@ function Effect:activate(owner)
     end
 end
 
--- this component is the one which will allow entities to apply effects to each other. The effects
--- available are dictated by EFFECTS_TABLE and are applied to individual entities after each turn 
-Power = Object:extend()
-function Power:new(input_effects)
+Sealed = Object:extend()
+function Sealed:new(input)
+
+end
+
+Locked = Object:extend()
+function Locked:new(input)
+
+end
+
+-- simple comp that prevents acces to Entity name, id or description
+-- can only removed by effect 
+Secret = Object:extend()
+function Secret:new(input)
+    self.string = input[1]
+end
+
+Description = Object:extend()
+function Description:new(input)
+    self.string = input[1]
+end
+
+Link = Object:extend()
+function Link:new(input)
 
 end

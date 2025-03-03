@@ -37,9 +37,37 @@ function str_effect(target, input)
     console_event(input .. " " .. target.name .. "!")
 end
 
+function sfx_play(target, input)
+    print("Playing sound: " .. input)
+
+    -- if valid, play eventual sound
+    if SOUNDS[input] then
+        love.audio.stop(SOUNDS[input])
+        love.audio.play(SOUNDS[input])
+    else
+        error_handler("Trying to play invalid sound effect: " .. input)
+    end
+end
+
+function stat_gold(target, input)
+    local target_stats = target.components["stats"].stats or nil
+
+    -- give feedback to eventual trigger that Entity has no stats or 'gold' stat
+    if not target_stats or not target_stats["gold"] then
+        return false
+    end
+    
+    target_stats["gold"] = target_stats["gold"] + dice_roll(input)
+
+    print(target.name .. " gold has been changed: " .. input)
+    return true
+end
+
 -- valid effects for the that can be applied to entities with consequence
 EFFECTS_TABLE = {
     ["poison"] = poison,
     ["slash"] = slash,
-    ["str"] = str_effect
+    ["str"] = str_effect,
+    ["statgold"] = stat_gold,
+    ["sfx"] = sfx_play
 }

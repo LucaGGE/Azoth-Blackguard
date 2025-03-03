@@ -46,9 +46,30 @@ IO_DTABLE = {
             [entity.cell["grid_column"] + player_comp.movement_inputs[key][2]]
         end
 
-        -- note that and entity's name equale to a personal name or its id
+        -- note that and Entity's name equale to instance name or its id
         occupant_ref = target_cell.occupant and target_cell.occupant["name"] or nil
         entity_ref = target_cell.entity and target_cell.entity["id"] or nil
+
+        -- TO DO TO DO TO DO this code sucks and check 1000 times for the same things. IMPROVE! TO DO TO DO TO DO TO DO TO DO TO DO 
+        -- hide id, name and description of Entities with 'secret' component
+        if occupant_ref then
+            if target_cell.occupant.components["description"] then
+                occupant_ref = target_cell.occupant.components["description"].string
+            end
+
+            if target_cell.occupant.components["secret"] then
+                occupant_ref = target_cell.occupant.components["secret"].string
+            end
+        end
+        if entity_ref then
+            if target_cell.entity.components["description"] then
+                entity_ref = target_cell.entity.components["description"].string
+            end
+
+            if target_cell.entity.components["secret"] then
+                entity_ref = target_cell.entity.components["secret"].string
+            end
+        end
 
         -- checking if player is observing himself
         if target_cell.occupant == entity then
@@ -68,7 +89,7 @@ IO_DTABLE = {
         end
 
         if occupant_ref and entity_ref then
-            console_event("Thee observe " .. occupant_ref .. ", standing don somethende")
+            console_event("Thee observe " .. occupant_ref .. ", standing on somethende")
         end
 
         -- being a free action it always returns nil, so it needs to set player_comp.action_state = nil

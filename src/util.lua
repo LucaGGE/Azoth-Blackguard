@@ -676,12 +676,10 @@ function dice_roll(die_set_input, success_input)
     -- immediately check if it's a dice set or a constant
     die_set = strings_separator(die_set_input, "d", 1)
 
-    -- die_set_input is constant
+    -- die_set_input is constant, immediately return it as result
     if not die_set[2] then
         result = tonumber(die_set_input)
-        modifier = 0
 
-        -- if it's constant value, immediately return it as result
         return result
     end
 
@@ -693,16 +691,20 @@ function dice_roll(die_set_input, success_input)
     if value_modifier_couple[2] then
         die_value = tonumber(value_modifier_couple[1])
         modifier = tonumber(value_modifier_couple[2])
-    end
-    -- check if actual die set has negative modifier
-    if modifier == false then
-        value_modifier_couple = strings_separator(die_set[2], "-", 1)
-        if value_modifier_couple[2] then
-            die_value = tonumber(value_modifier_couple[1])
-            modifier = tonumber(value_modifier_couple[2]) * -1 or 0
-        end
+        
+        goto continue
     end
 
+    -- check if actual die set has negative modifier
+    value_modifier_couple = strings_separator(die_set[2], "-", 1)
+    if value_modifier_couple[2] then
+        die_value = tonumber(value_modifier_couple[1])
+        modifier = tonumber(value_modifier_couple[2]) * -1
+    end
+
+    :: continue ::
+
+    -- sum of all throws from the die set
     for i = 1, throws do
         result = result + math.random(1, die_value)
     end
@@ -954,28 +956,21 @@ function death_check(target, damage, type, message)
         [false] = {[1] = 1, [2] = 1, [3] = 0},
         [true] = {[1] = 1, [2] = 0, [3] = 0}
     }
-    local target_stats = target.components["stats"].stats
-    local target_profile = target.components["profile"] and target.components["profile"].profile[type] or false
+    -- reference eventual 'stats' component or set variable to false
+    local target_stats = target.components["stats"] and target.components["stats"].stats or false
+    -- reference eventual 'profile' component or set variable to false
+    local target_modifier = target.components["profile"] and target.components["profile"].profile[type] or false
     -- choose color depending on player (red) or npc (yellow)
     local target_type = target.components["player"] or false
 
     -- cannot damage an Entity without hp
-    if not target_stats["hp"] then print("no hp") return false end
+    if not target_stats and not target_stats["hp"] then print("Target has no HP stat") return false end
 
     -- cannot damage an Entity immune to that effect
-    if target_profile == "immune" then print("immune") return false end
+    if target_modifier and target_modifier == "immune" then print("immune") return false end
 
-    if not target_profile then
-        print("not...")
-        print(damage)
-        print(target_stats["hp"])
-        target_stats["hp"] = target_stats["hp"] - dice_roll(damage)
-    end
-
-    if target_profile then
-        print("is...")
-        target_stats["hp"] = target_stats["hp"] - (dice_roll(damage) + tonumber(target_profile))
-    end
+    print(damage)
+    target_stats["hp"] = target_stats["hp"] - (dice_roll(damage) + tonumber(target_modifier or 0))
 
     if target_stats["hp"] <= 0 then
         target.alive = false

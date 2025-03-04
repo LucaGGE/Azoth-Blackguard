@@ -190,10 +190,6 @@ function Movable:move_entity(entity, direction)
         local score_to_succeed = "7"
         local successful_attack = dice_roll("1d12+1", score_to_succeed)
         
-        -- entities without dice sets have constant 1 damage
-        --local damage = dice_roll("1")
-        --target_stats["hp"] = target_stats["hp"] - (successful_attack and damage or 0)
-
         if successful_attack then 
             love.audio.stop(SOUNDS["hit_blow"])
             love.audio.play(SOUNDS["hit_blow"])
@@ -519,42 +515,19 @@ function Stats:new(stats_table)
     end
 end
 
-Dies = Object:extend()
-function Dies:new(dies_table)
-    -- NOTE: TO DATE, die sets can contain only dies of the same type (2d4, 3d6...)
-    -- self.dies is a table of all of the entity's die sets
-    self.dies = {}
-    for i, stat in ipairs(dies_table) do
-        -- new_set[1] == set name; new_set[2] == set
-        local new_set = strings_separator(stat, "=", 1)
-        -- set_values == all of the set's values but name
-        local set_values = {}
-        -- set_data == n of dies, type of die + (optional) modifier
-        local set_data = strings_separator(new_set[2], "d", 1)
-
-        -- check for the presence of positive/negative modifiers. This would mean
-        -- that set_data[2] corresponds to a dice value like 4+1, or 6-2
-        local is_plus = string.find(set_data[2], "+")
-        local is_minus = string.find(set_data[2], "-")
-
-        -- number of dies in set
-        set_values[1] = set_data[1]
-
-        -- (optional) modifier[1] == dice type, modifier[2] == modifier
-        if is_plus then
-            local modifier = strings_separator(set_data[2], "+", 1)
-            set_values[2] = tonumber(modifier[1])
-            set_values[3] = tonumber(modifier[2])
-        elseif is_minus then
-            local modifier = strings_separator(set_data[2], "-", 1)
-            set_values[2] = tonumber(modifier[1])
-            set_values[3] = tonumber(modifier[2]) * -1
-        else
-            set_values[2] = tonumber(set_data[2])
+-- this component stores resistances and immunity to effects
+Profile = Object:extend()
+function Profile:new(input_table)
+    self.profile = {}
+    for i, stat in ipairs(input_table) do
+        local new_stat = strings_separator(stat, "=", 1)
+        -- automatically convert numerical stats to numbers
+        if new_stat[2]:match("%d") then
+            new_stat[2] = tonumber(new_stat[2])
         end
-
-        -- at last, assign new set to self.dies at name (new_set[1])
-        self.dies[new_set[1]] = set_values
+        -- code below translates as "self.profile[stat_name] = stat_value"
+        self.profile[new_stat[1]] = new_stat[2]
+        print(new_stat[1] .. ": " .. new_stat[2])
     end
 end
 

@@ -697,15 +697,17 @@ function dice_roll(die_set_input, success_input)
     -- check if actual die set has negative modifier
     if modifier == false then
         value_modifier_couple = strings_separator(die_set[2], "-", 1)
-        die_value = tonumber(value_modifier_couple[1])
-        modifier = tonumber(value_modifier_couple[2]) * -1 or 0
+        if value_modifier_couple[2] then
+            die_value = tonumber(value_modifier_couple[1])
+            modifier = tonumber(value_modifier_couple[2]) * -1 or 0
+        end
     end
 
     for i = 1, throws do
         result = result + math.random(1, die_value)
     end
     -- apply modifier
-    result = result + modifier
+    result = result + modifier or 0
     -- if success is request, it must be >= 0 or return false
     if success and success - result < 0 then result = false end
     -- numerical results can't be < 0
@@ -946,22 +948,38 @@ function console_cmd(cmd)
     g.canvas_ui = ui_manager_play()
 end
 
-function death_check(target, damage, message)
+function death_check(target, damage, type, message)
     -- this is needed to output messages on screen in yellow or red
     local event_color = {
         [false] = {[1] = 1, [2] = 1, [3] = 0},
         [true] = {[1] = 1, [2] = 0, [3] = 0}
     }
     local target_stats = target.components["stats"].stats
+    local target_profile = target.components["profile"] and target.components["profile"].profile[type] or false
     -- choose color depending on player (red) or npc (yellow)
     local target_type = target.components["player"] or false
 
     -- cannot damage an Entity without hp
-    if not target_stats["hp"] then return false end
+    if not target_stats["hp"] then print("no hp") return false end
 
-    target_stats["hp"] = target_stats["hp"] - dice_roll(damage)
+    -- cannot damage an Entity immune to that effect
+    if target_profile == "immune" then print("immune") return false end
+
+    if not target_profile then
+        print("not...")
+        print(damage)
+        print(target_stats["hp"])
+        target_stats["hp"] = target_stats["hp"] - dice_roll(damage)
+    end
+
+    if target_profile then
+        print("is...")
+        target_stats["hp"] = target_stats["hp"] - (dice_roll(damage) + tonumber(target_profile))
+    end
+
     if target_stats["hp"] <= 0 then
         target.alive = false
         console_event(target.name .. " " .. message, event_color[target_type])
     end
+    print("end of func")
 end

@@ -69,6 +69,7 @@ COMPONENTS_TABLE = {
     ["player"] = Player,
     ["npc"] = Npc,
     ["stats"] = Stats,
+    ["profile"] = Profile,
     ["trigger"] = Trigger,
     ["pickup"] = Pickup,
     ["usable"] = Usable,

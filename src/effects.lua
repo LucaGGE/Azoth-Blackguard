@@ -14,23 +14,18 @@ end
 -- applied as a multiple-turns duration effect by poison()
 function poisoned(target, input)
     print(target.name .. " is poisoned")
-    death_check(target, "1", "got killed by poison")
+    death_check(target, "1", "poison", "got killed by poison")
 end
 
-function slash(target, input)
-    -- NOTE: to reference, you need a table. With ... .stats["hp"] you'll get a copy!
-    local target_stats = target.components["stats"].stats
-    
+function slash(target, input) 
     print(target.name .. " is slashed")
 
-    death_check(target, input, "was slaughtered")  
-    table.insert(target.effects, EffectTag(target, input, dice_roll("3d3"), bleed))
+    death_check(target, input, "slash", "was slaughtered")  
+    --table.insert(target.effects, EffectTag(target, input, dice_roll("3d3"), bleed))
 end
 
 function bleed(target, input)
-    local target_hp = target.components["stats"].stats["hp"]
-
-    death_check(target, "1d2", "bled to death")
+    death_check(target, "1d2", "bleeding", "bled to death")
 end
 
 function str_effect(target, input)

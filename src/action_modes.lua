@@ -120,13 +120,18 @@ IO_DTABLE = {
             return true
         end
 
-        -- if the target has a trigger 'triggeroncollision' comp, trigger immediately
-        if target.components["trigger"] and target.components["trigger"].triggeroncollision then
+        -- if the target has a trigger comp, trigger immediately
+        if target.components["trigger"] then
             print("The object triggers!")
             target.components["trigger"]:activate(target, entity)
         end
 
-        -- if no pickup target is found then warn player
+        -- if target is has destroyontrigger, don't bother picking up
+        if not target.alive then
+            return true
+        end
+
+        -- if target has no pickup comp then warn player
         if target_cell.entity.components["pickup"] then
             target.components["pickup"]:activate(target, entity)
             console_event("Thee pick up " .. target.id)

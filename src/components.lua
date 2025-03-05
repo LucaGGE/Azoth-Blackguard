@@ -247,7 +247,7 @@ function Movable:move_entity(entity, direction)
     end
 
     -- see if entity is has trigger component
-    if target_cell.entity.components["trigger"] then
+    if target_cell.entity.components["trigger"] and target_cell.entity.components["trigger"].triggeroncollision then
         -- trigger may work or not, but entity still moved, so return true
         target_cell.entity.components["trigger"]:activate(target_cell.entity, entity)
         return true
@@ -380,23 +380,22 @@ function Trigger:new(args)
 end
 
 function Trigger:activate(owner, entity)
-    self.success = false
+    print(self.triggeroncollision)
     
     -- check if owner Entity has a dedicated power flagged as 'trigger'
     if owner.powers["trigger"] then
-        -- if something goes wrong (i.e. monster stepping on gold), do not destroy on trigger
-        success = owner.powers["trigger"]:activate(entity)
+        owner.powers["trigger"]:activate(entity)
     else
         print("Blank trigger: a destroyontrigger Entity has no 'trigger' power to activate")
     end
 
-    if success then
-        -- print trigger event string (i.e. 'A trap activates!')
-        console_event(self.event_string)
+    -- print trigger event string (i.e. 'A trap activates!')
+    if self.event_string then
+        console_event(entity.name .. " " .. self.event_string)
     end
     
     -- if owner is to 'destroyontrigger', destroy it
-    if self.destroyontrigger and success then
+    if self.destroyontrigger then
         -- will be removed from render_group and cell automatically in StatePlay:refresh()
         owner.alive = false
     end

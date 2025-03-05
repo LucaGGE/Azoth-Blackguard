@@ -21,7 +21,7 @@ function slash(target, input)
     print(target.name .. " is slashed")
 
     death_check(target, input, "slash", "was slaughtered")  
-    --table.insert(target.effects, EffectTag(target, input, dice_roll("3d3"), bleed))
+    table.insert(target.effects, EffectTag(target, input, dice_roll("3d3"), bleed))
 end
 
 function bleed(target, input)
@@ -45,7 +45,7 @@ function sfx_play(target, input)
 end
 
 function stat_gold(target, input)
-    local target_stats = target.components["stats"].stats or nil
+    local target_stats = target.components["stats"].stats
 
     -- give feedback to eventual trigger that Entity has no stats or 'gold' stat
     if not target_stats or not target_stats["gold"] then

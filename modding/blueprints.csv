@@ -1,7 +1,7 @@
-@player|:players|player|stats,hp=10,gold=0|movable,walk|slots,head,chest,cape|*slash,str=Player slashes,slash=1d4,bleed=2d4
+@player|:players|player|stats,hp=10,gold=0|movable,walk|slots,head,chest,cape|*slash,str=Player slashes,slash=1d4
 @lemure|:65|stats,hp=5|npc,group=self,enemies=none,nature=neutral,sight=15,hearing=5|movable,walk,climb
 @crab|:67|stats,hp=15,en=10|npc,group=crabs,enemies=none,nature=aggressive,sight=5,hearing=1|movable,walk,swim|*grab,str=It grabs!,slash=1d2
-@gold|:81|trigger,true,true,Thee collect th' gold|*trigger,statgold=1d5+5,sfx=sfx_gold
+@gold|:81|pickup|trigger,true,false,collects th' gold|*trigger,statgold=1d5+5,sfx=sfx_gold
 @exit|:110|exit,Thee travel to another level
 @shroom|:shrooms|obstacle|secret,secret entity
 @shroom2|:shrooms|obstacle|description,a weird-looking mushroom indeed

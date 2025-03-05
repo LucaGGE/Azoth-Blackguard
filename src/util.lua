@@ -709,7 +709,7 @@ function dice_roll(die_set_input, success_input)
     for i = 1, throws do
         result = result + math.random(1, die_value)
     end
-    -- apply modifier
+    -- apply modifier, if any
     result = result + (modifier or 0)
     -- if success is request, it must be >= 0 or return false
     if success and success - result < 0 then result = false end

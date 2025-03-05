@@ -685,6 +685,7 @@ function dice_roll(die_set_input, success_input)
 
     -- die_set_input is an actual die set, store all data
     throws = tonumber(die_set[1])
+    die_value = tonumber(die_set[2])
 
     -- check if actual die set has positive modifier
     value_modifier_couple = strings_separator(die_set[2], "+", 1)
@@ -709,7 +710,7 @@ function dice_roll(die_set_input, success_input)
         result = result + math.random(1, die_value)
     end
     -- apply modifier
-    result = result + modifier or 0
+    result = result + (modifier or 0)
     -- if success is request, it must be >= 0 or return false
     if success and success - result < 0 then result = false end
     -- numerical results can't be < 0

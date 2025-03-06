@@ -2,14 +2,14 @@
 @lemure|:65|stats,hp=10|npc,group=self,enemies=none,nature=neutral,sight=15,hearing=5|movable,walk,climb|profile,bleeding=immune
 @crab|:67|stats,hp=15,en=10|npc,group=crabs,enemies=none,nature=aggressive,sight=5,hearing=1|movable,walk,swim|*grab,str=Clamping,slash=1d2|profile,slash=-2
 @gold|:81|pickup|trigger,true,false,collects th' gold|*trigger,statgold=1d5+5,sfx=sfx_gold
-@locket|:71|locked|trigger,true,false,doth open the locket
-@key|:35|key|pickup
+@locket|:71|locked|trigger,true,false,doth open the locket|description,golden locket
+@key|:35|key|pickup|description,key
 @exit|:110|exit,Thee travel to another level
-@shroom|:shrooms|obstacle|secret,secret entity
+@shroom|:shrooms|obstacle|secret,unknown mushroom|description,deadly cap
 @shroom2|:shrooms|obstacle|description,most peculiar-looking mushroom, verily
-@potion1|:potions
-@potion2|:potions
-@potion3|:potions
-@potion4|:potions
-@potion5|:potions
-@potion6|:potions
+@potion1|:potions|secret,potion|description,mana potion
+@potion2|:potions|secret,potion|description,life potion
+@potion3|:potions|secret,potion|description,elixir of hallucination
+@potion4|:potions|secret,potion|description,poison vial
+@potion5|:potions|secret,potion|description,phasing juice
+@potion6|:potions|secret,potion|description,blindness ointment

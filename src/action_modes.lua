@@ -48,7 +48,7 @@ IO_DTABLE = {
 
         -- note that and Entity's name equale to instance name or its id
         occupant_ref = target_cell.occupant and target_cell.occupant["name"] or nil
-        entity_ref = target_cell.entity and target_cell.entity["id"] or nil
+        entity_ref = target_cell.entity and target_cell.entity["name"] or nil
 
         -- TO DO TO DO TO DO this code sucks and check 1000 times for the same things. IMPROVE! TO DO TO DO TO DO TO DO TO DO TO DO 
         -- hide id, name and description of Entities with 'secret' component
@@ -110,6 +110,19 @@ IO_DTABLE = {
             return false
         end
 
+        -- if no target is found, return a 'nothing found' message
+        if not target_cell.entity then
+            console_event("There's non-other to pick up h're")
+            print("There's nothing to pick up h'ere")
+            return false
+        end
+
+        -- if target has no pickup comp then warn player
+        if not target_cell.entity.components["pickup"] then
+            console_event("Thee art unable to pick hider up")
+            return false
+        end
+
         if not entity.components["inventory"] then
             error_handler("Entity without inventory is trying to pickup")
             return false
@@ -117,13 +130,6 @@ IO_DTABLE = {
 
         -- store the target entity, if present
         target = target_cell.entity
-
-        -- if no target is found, return a 'nothing found' message
-        if not target_cell.entity then
-            console_event("There's non-other to pick up h're")
-            print("There's nothing to pick up h'ere")
-            return true
-        end
 
         -- if the target has a trigger comp, trigger immediately
         if target.components["trigger"] then
@@ -136,13 +142,8 @@ IO_DTABLE = {
             return true
         end
 
-        -- if target has no pickup comp then warn player
-        if target_cell.entity.components["pickup"] then
-            return entity.components["inventory"]:add(target)
-        else
-            console_event("Thee art unable to pick hider up")
-            return false
-        end
+        -- if everything else is in order, pick Entity up
+        return entity.components["inventory"]:add(target)
     end,
     ["use"] = function(player_comp, entity, key)
         local target_cell
@@ -173,7 +174,7 @@ IO_DTABLE = {
 
         -- if no usable target is found then warn player
         if target_cell.entity.components["usable"] then
-            console_event("Thee usae " .. target)
+            console_event("Thee usae " .. target.name)
             target.components["usable"]:activate(target, entity)
         else
             console_event("Thee can't usae this")

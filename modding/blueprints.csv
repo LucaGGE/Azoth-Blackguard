@@ -4,6 +4,7 @@
 @gold|:81|pickup|trigger,true,false,collects th' gold|*trigger,statgold=1d5+5,sfx=sfx_gold
 @locket|:71|locked|trigger,true,false,doth open the locket|description,golden locket
 @key|:35|key|pickup|description,key
+@tome|:28|pickup|sealed|description,old tome|trigger,false,false,reads "Scemo ki legge!!1!"
 @exit|:110|exit,Thee travel to another level
 @shroom|:shrooms|obstacle|secret,unknown mushroom|description,deadly cap
 @shroom2|:shrooms|obstacle|description,most peculiar-looking mushroom, verily

@@ -23,7 +23,7 @@ function Player:new()
     -- players are automatically part of this group
     self.group = "players"
     self.action_state = nil
-    self.valid_input = "qwertyuiopasdfghjklzxcvbnm"
+    self.valid_input = "qwertyuiopasdfghjklzxcvbnmspace"
     self.local_string = ""
     -- this variable contains all the movement inputs key-values for keypad and keyboard, with key = (row, column)
     self.movement_inputs = {
@@ -697,9 +697,30 @@ function Effect:activate(owner)
     end
 end
 
+-- same as 'locked', but requires 'say' interaction to unlock
 Sealed = Object:extend()
 function Sealed:new(input)
 
+end
+
+function Sealed:activate(target, entity, player_comp)
+    if target.name == player_comp.local_string then
+        console_event("Thou dost unseal it!")
+        print(target.name)
+        if target.components["trigger"] then
+            target.components["trigger"]:activate(target, entity)
+        end
+
+        -- if Entity gets successfully unsealed, remove 'seled' comp
+        target.components["sealed"] = nil
+        player_comp.local_string = ""
+        print("returning true")
+        return true
+    end
+
+    console_event("There is no response")
+
+    return false
 end
 
 -- when is requested to unlock from console, searches in requester inventory for an
@@ -718,6 +739,9 @@ function Locked:activate(target, entity)
                 if target.components["trigger"] then
                     target.components["trigger"]:activate(target, entity)
                 end
+
+                -- if Entity was successfully unlocked, remove 'Locked' comp
+                target.components["locked"] = nil
                 return true
             end
         end

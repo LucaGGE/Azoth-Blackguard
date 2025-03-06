@@ -995,3 +995,17 @@ function death_check(target, damage_dice, type, message)
     -- i.e. the harder you slash someone, the longer he will bleed
     return true, damage_score
 end
+
+-- check if Entity can be interacted with actions such as pickup, use, etc
+function entity_available(target)
+    if target.components["locked"] or target.components["sealed"] then
+        console_event(
+            target.components["locked"] and "You require a key"
+            or target.components["sealed"] and "It is sealed by magic"
+        )
+        
+        return false
+    else
+        return true
+    end
+end

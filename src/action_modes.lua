@@ -13,7 +13,7 @@ local INPUT_DTABLE = {
         love.audio.stop(SOUNDS["button_select"])
         love.audio.play(SOUNDS["button_select"])
 
-        -- check action commang, note that 'console' action is forbidden
+        -- check action command, note that 'console' action is forbidden
         if player_comp.local_string == "space" then
             player_comp.local_string = ""
         end
@@ -51,7 +51,6 @@ IO_DTABLE = {
         entity_ref = target_cell.entity and target_cell.entity["name"] or nil
 
         -- TO DO TO DO TO DO this code sucks and check 1000 times for the same things. IMPROVE! TO DO TO DO TO DO TO DO TO DO TO DO 
-        -- hide id, name and description of Entities with 'secret' component
         if occupant_ref then
             if target_cell.occupant.components["description"] then
                 occupant_ref = target_cell.occupant.components["description"].string
@@ -98,6 +97,65 @@ IO_DTABLE = {
 
         return false
     end,
+    ["say"] = function(player_comp, entity, key)
+        local return_value
+
+        -- when message is ready, go to non accessible action_state and choose target
+        if key == "enter" or key == "return" then
+            player_comp.action_state = "/"
+            console_cmd("Tell whom? ")
+
+            return false
+        end
+
+        if not INPUT_DTABLE[key] then
+            player_comp.local_string = text_input(player_comp.valid_input, key, player_comp.local_string, 41)
+            -- immediately show console string on screen
+            console_cmd("Your words: " .. player_comp.local_string)            
+            -- always return false, since player is typing action
+            return false
+        end
+        
+        -- if backspace or enter command, activate
+        return_value = INPUT_DTABLE[key](player_comp)
+
+        if return_value then
+            console_cmd("Your words: " .. return_value)
+        end
+
+        return false
+    end,
+    ["/"] = function(player_comp, entity, key)
+        local target_cell
+        local target
+        
+        if player_comp.movement_inputs[key] then
+            target_cell = g.grid[entity.cell["grid_row"] + player_comp.movement_inputs[key][1]]
+            [entity.cell["grid_column"] + player_comp.movement_inputs[key][2]]
+        else
+            -- if input is not a valid direction, turn is not valid
+            return false
+        end
+
+        -- store the target entity, if present
+        target = target_cell.entity
+
+        -- if no target is found, return a 'nothing happens' message
+        if not target_cell.entity then
+            console_event("There is naught within")
+            player_comp.local_string = ""
+            return false
+        end
+
+        -- if the target has a trigger comp, trigger immediately
+        if target.components["sealed"] then
+            return target.components["sealed"]:activate(target, entity, player_comp)
+        end
+
+        console_event("Nothing doth seem to happen")
+        player_comp.local_string = ""
+        return true
+    end,
     ["pickup"] = function(player_comp, entity, key)
         local target_cell
         local target
@@ -110,19 +168,6 @@ IO_DTABLE = {
             return false
         end
 
-        -- if no target is found, return a 'nothing found' message
-        if not target_cell.entity then
-            console_event("There's non-other to pick up h're")
-            print("There's nothing to pick up h'ere")
-            return false
-        end
-
-        -- if target has no pickup comp then warn player
-        if not target_cell.entity.components["pickup"] then
-            console_event("Thee art unable to pick hider up")
-            return false
-        end
-
         if not entity.components["inventory"] then
             error_handler("Entity without inventory is trying to pickup")
             return false
@@ -130,6 +175,16 @@ IO_DTABLE = {
 
         -- store the target entity, if present
         target = target_cell.entity
+
+        -- if no target is found, return a 'nothing found' message
+        if not target_cell.entity then
+            console_event("There's non-other to pick up h're")
+            print("There's nothing to pick up h'ere")
+            return true
+        end
+
+        -- block any interaction with 'locked' or 'sealed' Entities
+        if not entity_available(target) then return true end
 
         -- if the target has a trigger comp, trigger immediately
         if target.components["trigger"] then
@@ -142,8 +197,13 @@ IO_DTABLE = {
             return true
         end
 
-        -- if everything else is in order, pick Entity up
-        return entity.components["inventory"]:add(target)
+        -- if target has no pickup comp then warn player
+        if target_cell.entity.components["pickup"] then
+            return entity.components["inventory"]:add(target)
+        else
+            console_event("Thee art unable to pick hider up")
+            return false
+        end
     end,
     ["use"] = function(player_comp, entity, key)
         local target_cell
@@ -166,6 +226,9 @@ IO_DTABLE = {
             return true
         end
 
+        -- block any interaction with 'locked' or 'sealed' Entities
+        if not entity_available(target) then return true end
+
         -- if the target has a trigger 'triggeroncollision' comp, trigger immediately
         if target.components["trigger"] and target.components["trigger"].triggeroncollision then
             print("The object triggers!")
@@ -174,7 +237,7 @@ IO_DTABLE = {
 
         -- if no usable target is found then warn player
         if target_cell.entity.components["usable"] then
-            console_event("Thee usae " .. target.name)
+            console_event("Thee usae " .. target)
             target.components["usable"]:activate(target, entity)
         else
             console_event("Thee can't usae this")
@@ -275,6 +338,13 @@ function player_commands(player_comp, key)
                 return false
             end
         end,
+        ["say"] = function(player_comp)
+            if not player_comp.action_state then
+                player_comp.action_state = "say"
+                console_cmd("Your words: ")             
+                return false
+            end
+        end,
         ["pickup"] = function(player_comp)
             if not player_comp.action_state then
                 player_comp.action_state = "pickup"
@@ -285,6 +355,7 @@ function player_commands(player_comp, key)
     }
     -- these are 'hotkeys', aka the action modes 'links' that can be activated by keyboard shortcut
     -- other than with console (note console can only be activated from a hotkey)
+    commands["t"] = commands["say"]
     commands["u"] = commands["use"]
     commands["i"] = commands["inventory"]
     commands["o"] = commands["observe"]

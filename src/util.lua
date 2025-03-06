@@ -206,7 +206,6 @@ function entities_spawner(blueprint, loc_row, loc_column, name)
         end
 
         new_player["entity"] = instanced_entity
-        print("------->"..new_player["entity"].name)
         table.insert(g.players_party, new_player)
     end
 
@@ -343,7 +342,6 @@ function map_generator(map_values, generate_players)
     if generate_players then
         -- spawning players: in the menu we have inserted players entities but not their input_comp!
         local players_party_copy = g.players_party
-        print("...Emptying players_party")
         g.players_party = {}
 
         for i, bpandname in ipairs(players_party_copy) do
@@ -977,8 +975,6 @@ function death_check(target, damage_dice, type, message)
         console_event(target.name .. " doth seem immune to " .. type)
         return false
     end
-
-    if target_modifier then print(target_modifier) end
     
     damage_score = dice_roll(damage_dice) + tonumber(target_modifier or 0)
 

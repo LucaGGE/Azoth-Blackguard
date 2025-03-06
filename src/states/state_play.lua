@@ -85,7 +85,6 @@ function StatePlay:update()
     -- checking for input to resolve turns
     if g.keys_pressed[1] and not g.is_tweening then
         local current_player = g.players_party[current_turn]
-        print("In update: "..g.players_party[current_turn]["entity"].name)
         
         -- sending input to current player input_manager (if alive)
         if current_player then
@@ -111,7 +110,6 @@ function StatePlay:update()
 
         -- if the current_turn (now + 1) exceeds the n of players, it's NPCs turn
         if not g.players_party[current_turn] then
-            print(g.players_party[1]["entity"].name)
             -- reset turn system to 1
             current_turn = 1
             -- block player from doing anything while g.camera and NPCs act

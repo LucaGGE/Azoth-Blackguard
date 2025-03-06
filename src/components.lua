@@ -249,6 +249,10 @@ function Movable:move_entity(entity, direction)
         target_cell.entity.components["trigger"]:activate(target_cell.entity, entity)
         return true
     end
+
+    print("last ok by: " .. entity.name)
+    -- if a non-reactive, non-NPC, non-Player, non-Obstacle Entity is in target cell, simply ignore 
+    return true
 end
 
 Npc = Object:extend()

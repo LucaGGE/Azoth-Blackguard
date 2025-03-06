@@ -98,12 +98,12 @@ local INPUT_DTABLE2 = {
             for i = 1, n_of_players do
                 -- creating a new Entity() and feeding it all player_blueprint data + Players names
                 --local new_player = Entity(player_blueprint.id, player_blueprint.tile, player_blueprint.features, names_table[i])
-                local blueprint = {["bp"] = BLUEPRINTS_LIST["player"],
+                local blueprint_plus_name = {["bp"] = BLUEPRINTS_LIST["player"],
                 ["name"] = names_table[i]
                 }
                 -- NOTE: this is a first assignment to g.players_party. Players will need to be extracted from
-                -- here and added again, this time with their input (player) components!
-                table.insert(g.players_party, blueprint)
+                -- here and added again in entities_spawner(), this time with their input ('player') components!
+                table.insert(g.players_party, blueprint_plus_name)
             end
 
             -- move to StatePlay(), giving 1 and "true" to :Init() for map_n and player_regen(eration)

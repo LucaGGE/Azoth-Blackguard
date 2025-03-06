@@ -142,6 +142,8 @@ function sprites_groups_manager()
     return true
 end
 
+-- spawns all Entities in map. NOTE: players get spawned on spawn points and get generated only once
+-- at game's start, to avoid erasing their data; both cases are found in map_generator() func
 function entities_spawner(blueprint, loc_row, loc_column, name)
     local player_num = 1
     local is_occupant = false
@@ -155,7 +157,7 @@ function entities_spawner(blueprint, loc_row, loc_column, name)
     local instanced_components = {}
     local instanced_entity = nil
 
-    for i, comp_tags in ipairs(blueprint["bp"].components) do
+    for i, comp_tags in ipairs(blueprint.components) do
         -- translating components tags into actual components thanks to components_interface
         local new_component = components_interface(comp_tags)
         instanced_components[comp_tags[1]] = new_component
@@ -172,7 +174,7 @@ function entities_spawner(blueprint, loc_row, loc_column, name)
         end
     end
 
-    instanced_entity = Entity(blueprint["bp"].id, blueprint["bp"].tile, instanced_components, blueprint["bp"].powers, name)
+    instanced_entity = Entity(blueprint.id, blueprint.tile, instanced_components, blueprint.powers, name)
 
     -- once special components are stored, finish entityt identity 
     if is_npc then
@@ -204,6 +206,7 @@ function entities_spawner(blueprint, loc_row, loc_column, name)
         end
 
         new_player["entity"] = instanced_entity
+        print("------->"..new_player["entity"].name)
         table.insert(g.players_party, new_player)
     end
 
@@ -270,7 +273,7 @@ function map_generator(map_values, generate_players)
             if tile_index:match("%d") then
                 -- save entity in the blueprint variable
                 if BLUEPRINTS_LIST[tile_value_2] then
-                    blueprint = {["bp"] = BLUEPRINTS_LIST[tile_value_2]}
+                    blueprint = BLUEPRINTS_LIST[tile_value_2]
                     -- checking if a special name for the entity was fed in the map
                     entity_name = tile_value_3
                 else
@@ -304,7 +307,7 @@ function map_generator(map_values, generate_players)
                 g.grid[i][j].index = "empty"
             else
                 -- cell simply has no entities inside!
-                finalize_cell(tile_index, nil, i, j)
+                finalize_cell(tile_index, false, i, j)
             end
             return tile_index
         end
@@ -340,8 +343,12 @@ function map_generator(map_values, generate_players)
     if generate_players then
         -- spawning players: in the menu we have inserted players entities but not their input_comp!
         local players_party_copy = g.players_party
+        print("...Emptying players_party")
         g.players_party = {}
-        for i, player_blueprint in ipairs(players_party_copy) do
+
+        for i, bpandname in ipairs(players_party_copy) do
+            local bp = bpandname["bp"]
+            local name = bpandname["name"]
             -- check that all 4 spawn locations for players were set
             if not player_spawn_loc[i] then
                 error_handler("Map has insufficient Player Spawn Points. All maps should have four.")
@@ -350,9 +357,10 @@ function map_generator(map_values, generate_players)
                 g.game_state:init()
                 break
             end
-            entities_spawner(player_blueprint, player_spawn_loc[i]["row"], player_spawn_loc[i]["column"], entity_name)
+            entities_spawner(bp, player_spawn_loc[i]["row"], player_spawn_loc[i]["column"], name)
         end
     else
+        -- if players already got generated once, just position them on their ordered spawn points
         for i, player in ipairs(g.players_party)  do
             player["entity"].cell["cell"] = player_spawn_loc[i]["cell"]
             player["entity"].cell["cell"].occupant = player["entity"]
@@ -493,7 +501,6 @@ function blueprints_generator(input_table)
         element_output = strings_separator(element, "@", 1)
         
         if element_output[2] then
-            --print("id: " .. element_output[2])
             id = element_output[2]
 
             -- checking to ensure Blueprint id uniqueness
@@ -511,7 +518,6 @@ function blueprints_generator(input_table)
         -- In the latter case, the selected tile will be removed from the pool once used.
         -- Now it is being checked if the Entity has a fixed tile or a random one from a group.
         if element_output[2] then
-            --print("tile: " .. element_output[2])
             -- number of values in the group, counted later
             local num_of_values = 0
             -- selected random index
@@ -732,12 +738,12 @@ function turns_manager(current_player, npc_turn)
     }):finish(function ()
         -- if it's not the NPCs turn, skip single NPC activation
         if not npc_turn then
-            for i, effect_tag in ipairs(current_player.effects) do
+            for i, effect_tag in ipairs(current_player["entity"].effects) do
                 -- activate lasting effects for current_player
                 effect_tag:activate()
-                -- remove concluded effects from current_player.effects
+                -- remove concluded effects from current_player["entity"].effects
                 if effect_tag.duration <= 0 then
-                    table.remove(current_player.effects, i)
+                    table.remove(current_player["entity"].effects, i)
                 end
             end
             goto continue
@@ -760,9 +766,6 @@ function turns_manager(current_player, npc_turn)
                 g.npcs_group[i].components["npc"]:activate(g.npcs_group[i])
             end
         end
-
-        -- activate lasting effects for all the non-player non-NPC Entities
-        -- WIP TO DO WIP TO DO WIP TO DO WIP TO DO WIP TO DO WIP TO DO WIP TO DO WIP TO DO WIP TO DO WIP TO DO WIP TO DO WIP TO DO WIP TO DO 
 
         ::continue::
         g.is_tweening = false

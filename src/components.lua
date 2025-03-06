@@ -215,9 +215,6 @@ function Movable:move_entity(entity, direction)
                 table.insert(g.cemetery, deceased)
                 -- send a 'game over' string to console in red color
                 console_event(deceased["player"] .. " got slain by " .. deceased["killer"], {[1] = 1, [2] = 0, [3] = 0})
-            else
-                -- send a 'creature killed' string to console in visible color
-                console_event(target_cell.occupant.name .. " got slain by " .. entity.name, {[1] = 1, [2] = 1, [3] = 0})
             end
         end
 

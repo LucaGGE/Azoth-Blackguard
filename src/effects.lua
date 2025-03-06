@@ -38,7 +38,7 @@ function bleed(effect_tag, target, input)
 end
 
 function str_effect(target, input)
-    console_event(input .. " " .. target.name .. "!")
+    console_event(input .. " " .. target.name .. "!", {[1] = 1, [2] = 1, [3] = 0})
 end
 
 function sfx_play(target, input)

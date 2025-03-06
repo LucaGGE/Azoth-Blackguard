@@ -74,12 +74,12 @@ function EffectTag:new(target, input, duration, func)
     self.target = target
     self.input = input
     self.duration = duration -- number of turns that the EffectTag will last
-    self.func = func -- func to call. Not equal to the initial function
+    self.func = func -- dedicated func to call, established by the parent Effect
 end
 
 function EffectTag:activate(target)
     self.duration = self.duration - 1
-    self.func(self.target, self.input)
+    self.func(self, self.target, self.input)
 end
 
 -- base state definition

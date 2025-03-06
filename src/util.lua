@@ -951,7 +951,7 @@ function console_cmd(cmd)
     g.canvas_ui = ui_manager_play()
 end
 
-function death_check(target, damage, type, message)
+function death_check(target, damage_dice, type, message)
     -- this is needed to output messages on screen in yellow or red
     local event_color = {
         [false] = {[1] = 1, [2] = 1, [3] = 0},
@@ -962,20 +962,37 @@ function death_check(target, damage, type, message)
     -- reference eventual 'profile' component or set variable to false
     local target_modifier = target.components["profile"] and target.components["profile"].profile[type] or false
     -- choose color depending on player (red) or npc (yellow)
-    local target_type = target.components["player"] or false
+    local target_family = target.components["player"] or false
+    -- stores final damage score to subtract from target's HP
+    local damage_score = 0
 
     -- cannot damage an Entity without hp
     if not target_stats and not target_stats["hp"] then print("Target has no HP stat") return false end
 
     -- cannot damage an Entity immune to that effect
-    if target_modifier and target_modifier == "immune" then print("immune") return false end
+    if target_modifier and target_modifier == "immune" then
+        console_event(target.name .. " doth seem immune to " .. type)
+        return false
+    end
 
-    print(damage)
-    target_stats["hp"] = target_stats["hp"] - (dice_roll(damage) + tonumber(target_modifier or 0))
+    if target_modifier then print(target_modifier) end
+    
+    damage_score = dice_roll(damage_dice) + tonumber(target_modifier or 0)
+
+    -- this is done to avoid adding HP when target_modifier is so high to output a zero/negative number
+    if damage_score <= 0 then
+        console_event(target.name .. " doth not appear troubled by " .. type)
+        return false
+    end
+
+    target_stats["hp"] = target_stats["hp"] - damage_score
 
     if target_stats["hp"] <= 0 then
         target.alive = false
-        console_event(target.name .. " " .. message, event_color[target_type])
+        console_event(target.name .. " " .. message, event_color[target_family])
     end
-    print("end of func")
+
+    -- returning success and damage inflicted. The second is useful when used to influence EffectTags,
+    -- i.e. the harder you slash someone, the longer he will bleed
+    return true, damage_score
 end

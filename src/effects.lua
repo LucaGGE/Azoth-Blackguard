@@ -17,15 +17,24 @@ function poisoned(target, input)
     death_check(target, "1", "poison", "got killed by poison")
 end
 
-function slash(target, input) 
-    print(target.name .. " is slashed")
+function slash(target, input)
+    local success, damage
 
-    death_check(target, input, "slash", "was slaughtered")  
-    table.insert(target.effects, EffectTag(target, input, dice_roll("3d3"), bleed))
+    success, damage = death_check(target, input, "slash", "was slaughtered")
+
+    if success then
+        -- the higher the slash damage, the longer the target will bleed
+        table.insert(target.effects, EffectTag(target, input, dice_roll("3d3+"..damage), bleed))
+    end
 end
 
-function bleed(target, input)
-    death_check(target, "1d2", "bleeding", "bled to death")
+function bleed(effect_tag, target, input)
+    local success
+
+    success, _ = death_check(target, "1", "bleeding", "bled to death")
+
+    -- if target is immune to EffectTag, then set its duration to 0
+    if not success then effect_tag.duration = 0 end
 end
 
 function str_effect(target, input)

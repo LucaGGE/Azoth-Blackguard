@@ -77,10 +77,13 @@ COMPONENTS_TABLE = {
     ["movable"] = Movable,
     ["exit"] = Exit,
     ["invisible"] = Invisible,
+    ["inventory"] = Inventory,
     ["slots"] = Slots,
     ["equipable"] = Equipable,
     ["sealed"] = Sealed,
     ["secret"] = Secret,
     ["description"] = Description,
-    ["link"] = Link
+    ["link"] = Link,
+    ["key"] = Key,
+    ["locked"] = Locked
 }

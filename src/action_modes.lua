@@ -110,6 +110,11 @@ IO_DTABLE = {
             return false
         end
 
+        if not entity.components["inventory"] then
+            error_handler("Entity without inventory is trying to pickup")
+            return false
+        end
+
         -- store the target entity, if present
         target = target_cell.entity
 
@@ -133,13 +138,11 @@ IO_DTABLE = {
 
         -- if target has no pickup comp then warn player
         if target_cell.entity.components["pickup"] then
-            target.components["pickup"]:activate(target, entity)
-            console_event("Thee pick up " .. target.id)
+            return entity.components["inventory"]:add(target)
         else
             console_event("Thee art unable to pick hider up")
+            return false
         end
-
-        return true
     end,
     ["use"] = function(player_comp, entity, key)
         local target_cell
@@ -174,6 +177,36 @@ IO_DTABLE = {
             target.components["usable"]:activate(target, entity)
         else
             console_event("Thee can't usae this")
+        end
+
+        return true
+    end,
+    ["unlock"] = function(player_comp, entity, key)
+        local target_cell
+        local target
+        
+        if player_comp.movement_inputs[key] then
+            target_cell = g.grid[entity.cell["grid_row"] + player_comp.movement_inputs[key][1]]
+            [entity.cell["grid_column"] + player_comp.movement_inputs[key][2]]
+        else
+            -- if input is not a valid direction, turn is not valid
+            return false
+        end
+
+        -- store the target entity, if present
+        target = target_cell.entity
+
+        -- if no target is found, return a 'nothing found' message
+        if not target_cell.entity then
+            console_event("There be naught that can be unlocked h're")
+            return true
+        end
+
+        -- if no unlockable target is found then warn player
+        if target.components["locked"] then
+            target.components["locked"]:activate(target, entity)
+        else
+            console_event("Thee can't unlock this")
         end
 
         return true
@@ -220,6 +253,13 @@ function player_commands(player_comp, key)
             if not player_comp.action_state then
                 player_comp.action_state = "use"
                 console_cmd("Use where?")            
+                return false
+            end
+        end,
+        ["unlock"] = function(player_comp)
+            if not player_comp.action_state then
+                player_comp.action_state = "unlock"
+                console_cmd("Unlock where?")            
                 return false
             end
         end,

@@ -118,6 +118,8 @@ function Movable:move_entity(entity, direction)
     local relevant_tiles = {} -- if moving diagonally, check if adjacent cells are transversable
     local row_movement = entity.cell["grid_row"] + direction[1]
     local column_movement = entity.cell["grid_column"] + direction[2]
+    local score_to_succeed = 7
+    local successful_attack
 
     -- making sure that the Player isn't trying to move out of g.grid
     if column_movement > g.grid_x or column_movement <= 0 or row_movement > g.grid_y or row_movement <= 0 then
@@ -186,9 +188,14 @@ function Movable:move_entity(entity, direction)
             return false
         end
 
+        -- if target is invisible, you need to roll a lower number
+        if target_cell.occupant.components["invisible"] then
+            print("Trying to hit invisible entity, success when: roll < 4")
+            score_to_succeed = 4
+        end
+
         -- dices get rolled to identify successful hit and eventual damage
-        local score_to_succeed = "7"
-        local successful_attack = dice_roll("1d12+1", score_to_succeed)
+        successful_attack = dice_roll("1d12+1", score_to_succeed)
         
         if successful_attack then 
             love.audio.stop(SOUNDS["hit_blow"])
@@ -250,7 +257,6 @@ function Movable:move_entity(entity, direction)
         return true
     end
 
-    print("last ok by: " .. entity.name)
     -- if a non-reactive, non-NPC, non-Player, non-Obstacle Entity is in target cell, simply ignore 
     return true
 end
@@ -358,10 +364,6 @@ Trap = Object:extend()
 function Trap:new()
 end
 
-Inventory = Object:extend()
-function Inventory:new()
-end
-
 -- for all the entities that are not Players but occupy it entirely (trees, boulders...)
 Obstacle = Object:extend()
 function Obstacle:new()
@@ -380,9 +382,7 @@ function Trigger:new(args)
     self.event_string = args[3]
 end
 
-function Trigger:activate(owner, entity)
-    print(self.triggeroncollision)
-    
+function Trigger:activate(owner, entity)  
     -- check if owner Entity has a dedicated power flagged as 'trigger'
     if owner.powers["trigger"] then
         owner.powers["trigger"]:activate(entity)
@@ -405,10 +405,6 @@ end
 -- Pickup is a 'flag' class, where its only utility is to let the game know an entity can be picked up
 Pickup = Object:extend()
 function Pickup:new()
-end
-
-function Pickup:activate(owner, entity)
-    print("Adding item to entity's inventory/hands")
 end
 
 -- Usable is a for all objects that can be used in some way and then trigger an event
@@ -537,22 +533,59 @@ Invisible = Object:extend()
 function Invisible:new()
 end
 
--- simple component that stores a key and triggers an entity with corresponding name,
--- i.e. self.key_value = door_a45 triggers door entity with name = door_a45
--- can also used to activate golems, unlock quests, etc. Requires 'Usable' to be used
+--[[
+    Simple component that stores a key and removes 'locked' component from an Entity
+    with corresponding name, i.e. if name = door_a45, remove 'locked' from Entity with
+    name = door_a45. Can also used to activate golems, unlock quests, etc.
+]]--
 Key = Object:extend()
-function Key:new(arg)
-    self.key_value = arg[1]
+function Key:new()
 end
 
--- for all entities that can store items (i.e. Players, NPCs, chests, libraries...)
+-- for all Entities that can store items (i.e. Players, NPCs, chests, libraries...)
 Inventory = Object:extend()
 function Inventory:new(arg)
-    -- setting Inventory's capacity as n of entities
-    self.space = arg[1]
+    self.items = {}
+    self.spaces = 0 -- available spaces
+    self.capacity = 0 -- max number of spaces
+
+    -- setting Inventory's capacity as n of Entities
+    if not arg[1] or tonumber(arg[1]) > 26 then
+        error_handler("Inventory comp has number of spaces > 26 or none, set to 26")
+        self.spaces = tonumber(arg[1])
+        self.capacity = tonumber(arg[1])
+    else
+        self.spaces = tonumber(arg[1])
+        self.capacity = tonumber(arg[1])
+    end
 end
 
--- for all entities that can equip Equipable entities, matches Equipable comp tags
+function Inventory:add(item)
+    if self.spaces > 0 then
+        self.spaces = self.spaces - 1
+        table.insert(self.items, item)
+        console_event("Thee pick up " .. item.id)
+        item.alive = false
+
+        return true
+    else
+        console_event("Thy inventory is full")
+
+        return false
+    end
+end
+
+function Inventory:remove(item)
+    for i, stored_item in ipairs(self.items) do
+        if stored_item:is(item) then
+            table.remove(self.items, i)
+            print("Removing object from inventory...")
+        end
+    end
+    print("Releasing object on ground...")
+end
+
+-- for all Entities that can equip Equipable Entities, matches Equipable comp tags
 -- with own tags (i.e. Equipable on: horns works with Slots : horns)
 Slots = Object:extend()
 function Slots:new(args)
@@ -565,7 +598,7 @@ function Slots:new(args)
 end
 
 --[[
-    For all entities that can be equipped (i.e. rings, amulets, crowns...),
+    For all Entities that can be equipped (i.e. rings, amulets, crowns...),
     need to know in which slot they're supposed to fit (i.e. head, hand, tentacle...)
     and multiple compatible slots are accepted (i.e. right hand, left hand...).
     Also note that once equipped, objects will trigger/statchange/apply effects.
@@ -669,9 +702,31 @@ function Sealed:new(input)
 
 end
 
+-- when is requested to unlock from console, searches in requester inventory for an
+-- Entity with a 'key' comp with corresponding name.
+-- As the 'key' component, name = Entity.name
 Locked = Object:extend()
 function Locked:new(input)
 
+end
+
+function Locked:activate(target, entity)
+    if entity.components["inventory"] then
+        for _, item in ipairs(entity.components["inventory"].items) do
+            if item.components["key"] and item.name == target.name then
+                console_event("Thou dost unlock it!")
+                if target.components["trigger"] then
+                    target.components["trigger"]:activate(target, entity)
+                end
+                return true
+            end
+        end
+        console_event("Thou dost miss the key")
+        
+        return true
+    end
+    error_handler("Entity without invetory is trying to use key to unlock")
+    return false
 end
 
 -- simple comp that prevents acces to Entity name, id or description

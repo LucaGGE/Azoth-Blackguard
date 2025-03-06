@@ -675,7 +675,7 @@ function dice_roll(die_set_input, success_input)
     local modifier = false
     local value_modifier_couple
     local result = 0
-    local success = tonumber(success_input)
+    local success = success_input
 
     -- immediately check if it's a dice set or a constant
     die_set = strings_separator(die_set_input, "d", 1)
@@ -716,7 +716,7 @@ function dice_roll(die_set_input, success_input)
     -- apply modifier, if any
     result = result + (modifier or 0)
     -- if success is request, it must be >= 0 or return false
-    if success and success - result < 0 then result = false end
+    if success and success - result <= 0 then result = false end
     -- numerical results can't be < 0
     if result and result < 0 then result = 0 end
 

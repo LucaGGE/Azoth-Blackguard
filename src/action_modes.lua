@@ -5,7 +5,7 @@
  -- table used for special console key input
 local INPUT_DTABLE = {
     ["enter"] = function(player_comp)
-        local return_value
+        local return_value, custom_action
         -- reset console related values (action_state is set in player_commands())
         console_cmd(nil)
         player_comp.action_state = nil
@@ -19,8 +19,15 @@ local INPUT_DTABLE = {
         end
 
         -- if function received valid command, execute action
-        return_value = player_commands(player_comp, player_comp.local_string)
+        return_value, custom_action = player_commands(player_comp, player_comp.local_string)
 
+        -- check if player is trying a custom action on Usable Entity
+        -- this means any command out of player_commands() local commands
+        if custom_action then
+            player_comp.action_state = "use"
+            console_cmd("Where?")
+        end
+        
         -- false value signals to console that action_mode needs to be changed
         return false
     end,
@@ -44,6 +51,9 @@ IO_DTABLE = {
         if player_comp.movement_inputs[key] then
             target_cell = g.grid[entity.cell["grid_row"] + player_comp.movement_inputs[key][1]]
             [entity.cell["grid_column"] + player_comp.movement_inputs[key][2]]
+        else
+            -- if input is not a valid direction, turn is not valid
+            return false
         end
 
         -- note that and Entity's name equale to instance name or its id
@@ -143,7 +153,6 @@ IO_DTABLE = {
         -- if no target is found, return a 'nothing happens' message
         if not target_cell.entity then
             console_event("There is naught within")
-            player_comp.local_string = ""
             return false
         end
 
@@ -153,7 +162,7 @@ IO_DTABLE = {
         end
 
         console_event("Nothing doth seem to happen")
-        player_comp.local_string = ""
+
         return true
     end,
     ["pickup"] = function(player_comp, entity, key)
@@ -237,10 +246,16 @@ IO_DTABLE = {
 
         -- if no usable target is found then warn player
         if target.components["usable"] then
-            console_event("Thee usae " .. target.name)
-            target.components["usable"]:activate(target, entity)
+            local console_string
+            -- if local_string is empty, then player is acting a simple 'use' command
+            -- in this case, set it to false to let Usable comp & console_event() know
+            if player_comp.local_string == "" then player_comp.local_string = false end
+            console_string = player_comp.local_string or "usae "
+
+            console_event("Thee " .. console_string .. " " .. target.name)
+            target.components["usable"]:activate(target, entity, player_comp.local_string)
         else
-            console_event("Thee can't usae this")
+            console_event("Nothing doth happen")
         end
 
         return true
@@ -289,20 +304,21 @@ IO_DTABLE = {
         -- if backspace or enter command, activate
         return_value = INPUT_DTABLE[key](player_comp)
 
+        -- if backspace, modify string
         if return_value then
-            console_cmd("Thy action: " .. return_value)
-        else
-            -- reset local_string and enter new action_mode
-            player_comp.local_string = ""
-            --g.game_state:refresh()
-        end
+            console_cmd("Thy action: " .. player_comp.local_string)
 
+            return false
+        end
+        
         return false
     end
 }
 
 -- this function contains a table that links hotkey/console commands to actual action modes
-function player_commands(player_comp, key)
+function player_commands(player_comp, input_key)
+    local key = input_key
+
     local commands = {
         [":"] = function()
             if not player_comp.action_state then
@@ -366,8 +382,9 @@ function player_commands(player_comp, key)
     if not commands[key] then
         console_cmd(nil)
 
-        return false
+        return false, true
     end
 
+    player_comp.local_string = ""
     return commands[key](player_comp)
 end

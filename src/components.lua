@@ -456,7 +456,7 @@ function Usable:activate(target, input_entity, input_key)
     end
 
     if not target.powers[self.uses[key]] then
-        print(key)
+        print("2>>>>>"..key)
         error_handler("Usable comp has valid key-power couple called, but no corresponding power")
 
         return false

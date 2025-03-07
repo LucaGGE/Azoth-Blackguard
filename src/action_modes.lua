@@ -236,8 +236,8 @@ IO_DTABLE = {
         end
 
         -- if no usable target is found then warn player
-        if target_cell.entity.components["usable"] then
-            console_event("Thee usae " .. target)
+        if target.components["usable"] then
+            console_event("Thee usae " .. target.name)
             target.components["usable"]:activate(target, entity)
         else
             console_event("Thee can't usae this")

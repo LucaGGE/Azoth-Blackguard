@@ -83,7 +83,7 @@ COMPONENTS_TABLE = {
     ["sealed"] = Sealed,
     ["secret"] = Secret,
     ["description"] = Description,
-    ["link"] = Link,
+    ["linked"] = Linked,
     ["key"] = Key,
     ["locked"] = Locked
 }

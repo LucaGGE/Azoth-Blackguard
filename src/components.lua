@@ -414,22 +414,75 @@ function Usable:new(args)
         ["false"] = false,
         ["true"] = true
     }
+    local key_power
+    self.uses = {}
     self.destroyonuse = string_to_bool[args[1]]
+    for i, arg in ipairs(args) do
+        if i == 1 then
+            self.destroyonuse = string_to_bool[arg]
+            goto continue
+        end
+
+        key_power = strings_separator(arg, "=", 1)
+        if not key_power then
+            print("Warning: blank Usable component has no key-action couple")
+            return false
+        end
+        print(key_power[1])
+        print(key_power[2])
+        self.uses[key_power[1]] = key_power[2]
+
+        ::continue::
+    end
 end
 
-function Usable:activate(owner, entity)
-    print("Object has been used")
+-- to have simple 'use' working, have a power named 'use'
+function Usable:activate(target, input_entity, input_key)
+    local key = input_key or "use"
+    local entity = input_entity
 
-    -- A DECISION TABLE IS NEEDED HERE, WHERE DEPENDING ON ARGS[] INPUT AN OBJECT, WHEN USED, WILL TRIGGER OR DO SOMETHING ELSE (REMEMBER TRIGGER/SCRIPT SEPARATION) -------
+    -- trigger always hits activating Entity, even if linked comp is present
     if target.components["trigger"] then
-        print("The object triggers!")
-        target.components["trigger"]:activate(target, player)
+        target.components["trigger"]:activate(target, entity)
+    end
+
+    -- if Entity is destroyontrigger, don't bother with rest of code
+    if not target.alive then
+        return false
+    end
+
+    if not self.uses[key] then
+        console_event("Nothing doth happen")
+    end
+
+    if not target.powers[self.uses[key]] then
+        print(key)
+        error_handler("Usable comp has valid key-power couple called, but no corresponding power")
+
+        return false
+    end
+
+    if target.components["linked"] then
+        local row, column = target.components["linked"]:activate(target)
+        row = tonumber(row)
+        column = tonumber(column)
+        entity = g.grid[row][column] and g.grid[row][column].occupant or false
+    end
+
+    -- if linked but Entity is missing in cell, nothing happened and return true
+    if not entity then
+        console_event("The target is absent")
+
         return true
     end
 
+    -- at this point we know everything is in check, proceed
+    print("---->"..entity.name)
+    target.powers[self.uses[key]]:activate(target, entity)
+
     -- if destroyonuse, destroy used object (useful for consumables)
     if self.destroyonuse then
-        owner.alive = false
+        target.alive = false
     end
 
     return true
@@ -765,7 +818,19 @@ function Description:new(input)
     self.string = input[1]
 end
 
-Link = Object:extend()
-function Link:new(input)
+-- linked Entities will activate other Entities in specific row, column
+-- position of other Entities is defined by linked Entity name that
+-- indicates the cell to search for
+Linked = Object:extend()
+function Linked:new(input)
 
+end
+
+-- note how changing the Entity's name will change its cell of interest
+function Linked:activate(owner)
+    local row_column = strings_separator(owner.name, "-", 1)
+    local row = row_column[1]
+    local column = row_column[2]
+
+    return row, column
 end

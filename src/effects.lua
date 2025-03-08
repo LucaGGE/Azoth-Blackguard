@@ -67,11 +67,39 @@ function stat_gold(target, input)
     return true
 end
 
+-- simple function swapping between two tiles, depending on the current one.
+-- it can be used with 
+function tile_swap(target, input_tiles_couple)
+    local tiles_couple = strings_separator(input_tiles_couple, "-", 1)
+    local tile_a = tiles_couple[1]
+    local tile_b = tiles_couple[2]
+
+    -- swap current target tile with other tile
+    if target.tile == tile_a then target.tile = tile_b print("---> to tile b")return true end
+    if target.tile == tile_b then target.tile = tile_a print("---> to tile a")return true end
+end
+
+-- this effect changes physical properties of Entities. Currently only used to add/remove
+-- 'Obstacle' component, more complexity will require a decision table and not if statements.
+function phys_change(target, property)
+    if property == "obstacle" then
+        if target.components["obstacle"] then
+            target.components["obstacle"] = nil
+        else
+            target.components["obstacle"] = Obstacle()
+        end
+    end
+end
+
+
+-- TO MOVE IN CONSTANTS ---------- TODO ---------- TODO ---------- TODO ---------- TODO ---------- TODO ---------- TODO ---------- TODO
 -- valid effects for the that can be applied to entities with consequence
 EFFECTS_TABLE = {
     ["poison"] = poison,
     ["slash"] = slash,
     ["str"] = str_effect,
     ["statgold"] = stat_gold,
-    ["sfx"] = sfx_play
+    ["sfx"] = sfx_play,
+    ["tileswap"] = tile_swap,
+    ["physchange"] = phys_change
 }

@@ -217,12 +217,26 @@ IO_DTABLE = {
     ["use"] = function(player_comp, entity, key)
         local target_cell
         local target
+
+        print(player_comp.movement_inputs[key])
+
+        -- it is better to avoid player to activate objects when standing on them,
+        -- since they could change physics and block him
+        if player_comp.movement_inputs[key][1] == 0 and player_comp.movement_inputs[key][2] == 0 then
+            console_event("Thou need to step back to accomplish this!")
+            return false
+        end
         
         if player_comp.movement_inputs[key] then
             target_cell = g.grid[entity.cell["grid_row"] + player_comp.movement_inputs[key][1]]
             [entity.cell["grid_column"] + player_comp.movement_inputs[key][2]]
         else
             -- if input is not a valid direction, turn is not valid
+            return false
+        end
+
+        if target_cell.occupant then
+            console_event(target_cell.occupant.name .. " is hindering your action")
             return false
         end
 

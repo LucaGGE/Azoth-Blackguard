@@ -3,7 +3,8 @@
 @crab|:67|stats,hp=15,en=10|npc,group=crabs,enemies=none,nature=aggressive,sight=5,hearing=1|movable,walk,swim|*grab,str=Clamping,slash=1d2|profile,slash=-2
 @gold|:81|pickup|trigger,true,false,collects th' gold|*trigger,statgold=1d5+5,sfx=sfx_gold
 @locket|:71|locked|trigger,true,false,doth open the locket|description,golden locket
-@key|:35|key|pickup|description,key
+@key|:111|key|pickup|description,key
+@door|:1|obstacle|usable,false,use=open|*open,tileswap=1-112,physchange=obstacle
 @tome|:28|pickup|sealed|description,old tome|trigger,false,false,reads "Scemo ki legge!!1!"
 @lever|:38|description,old lever|usable,false,use=powa,turn=hidden|*powa,str=Activating|*hidden,str=Turning
 @exit|:110|exit,Thee travel to another level

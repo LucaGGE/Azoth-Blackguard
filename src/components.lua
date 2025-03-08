@@ -156,12 +156,19 @@ function Movable:move_entity(entity, direction)
             print("Incompatible tile terrain in path for entity")
             return false
         end 
-    end    
+    end
+
+    -- check if player is dealing with an obstacle Entity, not an occupant
+    if target_cell.entity and target_cell.entity.components["obstacle"] then
+        print("Cell is already occupied by: " .. target_cell.entity.id)
+        return false
+    end
+
     -- checking if there are entities on the target_cell. These always have precedence of interaction
     if target_cell.occupant then
         -- a lack of controller means the player is dealing with an object entity, not a creature entity
         if not target_cell.occupant.controller then
-            print("Cell is already occupied by: "..target_cell.occupant.id)
+            print("Cell is already occupied by: " .. target_cell.occupant.id)
             return false
         end
 

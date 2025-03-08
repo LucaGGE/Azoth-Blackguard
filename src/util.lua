@@ -169,8 +169,6 @@ function entities_spawner(blueprint, loc_row, loc_column, name)
         elseif comp_tags[1] == "player" then
             new_player["player_component"] = new_component
             is_occupant = true
-        elseif comp_tags[1] == "obstacle" then
-            is_occupant = true
         end
     end
 

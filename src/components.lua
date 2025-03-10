@@ -53,7 +53,6 @@ function Player:input_management(entity, key)
     if key == "v" then
         if entity.powers then
             for power, power_class in pairs(entity.powers) do
-                print(power)
                 for effect, input in pairs(power_class.effects) do
                     print(effect .. " = " .. input)
                 end
@@ -62,6 +61,7 @@ function Player:input_management(entity, key)
             print("No powers for Entity " .. self.name)
         end
     end
+    --------------------------------------------------------------------------------------------------------------------------------------
 
     if not self.action_state then
         -- checking if player is trying to use a hotkey
@@ -218,7 +218,6 @@ function Movable:move_entity(entity, direction)
             target_stats["hp"] = 0
             -- entity will be removed from render_group and cell automatically in StatePlay:refresh()
             target_cell.occupant.alive = false
-            print("Player set as dead")
             -- if a player just died, save all deceased's relevant info in cemetery for Game Over screen
             if target_cell.occupant.components["player"] then
                 local deceased = {["player"] = target_cell.occupant.name,
@@ -435,8 +434,6 @@ function Usable:new(args)
             print("Warning: blank Usable component has no key-action couple")
             return false
         end
-        print(key_power[1])
-        print(key_power[2])
         self.uses[key_power[1]] = key_power[2]
 
         ::continue::
@@ -463,7 +460,6 @@ function Usable:activate(target, input_entity, input_key)
     end
 
     if not target.powers[self.uses[key]] then
-        print("2>>>>>"..key)
         error_handler("Usable comp has valid key-power couple called, but no corresponding power")
 
         return false
@@ -484,7 +480,6 @@ function Usable:activate(target, input_entity, input_key)
     end
 
     -- at this point we know everything is in check, proceed
-    print("---->"..entity.name)
     target.powers[self.uses[key]]:activate(target, entity)
 
     -- if destroyonuse, destroy used object (useful for consumables)
@@ -583,7 +578,6 @@ function Profile:new(input_table)
         end
         -- code below translates as "self.profile[stat_name] = stat_value"
         self.profile[new_stat[1]] = new_stat[2]
-        print(new_stat[1] .. ": " .. new_stat[2])
     end
 end
 
@@ -622,9 +616,19 @@ end
 
 function Inventory:add(item)
     if self.spaces > 0 then
+        local item_ref = item.name
+
+        if item.components["description"] then
+            item_ref = item.components["description"].string
+        end
+
+        if item.components["secret"] then
+            item_ref = item.components["secret"].string
+        end
+
         self.spaces = self.spaces - 1
         table.insert(self.items, item)
-        console_event("Thee pick up " .. item.id)
+        console_event("Thee pick up " .. item_ref)
         item.alive = false
 
         return true
@@ -652,6 +656,7 @@ function Slots:new(args)
     -- slot is available if == true and ~= Entity
     self.slots = {}
     for _,slot in ipairs(args) do
+        print("->->-> "..slot)
         -- adding all input slots from args (true = available)
         self.slots[slot] = true
     end
@@ -660,7 +665,7 @@ end
 --[[
     For all Entities that can be equipped (i.e. rings, amulets, crowns...),
     need to know in which slot they're supposed to fit (i.e. head, hand, tentacle...)
-    and multiple compatible slots are accepted (i.e. right hand, left hand...).
+    and multiple suitable slots are accepted (i.e. right hand, left hand...).
     Also note that once equipped, objects will trigger/statchange/apply effects.
     The last simply artificially changes Player's characteristics.
 ]]
@@ -672,14 +677,16 @@ function Equipable:new(args)
     }
     -- cursed objects cannot be normally unequipped
     self.cursed = string_to_bool[args[1]]
-    -- now remove the frist arg, as it becomes useless
+    print("--->" .. args[1])
+    -- now remove the first arg, as it becomes useless
     table.remove(args, 1)
 
-    self.compatible_slots = {}
+    self.suitable_slots = {}
 
-    for i,v in ipairs(args) do
+    for i, slot in ipairs(args) do
+        print("slot --->" .. slot)
         -- adding all compatible slots for an Equipable
-        table.insert(self.compatible_slots, v)
+        table.insert(self.suitable_slots, slot)
     end
 end
 
@@ -687,7 +694,6 @@ end
 -- these effects are validated by EFFECTS_TABLE and executed by apply_effect() function
 Effect = Object:extend()
 function Effect:new(input_effects)
-    print(input_effects)
     self.active_effects = {}
 
     -- immediately add optional effects and effect immunities on comp creation
@@ -766,7 +772,6 @@ end
 function Sealed:activate(target, entity, player_comp)
     if target.name == player_comp.local_string then
         console_event("Thou dost unseal it!")
-        print(target.name)
         if target.components["trigger"] then
             target.components["trigger"]:activate(target, entity)
         end

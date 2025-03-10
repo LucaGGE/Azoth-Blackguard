@@ -168,6 +168,7 @@ IO_DTABLE = {
     ["pickup"] = function(player_comp, entity, key)
         local target_cell
         local target
+        local target_ref
         
         if player_comp.movement_inputs[key] then
             target_cell = g.grid[entity.cell["grid_row"] + player_comp.movement_inputs[key][1]]
@@ -197,7 +198,6 @@ IO_DTABLE = {
 
         -- if the target has a trigger comp, trigger immediately
         if target.components["trigger"] then
-            print("The object triggers!")
             target.components["trigger"]:activate(target, entity)
         end
 
@@ -236,7 +236,17 @@ IO_DTABLE = {
         end
 
         if target_cell.occupant then
-            console_event(target_cell.occupant.name .. " is hindering your action")
+            local occupant_ref = target_cell.occupant.name
+
+            if target_cell.occupant.components["description"] then
+                occupant_ref = target_cell.occupant.components["description"].string
+            end
+
+            if target_cell.occupant.components["secret"] then
+                occupant_ref = target_cell.occupant.components["secret"].string
+            end
+
+            console_event(occupant_ref .. " is hindering your action")
             return false
         end
 
@@ -303,6 +313,54 @@ IO_DTABLE = {
         end
 
         return true
+    end,
+    ["equip"] = function(player_comp, entity, key)
+        local inv_str = "abcdefghijklmnopqrstuvwxyz"
+        local inv_ref = entity.components["inventory"]
+        local slots_ref = entity.components["slots"]
+        local available_items = {}
+        local target_item
+
+        if not inv_ref then
+            error_handler("Trying to equip without inventory component")
+            return false
+        end
+
+        if not slots_ref then
+            error_handler("Trying to equip without slots component")
+            return false
+        end
+
+        inv_ref = inv_ref.items
+        slots_ref = slots_ref.slots
+
+        for i = 1, string.len(inv_str) do
+            if not inv_ref[i] then
+                break
+            end
+
+            print(string.sub(inv_str, i, i) .. ": " .. inv_ref[i].components["description"].string or inv_ref[i].name)
+            available_items[string.sub(inv_str, i, i)] = inv_ref[i]
+        end
+
+        -- check if there's an item coupled with this letter
+        if not available_items[key] then
+            return false
+        end
+
+        if not available_items[key].components["equipable"] then
+            console_event("Thee can't equip this")
+            return true
+        end
+
+        print("Ready to equip: "..available_items[key].name)
+
+        for _, suit_slot in ipairs(available_items[key].components["equipable"].suitable_slots) do
+            if slots_ref[suit_slot] then
+                print("Equipped object!")
+                return true
+            end
+        end
     end,
     ["console"] = function(player_comp, entity, key)
         local return_value
@@ -379,6 +437,13 @@ function player_commands(player_comp, input_key)
             if not player_comp.action_state then
                 player_comp.action_state = "pickup"
                 console_cmd("Pickup where?")          
+                return false
+            end
+        end,
+        ["equip"] = function(player_comp)
+            if not player_comp.action_state then
+                player_comp.action_state = "equip"
+                console_cmd("Equip what?")
                 return false
             end
         end

@@ -357,10 +357,17 @@ IO_DTABLE = {
 
         for _, suit_slot in ipairs(available_items[key].components["equipable"].suitable_slots) do
             if slots_ref[suit_slot] then
+                -- save occupied slot in equipped object for easier referencing
+                available_items[key].components["equipable"].slot_reference = suit_slot
                 print("Equipped object!")
+                
+                available_items[key].components["equipable"]:equip(available_items[key], entity)
                 return true
             end
         end
+
+        print("No compatible/free slot found")
+        return false
     end,
     ["console"] = function(player_comp, entity, key)
         local return_value

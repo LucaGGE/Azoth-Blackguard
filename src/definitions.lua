@@ -32,6 +32,8 @@ function Entity:new(id, tile, components, powers, name)
     self.powers = powers or false
     -- completely optional. Used for Players names and special NPCs/objects
     self.name = name or id
+    -- original tile. Storing it makes much easier and faster to change Entities appearence
+    self.base_tile = tile
 end
 
 -- Powers are built with Effects, and can be applied on self/target by Entities
@@ -52,7 +54,6 @@ function Power:new(input)
             -- checking effects validity, storing valid ones
             if EFFECTS_TABLE[effect_input[1]] then
                 self.effects[effect_input[1]] = effect_input[2]
-                print("Effect: " .. effect_input[1] .. "(" .. effect_input[2] .. ")")
             else
                 error_handler(effect_input[1] .. ": this effect doesn't exist, ignored")
             end

@@ -68,15 +68,24 @@ function stat_gold(target, input)
 end
 
 -- simple function swapping between two tiles, depending on the current one.
--- it can be used with 
-function tile_swap(target, input_tiles_couple)
-    local tiles_couple = strings_separator(input_tiles_couple, "-", 1)
-    local tile_a = tiles_couple[1]
-    local tile_b = tiles_couple[2]
-
+function tile_switch(target, new_tile)
     -- swap current target tile with other tile
-    if target.tile == tile_a then target.tile = tile_b print("---> to tile b")return true end
-    if target.tile == tile_b then target.tile = tile_a print("---> to tile a")return true end
+    if target.tile == new_tile then target.tile = target.base_tile return true end
+    if target.tile == target.base_tile then target.tile = new_tile return true end
+
+    -- if neither is true, then target.tile has been changed in unexpected way
+    print("Warning: the Entity has been morphed and is now unable to tile_switch until de-morphed")
+    return false
+end
+
+-- changing Entity's tile to a new one
+function tile_change(target, new_tile)
+    target.tile = new_tile
+end
+
+-- restoring Entity's tile to original one
+function tile_restore(target)
+    target.tile = target.base_tile
 end
 
 -- this effect changes physical properties of Entities. Currently only used to add/remove
@@ -100,6 +109,8 @@ EFFECTS_TABLE = {
     ["str"] = str_effect,
     ["statgold"] = stat_gold,
     ["sfx"] = sfx_play,
-    ["tileswap"] = tile_swap,
+    ["tileswitch"] = tile_switch,
+    ["tilechange"] = tile_change,
+    ["tilerestore"] = tile_restore,
     ["physchange"] = phys_change
 }

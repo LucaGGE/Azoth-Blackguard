@@ -666,7 +666,7 @@ end
     For all Entities that can be equipped (i.e. rings, amulets, crowns...),
     need to know in which slot they're supposed to fit (i.e. head, hand, tentacle...)
     and multiple suitable slots are accepted (i.e. right hand, left hand...).
-    Also note that once equipped, objects will trigger/statchange/apply effects.
+    Also note that once equipped, objects will trigger/apply effects.
     The last simply artificially changes Player's characteristics.
 ]]
 Equipable = Object:extend()
@@ -677,16 +677,38 @@ function Equipable:new(args)
     }
     -- cursed objects cannot be normally unequipped
     self.cursed = string_to_bool[args[1]]
-    print("--->" .. args[1])
-    -- now remove the first arg, as it becomes useless
-    table.remove(args, 1)
-
     self.suitable_slots = {}
+    self.appearance = args[2]
+    self.slot_reference = false
+    print("--->" .. args[1])
+    -- now remove first and second arg, as they becomes useless
+    table.remove(args, 1)
+    table.remove(args, 1)
 
     for i, slot in ipairs(args) do
         print("slot --->" .. slot)
         -- adding all compatible slots for an Equipable
         table.insert(self.suitable_slots, slot)
+    end
+end
+
+function Equipable:equip(owner, target)
+    local success
+    target.tile = self.appearance
+    success = owner.powers["equip"]:activate(target)
+
+    if not success then
+        print("Warning: trying to activate equip power, but none is found")
+    end
+end
+
+function Equipable:unequip(owner, target)
+    local success
+    target.tile = target.base_tile
+    success = owner.powers["unequip"]:activate(target)
+
+    if not success then
+        print("Warning: trying to activate unequip power, but none is found")
     end
 end
 

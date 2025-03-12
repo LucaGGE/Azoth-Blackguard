@@ -465,11 +465,32 @@ function Usable:activate(target, input_entity, input_key)
         return false
     end
 
+    -- activate target power
+    target.powers[self.uses[key]]:activate(target, entity)
+    -- if destroyonuse, destroy used object (useful for consumables)
+    if self.destroyonuse then
+        target.alive = false
+    end
+
+    -- if self.uses[key] ~= 'linked', no need to proceed
+    if self.uses[key] ~= "linked" then
+        print("Power does not call for linked activation")
+        return true
+    end
+    
+    -- search for linked comp and store eventual linked Entity
     if target.components["linked"] then
+        print("Linked component was found")
         local row, column = target.components["linked"]:activate(target)
         row = tonumber(row)
         column = tonumber(column)
+        -- check immediately for NPC/Player
         entity = g.grid[row][column] and g.grid[row][column].occupant or false
+        -- if absent, check for Entity
+        if not entity then entity = g.grid[row][column].entity or false end
+    else
+        -- no linked component, return true
+        return true
     end
 
     -- if linked but Entity is missing in cell, nothing happened and return true
@@ -479,13 +500,14 @@ function Usable:activate(target, input_entity, input_key)
         return true
     end
 
-    -- at this point we know everything is in check, proceed
-    target.powers[self.uses[key]]:activate(target, entity)
+    if not entity.powers["linked"] then
+        print("WARNING: linked Entity has no dedicated 'linked' power")
 
-    -- if destroyonuse, destroy used object (useful for consumables)
-    if self.destroyonuse then
-        target.alive = false
+        return true
     end
+
+    -- at this point we know everything is in check, proceed
+    entity.powers["linked"]:activate(entity)
 
     return true
 end

@@ -7,7 +7,7 @@
 @door|:1|obstacle|usable,false,use=linked|*linked,tileswitch=112,physchange=obstacle
 @tome|:28|pickup|sealed|description,old tome|trigger,false,false,reads "Scemo ki legge!!1!"
 @lever|:38|description,old lever|linked|usable,false,use=linked,turn=hidden|*linked,str=Activating|*hidden,str=Turning
-@cape1|:53|description,traveling cape|equipable,false,46,cape|pickup|*equip,str=Putting on,tilechange=46|*unequip,str=Putting off,tilerestore
+@cape1|:53|description,traveling cape|equipable,true,cape|pickup|*equip,str=Putting on,tilechange=46|*unequip,str=Putting off,tilerestore=
 @exit|:110|exit,Thee travel to another level
 @shroom|:shrooms|obstacle|secret,unknown mushroom|description,deadly cap
 @shroom2|:shrooms|obstacle|description,most peculiar-looking mushroom, verily

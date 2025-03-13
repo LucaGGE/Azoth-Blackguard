@@ -680,7 +680,7 @@ function Slots:new(args)
     for _,slot in ipairs(args) do
         print("->->-> "..slot)
         -- adding all input slots from args (true = available)
-        self.slots[slot] = true
+        self.slots[slot] = "empty"
     end
 end
 
@@ -700,11 +700,9 @@ function Equipable:new(args)
     -- cursed objects cannot be normally unequipped
     self.cursed = string_to_bool[args[1]]
     self.suitable_slots = {}
-    self.appearance = args[2]
     self.slot_reference = false
     print("--->" .. args[1])
-    -- now remove first and second arg, as they becomes useless
-    table.remove(args, 1)
+    -- now remove first arg, as it becomes useless
     table.remove(args, 1)
 
     for i, slot in ipairs(args) do
@@ -715,23 +713,30 @@ function Equipable:new(args)
 end
 
 function Equipable:equip(owner, target)
-    local success
     target.tile = self.appearance
-    success = owner.powers["equip"]:activate(target)
 
-    if not success then
+    if not owner.powers["equip"] then
         print("Warning: trying to activate equip power, but none is found")
+        return false
     end
+
+    owner.powers["equip"]:activate(target)
+    return true
 end
 
 function Equipable:unequip(owner, target)
-    local success
-    target.tile = target.base_tile
-    success = owner.powers["unequip"]:activate(target)
-
-    if not success then
-        print("Warning: trying to activate unequip power, but none is found")
+    if owner.components["equipable"].cursed then
+        console_event("Thy item is cursed and may not be unequipped!",{0.6,0.2,1})
+        return false
     end
+
+    if not owner.powers["unequip"] then
+        print("Warning: trying to activate unequip power, but none is found")
+        return false
+    end
+
+    owner.powers["unequip"]:activate(target)
+    return true
 end
 
 -- this component allows entities to be subjected through a variety of effects give by the Power comp

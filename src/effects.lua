@@ -85,6 +85,8 @@ end
 
 -- restoring Entity's tile to original one
 function tile_restore(target)
+    print("restore tile to --->"..target.name)
+    print(target.base_tile)
     target.tile = target.base_tile
 end
 

@@ -107,7 +107,7 @@ IO_DTABLE = {
 
         return false
     end,
-    ["say"] = function(player_comp, entity, key)
+    ["talk"] = function(player_comp, entity, key)
         local return_value
 
         -- when message is ready, go to non accessible action_state and choose target
@@ -360,9 +360,11 @@ IO_DTABLE = {
 
         -- check if the slot required by the item is available in Entity Slots component
         for _, suit_slot in ipairs(available_items[key].components["equipable"].suitable_slots) do
-            if slots_ref[suit_slot] then
+            if slots_ref[suit_slot] == "empty" then
                 -- save occupied slot in equipped object for easier referencing
                 available_items[key].components["equipable"].slot_reference = suit_slot
+                -- store item inside slots component
+                slots_ref[suit_slot] = available_items[key]
                 print("Equipped object!")
                 -- activate equip() func in 'equipable' component to trigger dedicated effects
                 available_items[key].components["equipable"]:equip(available_items[key], entity)
@@ -373,6 +375,29 @@ IO_DTABLE = {
         -- if no compatible/free slot is found on Entity, return false
         print("No compatible/free slot found")
         return false
+    end,
+    ["unequip"] = function(player_comp, entity, key)
+        local slots_ref
+
+        if not entity.components["slots"] then
+            print("WARNING: Entity without slots is trying to unequip")
+            return false
+        end
+        -- if an item entity was equipped and still is, we can assume its data is predictable
+        slots_ref = entity.components["slots"].slots
+        for _, slot in pairs(slots_ref) do
+            print(slot)
+            if slot ~= "empty" then
+                local item = slot
+                local success = item.components["equipable"]:unequip(item, entity)
+                -- if item wasn't cursed and is successfully removed, empty slot
+                if success then
+                    slots_ref[item.components["equipable"].slot_reference] = "empty"
+                end
+            end            
+        end
+
+        return true
     end,
     ["console"] = function(player_comp, entity, key)
         local return_value
@@ -438,9 +463,9 @@ function player_commands(player_comp, input_key)
                 return false
             end
         end,
-        ["say"] = function(player_comp)
+        ["talk"] = function(player_comp)
             if not player_comp.action_state then
-                player_comp.action_state = "say"
+                player_comp.action_state = "talk"
                 console_cmd("Your words: ")             
                 return false
             end
@@ -458,11 +483,18 @@ function player_commands(player_comp, input_key)
                 console_cmd("Equip what?")
                 return false
             end
+        end,
+        ["unequip"] = function(player_comp)
+            if not player_comp.action_state then
+                player_comp.action_state = "unequip"
+                console_cmd("Unequip what?")
+                return false
+            end
         end
     }
     -- these are 'hotkeys', aka the action modes 'links' that can be activated by keyboard shortcut
     -- other than with console (note console can only be activated from a hotkey)
-    commands["t"] = commands["say"]
+    commands["t"] = commands["talk"]
     commands["u"] = commands["use"]
     commands["i"] = commands["inventory"]
     commands["o"] = commands["observe"]

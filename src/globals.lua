@@ -5,6 +5,7 @@ g = {
     canvas_static, -- game canvases: base for statics, and final for statics + dynamics
     canvas_dynamic,
     canvas_ui, -- used only during state_play because of state stacking
+    canvas_inv, -- used only during state_play to show player's inventory
     grid = {}, -- grid system main data
     grid_x = 0, -- this is established by the CSV files containing the map
     grid_y = 0, -- this is established by the CSV files containing the map
@@ -14,6 +15,7 @@ g = {
     players_party = {}, -- contains both the entities reacting to input and their Player component
     npcs_group = {}, -- contains all the NPCs
     entities_group = {}, -- contains all the other entities, ref needed to apply effects on
+    current_inventory = {}, -- current player's inventory
     cemetery = {}, -- a table containing deaths data (player, killer, gold...)
     is_tweening = false, -- suspends player input during animations
     TILESET = love.graphics.newImage(mod.PATH_TO_TILESET or "graphics/tileset.png"),

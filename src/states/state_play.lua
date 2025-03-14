@@ -118,6 +118,7 @@ function StatePlay:update()
             if g.players_party[current_turn] then
                 -- reset current_turn number and move NPCs
                 turns_manager(g.players_party[current_turn], true)
+                inventory_update(g.players_party[current_turn]["entity"])
             elseif g.game_state:is(StatePlay) then
                 -- triggering Game Over, but only if we didn't simply pass through an exit!
                 g.game_state = StateGameOver()

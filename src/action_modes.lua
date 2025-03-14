@@ -315,59 +315,37 @@ IO_DTABLE = {
         return true
     end,
     ["equip"] = function(player_comp, entity, key)
-        local inv_str = "abcdefghijklmnopqrstuvwxyz"
-        local inv_ref = entity.components["inventory"]
         local slots_ref = entity.components["slots"]
-        local available_items = {}
         local target_item
-
-        if not inv_ref then
-            error_handler("Trying to equip without inventory component")
-            return false
-        end
 
         if not slots_ref then
             error_handler("Trying to equip without slots component")
             return false
         end
 
-        inv_ref = inv_ref.items -- player inventory
         slots_ref = slots_ref.slots -- player slots
 
-        -- print all item in player inventory and couple them with a letter
-        for i = 1, string.len(inv_str) do
-            -- if no more items are available, break loop
-            if not inv_ref[i] then
-                break
-            end
-
-            print(string.sub(inv_str, i, i) .. ": " .. inv_ref[i].components["description"].string or inv_ref[i].name)
-            available_items[string.sub(inv_str, i, i)] = inv_ref[i]
-        end
-
         -- check if there's an item coupled with this letter
-        if not available_items[key] then
+        if not g.current_inventory[key] then
             return false
         end
 
         -- check if the selected item is equipable
-        if not available_items[key].components["equipable"] then
+        if not g.current_inventory[key].components["equipable"] then
             console_event("Thee can't equip this")
             return true
         end
 
-        print("Ready to equip: "..available_items[key].name)
-
         -- check if the slot required by the item is available in Entity Slots component
-        for _, suit_slot in ipairs(available_items[key].components["equipable"].suitable_slots) do
+        for _, suit_slot in ipairs(g.current_inventory[key].components["equipable"].suitable_slots) do
             if slots_ref[suit_slot] == "empty" then
                 -- save occupied slot in equipped object for easier referencing
-                available_items[key].components["equipable"].slot_reference = suit_slot
+                g.current_inventory[key].components["equipable"].slot_reference = suit_slot
                 -- store item inside slots component
-                slots_ref[suit_slot] = available_items[key]
+                slots_ref[suit_slot] = g.current_inventory[key]
                 print("Equipped object!")
                 -- activate equip() func in 'equipable' component to trigger dedicated effects
-                available_items[key].components["equipable"]:equip(available_items[key], entity)
+                g.current_inventory[key].components["equipable"]:equip(g.current_inventory[key], entity)
                 return true
             end
         end
@@ -392,7 +370,9 @@ IO_DTABLE = {
                 local success = item.components["equipable"]:unequip(item, entity)
                 -- if item wasn't cursed and is successfully removed, empty slot
                 if success then
+                    -- emptying slots comp item reference and equipable comp slot reference
                     slots_ref[item.components["equipable"].slot_reference] = "empty"
+                    item.components["equipable"].slot_reference = false
                 end
             end            
         end

@@ -771,7 +771,7 @@ function turns_manager(current_player, npc_turn)
 end
 
 function ui_manager_play()
-    -- generating a canvas of the proper size
+    -- generating and setting a canvas of the proper size
     local new_canvas  = love.graphics.newCanvas(g.window_width, g.window_height)
     love.graphics.setCanvas(new_canvas)
 
@@ -805,7 +805,7 @@ function ui_manager_play()
     -- print console events
     love.graphics.setColor(g.console["color3"][1], g.console["color3"][2], g.console["color3"][3], 1)
     love.graphics.print(
-        g.console["event3"] or "Error: fed nothing to console_event() func", PADDING, (PADDING)
+        g.console["event3"] or "Error: fed nothing to console_event() func", PADDING, PADDING
     )
     love.graphics.setColor(g.console["color2"][1], g.console["color2"][2], g.console["color2"][3], 1)
     love.graphics.print(
@@ -1006,4 +1006,85 @@ function entity_available(target)
     else
         return true
     end
+end
+
+function inventory_update(player)
+    local new_canvas  = love.graphics.newCanvas(g.window_width, g.window_height)
+    local inv_str = "abcdefghijklmnopqrstuvwxyz"
+    local inv_ref = player.components["inventory"]
+    local available_items = {}
+    local equipped = false
+    local color = {
+        [true] = {1, 0, 0, 1},
+        [false] = {0.78, 0.96, 0.94, 1}    
+    }
+
+    -- immediately check if player is missing inventory component
+    if not inv_ref then
+        error_handler("In 'inventory_update()', found player with missing inventory")
+        return false
+    end
+
+    -- setting a canvas of the proper size
+    love.graphics.setCanvas(new_canvas)
+    -- clear to transparent black, set proper font and color
+    love.graphics.clear(0, 0, 0, 0)
+    love.graphics.setFont(FONTS["narration"])
+
+    inv_ref = inv_ref.items -- player inventory table
+
+    -- print all item in player inventory and couple them with a letter
+    for i = 1, string.len(inv_str) do
+        -- if no more items are available, break loop
+        if not inv_ref[i] then
+            break
+        end
+
+        -- choosing printf color to discriminate equipped/unequipped items
+        if inv_ref[i].components["equipable"] and inv_ref[i].components["equipable"].slot_reference then
+            equipped = true
+        else
+            equipped = false
+        end
+
+        -- chosen color setting
+        love.graphics.setColor(color[equipped])
+
+        love.graphics.printf(string.sub(inv_str, i, i) .. ": " .. inv_ref[i].components["description"].string or inv_ref[i].name, 10, 10 * i, g.window_width, "center")
+        available_items[string.sub(inv_str, i, i)] = inv_ref[i]
+        -- temp debug code
+        print(string.sub(inv_str, i, i) .. ": " .. inv_ref[i].components["description"].string or inv_ref[i].name)
+    end
+
+    -- storing available_items to be used with action_modes
+    g.current_inventory = available_items
+
+    -- restoring default RGBA, since this function influences ALL graphics
+    love.graphics.setColor(1, 1, 1, 1)
+    -- reset default canvas to draw on it in draw() func
+    love.graphics.setCanvas()
+
+    return true
+end
+
+function ui_manager_inventory()
+    -- generatoring and setting a canvas of the proper size
+    local new_canvas  = love.graphics.newCanvas(g.window_width, g.window_height)
+    love.graphics.setCanvas(new_canvas)
+
+    -- clear to transparent black, set proper font and color
+    love.graphics.clear(0, 0, 0, 0)
+    love.graphics.setFont(FONTS["narration"])
+    love.graphics.setColor(0.78, 0.96, 0.94, 1)
+
+    -- print player inventory
+
+
+    -- restoring default RGBA, since this function influences ALL graphics
+    love.graphics.setColor(1, 1, 1, 1)
+
+    -- reset default canvas to draw on it in draw() func
+    love.graphics.setCanvas()
+
+    return new_canvas
 end

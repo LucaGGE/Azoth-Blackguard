@@ -314,27 +314,43 @@ IO_DTABLE = {
         print("No compatible/free slot found")
         return false
     end,
-    ["unequip"] = function(player_comp, entity, key)
+    ["unequip"] = function(player_comp, player_entity, key)
         local slots_ref
 
-        if not entity.components["slots"] then
+        if not player_entity.components["slots"] then
             print("WARNING: Entity without slots is trying to unequip")
             return false
         end
-        -- if an item entity was equipped and still is, we can assume its data is predictable
-        slots_ref = entity.components["slots"].slots
-        for _, slot in pairs(slots_ref) do
-            print(slot)
-            if slot ~= "empty" then
-                local item = slot
-                local success = item.components["equipable"]:unequip(item, entity)
-                -- if item wasn't cursed and is successfully removed, empty slot
-                if success then
-                    -- emptying slots comp item reference and equipable comp slot reference
-                    slots_ref[item.components["equipable"].slot_reference] = "empty"
-                    item.components["equipable"].slot_reference = false
-                end
-            end            
+        -- if an item player_entity was equipped and still is, we can assume its data is predictable
+        slots_ref = player_entity.components["slots"].slots
+
+        if g.current_inventory[key] then
+            local item
+            local success
+
+            item = g.current_inventory[key]
+
+            if not item.components["equipable"] then
+                print("Trying to unequip an unequippable object!")
+                return false
+            end
+
+            -- if this variable == false, then the item wasn't equipped in the first place
+            if not item.components["equipable"].slot_reference then
+                print("Trying to unequip a non-equipped, equippable object")
+                return false
+            end
+
+            success = item.components["equipable"]:unequip(item, player_entity)
+
+            -- if item isn't cursed, empty slots comp item reference and equipable comp slot reference
+            if success then
+                slots_ref[item.components["equipable"].slot_reference] = "empty"
+                item.components["equipable"].slot_reference = false
+            end
+        else
+            print("No item at this key address")
+            return false
         end
 
         return true

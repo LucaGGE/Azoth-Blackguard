@@ -1092,3 +1092,30 @@ function ui_manager_inventory()
 
     return new_canvas
 end
+
+-- action_modes related function that selects a tile OR an inventory item to perform action on
+function target_selector(player_comp, performer, key)
+    local target_cell
+    local occupant_ref, entity_ref -- Entities references
+
+    if not g.view_inventory then
+        if player_comp.movement_inputs[key] then
+            target_cell = g.grid[performer.cell["grid_row"] + player_comp.movement_inputs[key][1]]
+            [performer.cell["grid_column"] + player_comp.movement_inputs[key][2]]
+        else
+            -- if input is not a valid direction, turn is not valid
+            return false
+        end
+
+        -- store eventual Occupant Entity or Entity
+        occupant_ref = target_cell.occupant or nil
+        entity_ref = target_cell.entity or nil
+
+        -- avoiding performer from acting on itself
+        if target_cell.occupant == performer then
+            occupant_ref = nil
+        end
+
+        return true, occupant_ref, entity_ref
+    end
+end

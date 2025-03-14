@@ -43,62 +43,55 @@ INPUT_DTABLE["return"] = INPUT_DTABLE["enter"]
 -- note that the 'console' mode is reserved for 'space' hotkey, to avoid looping through consoles.
 -- Lastly, be aware that player = player_component, and entity = player entity
 IO_DTABLE = {
-    ["observe"] = function(player_comp, entity, key)
-        local target_cell
-        local occupant_ref
-        local entity_ref
-        
-        if player_comp.movement_inputs[key] then
-            target_cell = g.grid[entity.cell["grid_row"] + player_comp.movement_inputs[key][1]]
-            [entity.cell["grid_column"] + player_comp.movement_inputs[key][2]]
-        else
-            -- if input is not a valid direction, turn is not valid
-            return false
-        end
+    ["observe"] = function(player_comp, player_entity, key)
+        local valid_key
+        local occupant_ref, entity_ref
+        local occupant_str, entity_str
 
-        -- note that and Entity's name equale to instance name or its id
-        occupant_ref = target_cell.occupant and target_cell.occupant["name"] or nil
-        entity_ref = target_cell.entity and target_cell.entity["name"] or nil
+        valid_key, occupant_ref, entity_ref = target_selector(player_comp, player_entity, key)
 
-        -- TO DO TO DO TO DO this code sucks and check 1000 times for the same things. IMPROVE! TO DO TO DO TO DO TO DO TO DO TO DO 
+        if not valid_key then return false end
+
         if occupant_ref then
-            if target_cell.occupant.components["description"] then
-                occupant_ref = target_cell.occupant.components["description"].string
+            -- defaut action is to set name for string
+            occupant_str = occupant_ref.name
+            
+            if occupant_ref.components["description"] then
+                occupant_str = occupant_ref.components["description"].string
             end
 
-            if target_cell.occupant.components["secret"] then
-                occupant_ref = target_cell.occupant.components["secret"].string
+            if occupant_ref.components["secret"] then
+                occupant_str = occupant_ref.components["secret"].string
             end
         end
         if entity_ref then
-            if target_cell.entity.components["description"] then
-                entity_ref = target_cell.entity.components["description"].string
+            -- defaut action is to set name for string
+            entity_str = entity_ref.name
+            
+            if entity_ref.components["description"] then
+                entity_str = entity_ref.components["description"].string
             end
 
-            if target_cell.entity.components["secret"] then
-                entity_ref = target_cell.entity.components["secret"].string
+            if entity_ref.components["secret"] then
+                entity_str = entity_ref.components["secret"].string
             end
         end
 
-        -- checking if player is observing himself
-        if target_cell.occupant == entity then
-            occupant_ref = nil
-        end
 
-        if not occupant_ref and not entity_ref then
+        if not occupant_str and not entity_str then
             console_event("Thee observe nothing")
         end
 
-        if not occupant_ref and entity_ref then
-            console_event("Thee observe ain " .. entity_ref)
+        if not occupant_str and entity_str then
+            console_event("Thee observe ain " .. entity_str)
         end
 
-        if occupant_ref and not entity_ref then
-            console_event("Thee observe " .. occupant_ref)
+        if occupant_str and not entity_str then
+            console_event("Thee observe " .. occupant_str)
         end
 
-        if occupant_ref and entity_ref then
-            console_event("Thee observe " .. occupant_ref .. ", standing on somethende")
+        if occupant_str and entity_str then
+            console_event("Thee observe " .. occupant_str .. ", standing on somethende")
         end
 
         -- being a free action it always returns nil, so it needs to set player_comp.action_state = nil
@@ -135,90 +128,72 @@ IO_DTABLE = {
 
         return false
     end,
-    ["/"] = function(player_comp, entity, key)
-        local target_cell
-        local target
-        
-        if player_comp.movement_inputs[key] then
-            target_cell = g.grid[entity.cell["grid_row"] + player_comp.movement_inputs[key][1]]
-            [entity.cell["grid_column"] + player_comp.movement_inputs[key][2]]
-        else
-            -- if input is not a valid direction, turn is not valid
-            return false
-        end
+    ["/"] = function(player_comp, player_entity, key)
+        local valid_key
+        local occupant_ref, entity_ref
 
-        -- store the target entity, if present
-        target = target_cell.entity
+        valid_key, occupant_ref, entity_ref = target_selector(player_comp, player_entity, key)
+        
+        if not valid_key then return false end
 
         -- if no target is found, return a 'nothing happens' message
-        if not target_cell.entity then
+        if not entity_ref then
             console_event("There is naught within")
             return false
         end
 
         -- if the target has a trigger comp, trigger immediately
-        if target.components["sealed"] then
-            return target.components["sealed"]:activate(target, entity, player_comp)
+        if entity_ref.components["sealed"] then
+            return entity_ref.components["sealed"]:activate(entity_ref, player_entity, player_comp)
         end
 
         console_event("Nothing doth seem to happen")
 
         return true
     end,
-    ["pickup"] = function(player_comp, entity, key)
-        local target_cell
-        local target
-        local target_ref
-        
-        if player_comp.movement_inputs[key] then
-            target_cell = g.grid[entity.cell["grid_row"] + player_comp.movement_inputs[key][1]]
-            [entity.cell["grid_column"] + player_comp.movement_inputs[key][2]]
-        else
-            -- if input is not a valid direction, turn is not valid
-            return false
-        end
+    ["pickup"] = function(player_comp, player_entity, key)
+        local valid_key
+        local occupant_ref, entity_ref
 
-        if not entity.components["inventory"] then
+        valid_key, occupant_ref, entity_ref = target_selector(player_comp, player_entity, key)
+        
+        if not valid_key then return false end
+
+        if not player_entity.components["inventory"] then
             error_handler("Entity without inventory is trying to pickup")
             return false
         end
 
-        -- store the target entity, if present
-        target = target_cell.entity
-
         -- if no target is found, return a 'nothing found' message
-        if not target_cell.entity then
+        if not entity_ref then
             console_event("There's non-other to pick up h're")
-            print("There's nothing to pick up h'ere")
             return true
         end
 
         -- block any interaction with 'locked' or 'sealed' Entities
-        if not entity_available(target) then return true end
+        if not entity_available(entity_ref) then return true end
 
         -- if the target has a trigger comp, trigger immediately
-        if target.components["trigger"] then
-            target.components["trigger"]:activate(target, entity)
+        if entity_ref.components["trigger"] then
+            entity_ref.components["trigger"]:activate(entity_ref, player_entity)
         end
 
         -- if target is has destroyontrigger, don't bother picking up
-        if not target.alive then
+        if not entity_ref.alive then
             return true
         end
 
         -- if target has no pickup comp then warn player
-        if target_cell.entity.components["pickup"] then
-            return entity.components["inventory"]:add(target)
+        if entity_ref.components["pickup"] then
+            return player_entity.components["inventory"]:add(entity_ref)
         else
             console_event("Thee art unable to pick hider up")
             return false
         end
     end,
-    ["use"] = function(player_comp, entity, key)
-        local target_cell
-        local target
-
-        print(player_comp.movement_inputs[key])
+    ["use"] = function(player_comp, player_entity, key)
+        local valid_key
+        local occupant_ref, entity_ref
 
         -- it is better to avoid player to activate objects when standing on them,
         -- since they could change physics and block him
@@ -227,87 +202,72 @@ IO_DTABLE = {
             return false
         end
         
-        if player_comp.movement_inputs[key] then
-            target_cell = g.grid[entity.cell["grid_row"] + player_comp.movement_inputs[key][1]]
-            [entity.cell["grid_column"] + player_comp.movement_inputs[key][2]]
-        else
-            -- if input is not a valid direction, turn is not valid
-            return false
-        end
+        valid_key, occupant_ref, entity_ref = target_selector(player_comp, player_entity, key)
+        
+        if not valid_key then return false end
 
-        if target_cell.occupant then
-            local occupant_ref = target_cell.occupant.name
+        if occupant_ref then
+            local occupant_str = occupant_ref.name
 
-            if target_cell.occupant.components["description"] then
-                occupant_ref = target_cell.occupant.components["description"].string
+            if occupant_ref.components["description"] then
+                occupant_str = occupant_ref.components["description"].string
             end
 
-            if target_cell.occupant.components["secret"] then
-                occupant_ref = target_cell.occupant.components["secret"].string
+            if occupant_ref.components["secret"] then
+                occupant_str = occupant_ref.components["secret"].string
             end
 
-            console_event(occupant_ref .. " is hindering your action")
+            console_event(occupant_str .. " is hindering your action")
             return false
         end
-
-        -- store the target entity, if present
-        target = target_cell.entity
 
         -- if no target is found, return a 'nothing found' message
-        if not target_cell.entity then
+        if not entity_ref then
             console_event("There is non-other usaeble h're")
             return true
         end
 
         -- block any interaction with 'locked' or 'sealed' Entities
-        if not entity_available(target) then return true end
+        if not entity_available(entity_ref) then return true end
 
         -- if the target has a trigger 'triggeroncollision' comp, trigger immediately
-        if target.components["trigger"] and target.components["trigger"].triggeroncollision then
-            print("The object triggers!")
-            target.components["trigger"]:activate(target, entity)
+        if entity_ref.components["trigger"] and entity_ref.components["trigger"].triggeroncollision then
+            entity_ref.components["trigger"]:activate(entity_ref, player_entity)
         end
 
-        -- if no usable target is found then warn player
-        if target.components["usable"] then
+        -- if usable target is found activate, else warn player
+        if entity_ref.components["usable"] then
             local console_string
             -- if local_string is empty, then player is acting a simple 'use' command
             -- in this case, set it to false to let Usable comp & console_event() know
             if player_comp.local_string == "" then player_comp.local_string = false end
             console_string = player_comp.local_string or "usae "
 
-            console_event("Thee " .. console_string .. " " .. target.name)
-            target.components["usable"]:activate(target, entity, player_comp.local_string)
+            console_event("Thee " .. console_string .. " " .. entity_ref.name)
+            entity_ref.components["usable"]:activate(entity_ref, player_entity, player_comp.local_string)
         else
             console_event("Nothing doth happen")
         end
 
         return true
     end,
-    ["unlock"] = function(player_comp, entity, key)
-        local target_cell
-        local target
-        
-        if player_comp.movement_inputs[key] then
-            target_cell = g.grid[entity.cell["grid_row"] + player_comp.movement_inputs[key][1]]
-            [entity.cell["grid_column"] + player_comp.movement_inputs[key][2]]
-        else
-            -- if input is not a valid direction, turn is not valid
-            return false
-        end
+    ["unlock"] = function(player_comp, player_entity, key)
+        local valid_key
+        local occupant_ref, entity_ref
 
-        -- store the target entity, if present
-        target = target_cell.entity
+        valid_key, occupant_ref, entity_ref = target_selector(player_comp, player_entity, key)
+        
+        if not valid_key then return false end
 
         -- if no target is found, return a 'nothing found' message
-        if not target_cell.entity then
+        if not entity_ref then
             console_event("There be naught that can be unlocked h're")
             return true
         end
 
         -- if no unlockable target is found then warn player
-        if target.components["locked"] then
-            target.components["locked"]:activate(target, entity)
+        if entity_ref.components["locked"] then
+            entity_ref.components["locked"]:activate(entity_ref, player_entity)
         else
             console_event("Thee can't unlock this")
         end

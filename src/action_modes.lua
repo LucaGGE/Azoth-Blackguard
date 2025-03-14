@@ -194,6 +194,10 @@ IO_DTABLE = {
     ["use"] = function(player_comp, player_entity, key)
         local valid_key
         local occupant_ref, entity_ref
+        
+        valid_key, occupant_ref, entity_ref = target_selector(player_comp, player_entity, key)
+
+        if not valid_key then return false end
 
         -- it is better to avoid player to activate objects when standing on them,
         -- since they could change physics and block him
@@ -201,10 +205,6 @@ IO_DTABLE = {
             console_event("Thou need to step back to accomplish this!")
             return false
         end
-        
-        valid_key, occupant_ref, entity_ref = target_selector(player_comp, player_entity, key)
-        
-        if not valid_key then return false end
 
         if occupant_ref then
             local occupant_str = occupant_ref.name

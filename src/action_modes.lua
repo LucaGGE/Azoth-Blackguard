@@ -199,11 +199,14 @@ IO_DTABLE = {
 
         if not valid_key then return false end
 
-        -- it is better to avoid player to activate objects when standing on them,
-        -- since they could change physics and block him
-        if player_comp.movement_inputs[key][1] == 0 and player_comp.movement_inputs[key][2] == 0 then
-            console_event("Thou need to step back to accomplish this!")
-            return false
+        -- TO DO TO DO TO DO IMPROVE THIS CODE, UGLY! TO DO TO DO TO DOTO DO TO DO TO DOTO DO TO DO TO DOTO DO TO DO TO DO --------
+        if not g.view_inventory then
+            -- it is better to avoid player to activate objects when standing on them,
+            -- since they could change physics and block him
+            if player_comp.movement_inputs[key][1] == 0 and player_comp.movement_inputs[key][2] == 0 then
+                console_event("Thou need to step back to accomplish this!")
+                return false
+            end
         end
 
         if occupant_ref then
@@ -409,7 +412,6 @@ function player_commands(player_comp, input_key)
             end
         end,
         ["inventory"] = function()
-            print("WARNING: inventory func in development")
             if not player_comp.action_state then
                 g.view_inventory = not g.view_inventory
                 return false
@@ -431,6 +433,9 @@ function player_commands(player_comp, input_key)
         end,
         ["pickup"] = function(player_comp)
             if not player_comp.action_state then
+                -- avoid picking up entities already in inventory
+                g.view_inventory = false
+                
                 player_comp.action_state = "pickup"
                 console_cmd("Pickup where?")          
                 return false
@@ -438,6 +443,7 @@ function player_commands(player_comp, input_key)
         end,
         ["equip"] = function(player_comp)
             if not player_comp.action_state then
+                g.view_inventory = true
                 player_comp.action_state = "equip"
                 console_cmd("Equip what?")
                 return false
@@ -445,6 +451,7 @@ function player_commands(player_comp, input_key)
         end,
         ["unequip"] = function(player_comp)
             if not player_comp.action_state then
+                g.view_inventory = true
                 player_comp.action_state = "unequip"
                 console_cmd("Unequip what?")
                 return false

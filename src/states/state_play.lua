@@ -128,7 +128,6 @@ function StatePlay:update()
             end
         else
             g.is_tweening = true
-            print("check here: " .. current_turn)
             
             turns_manager(g.players_party[current_turn], false)
         end

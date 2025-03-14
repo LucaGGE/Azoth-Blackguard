@@ -49,20 +49,6 @@ function Player:input_management(entity, key)
         return false
     end
 
-    -- TEMPORARY CODE, USED TO DEBUG -----------------------------------------------------------------------------------------------------
-    if key == "v" then
-        if entity.powers then
-            for power, power_class in pairs(entity.powers) do
-                for effect, input in pairs(power_class.effects) do
-                    print(effect .. " = " .. input)
-                end
-            end
-        else
-            print("No powers for Entity " .. self.name)
-        end
-    end
-    --------------------------------------------------------------------------------------------------------------------------------------
-
     if not self.action_state then
         -- checking if player is trying to use a hotkey
         if not self.movement_inputs[key] and not self.action_state then
@@ -701,12 +687,10 @@ function Equipable:new(args)
     self.cursed = string_to_bool[args[1]]
     self.suitable_slots = {}
     self.slot_reference = false
-    print("--->" .. args[1])
     -- now remove first arg, as it becomes useless
     table.remove(args, 1)
 
     for i, slot in ipairs(args) do
-        print("slot --->" .. slot)
         -- adding all compatible slots for an Equipable
         table.insert(self.suitable_slots, slot)
     end
@@ -828,7 +812,6 @@ function Sealed:activate(target, entity, player_comp)
         -- if Entity gets successfully unsealed, remove 'seled' comp
         target.components["sealed"] = nil
         player_comp.local_string = ""
-        print("returning true")
         return true
     end
 

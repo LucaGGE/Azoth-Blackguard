@@ -1054,8 +1054,6 @@ function inventory_update(player)
         FONT_SIZE_DEFAULT, FONT_SIZE_DEFAULT * i, g.window_width, "center"
         )
         available_items[string.sub(inv_str, i, i)] = inv_ref[i]
-        -- temp debug code
-        print(string.sub(inv_str, i, i) .. ": " .. inv_ref[i].components["description"].string or inv_ref[i].name)
     end
 
     -- storing available_items to be used with action_modes
@@ -1118,4 +1116,6 @@ function target_selector(player_comp, performer, key)
 
         return true, occupant_ref, entity_ref
     end
+
+    return true, false, g.current_inventory[key]
 end

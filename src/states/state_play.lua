@@ -62,14 +62,15 @@ function StatePlay:init(map, generate_players)
         -- resetting to Love2D's default canvas
         love.graphics.setCanvas()
 
+        -- setting camera and launching player inventory
         camera_setting()
+        inventory_update(g.players_party[current_turn]["entity"])
     else
         g.game_state:exit()
         g.game_state = StateFatalError()
         g.game_state:init()
     end
 
-    print("init")
     g.game_state:refresh()
 end
 
@@ -193,9 +194,16 @@ function StatePlay:refresh()
     end
 
     g.canvas_ui = ui_manager_play()
+    inventory_update(g.players_party[current_turn]["entity"])
 end
 
 function StatePlay:draw()
+    -- if inventory is open and there's a player, draw inventory and skip rest of code
+    if g.view_inventory and g.camera["entity"] then
+        love.graphics.draw(g.canvas_inv, 0, 0)
+        goto continue              
+    end
+
     -- draw g.canvas_dynamic on the screen, with g.camera offset.
     if g.camera["entity"] then
         -- screen is drawn on g.canvas_dynamic with player perfectly at the center of it
@@ -210,8 +218,12 @@ function StatePlay:draw()
         -- if for any reason there's no player, g.camera points 0,0 with its left upper corner
         love.graphics.draw(g.canvas_dynamic, 0, 0, 0, SIZE_MULTIPLIER, SIZE_MULTIPLIER)
     end
+    
+    ::continue::
+
     -- drawing UI dedicated canvas on top of everything, always locked on screen
     love.graphics.draw(g.canvas_ui, 0, 0)
+
 end
 
 function StatePlay:exit()

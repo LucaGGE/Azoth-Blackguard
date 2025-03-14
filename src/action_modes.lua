@@ -434,7 +434,10 @@ function player_commands(player_comp, input_key)
         end,
         ["inventory"] = function()
             print("WARNING: inventory func in development")
-            return true
+            if not player_comp.action_state then
+                g.view_inventory = not g.view_inventory
+                return false
+            end
         end,
         ["observe"] = function(player_comp)
             if not player_comp.action_state then

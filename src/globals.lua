@@ -16,6 +16,7 @@ g = {
     npcs_group = {}, -- contains all the NPCs
     entities_group = {}, -- contains all the other entities, ref needed to apply effects on
     current_inventory = {}, -- current player's inventory
+    view_inventory = false, -- view inventory or not
     cemetery = {}, -- a table containing deaths data (player, killer, gold...)
     is_tweening = false, -- suspends player input during animations
     TILESET = love.graphics.newImage(mod.PATH_TO_TILESET or "graphics/tileset.png"),

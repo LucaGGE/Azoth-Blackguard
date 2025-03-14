@@ -1050,7 +1050,9 @@ function inventory_update(player)
         -- chosen color setting
         love.graphics.setColor(color[equipped])
 
-        love.graphics.printf(string.sub(inv_str, i, i) .. ": " .. inv_ref[i].components["description"].string or inv_ref[i].name, 10, 10 * i, g.window_width, "center")
+        love.graphics.printf(string.sub(inv_str, i, i) .. ": " .. inv_ref[i].components["description"].string or inv_ref[i].name,
+        FONT_SIZE_DEFAULT, FONT_SIZE_DEFAULT * i, g.window_width, "center"
+        )
         available_items[string.sub(inv_str, i, i)] = inv_ref[i]
         -- temp debug code
         print(string.sub(inv_str, i, i) .. ": " .. inv_ref[i].components["description"].string or inv_ref[i].name)
@@ -1058,6 +1060,8 @@ function inventory_update(player)
 
     -- storing available_items to be used with action_modes
     g.current_inventory = available_items
+    -- copying updated inventory canvas to g.canvas_inv (global inventory canvas)
+    g.canvas_inv = new_canvas
 
     -- restoring default RGBA, since this function influences ALL graphics
     love.graphics.setColor(1, 1, 1, 1)

@@ -22,7 +22,7 @@ function StateGameOver:init()
         love.audio.stop(g.game_track)
     end
 
-    -- setting background color with calming pink for fatal errors
+    -- setting background color to black
     love.graphics.setBackgroundColor(0 / 255, 0 / 255, 0 / 255)
 
     -- play the gameover sting

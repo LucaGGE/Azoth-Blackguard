@@ -194,7 +194,9 @@ function StatePlay:refresh()
     end
 
     g.canvas_ui = ui_manager_play()
-    inventory_update(g.players_party[current_turn]["entity"])
+    if g.players_party[current_turn] then
+        inventory_update(g.players_party[current_turn]["entity"])
+    end
 end
 
 function StatePlay:draw()

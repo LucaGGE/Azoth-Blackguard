@@ -1029,7 +1029,6 @@ function inventory_update(player)
     love.graphics.setCanvas(new_canvas)
     -- clear to transparent black, set proper font and color
     love.graphics.clear(0, 0, 0, 0)
-    love.graphics.setFont(FONTS["narration"])
 
     inv_ref = inv_ref.items -- player inventory table
 

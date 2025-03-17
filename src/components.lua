@@ -24,7 +24,7 @@ function Player:new()
     self.group = "players"
     self.action_state = nil
     self.valid_input = "qwertyuiopasdfghjklzxcvbnmspace"
-    self.local_string = ""
+    self.string = "" -- stores player input for all action_modes
     -- this variable contains all the movement inputs key-values for keypad and keyboard, with key = (row, column)
     self.movement_inputs = {
         ["kp7"] = {-1,-1}, ["q"] = {-1,-1},
@@ -41,9 +41,8 @@ end
 
 function Player:input_management(entity, key)
     if key == "escape" then 
-        print("Action mode quit...")
         self.action_state = nil
-        self.local_string = ""
+        self.string = ""
         console_cmd(nil)
 
         return false
@@ -55,6 +54,11 @@ function Player:input_management(entity, key)
             -- note that hotkeys allow access only to a few states
             -- also note the difference between 'self' (this comp) and 'entity' (the player entity)
             return player_commands(self, key)
+        end
+
+        -- check if player has inventory open, to avoid undesired movement input
+        if g.view_inventory then
+            return false
         end
     
         -- check if player is skipping turn (always possible, even without a mov comp)
@@ -803,7 +807,7 @@ function Sealed:new(input)
 end
 
 function Sealed:activate(target, entity, player_comp)
-    if target.name == player_comp.local_string then
+    if target.name == player_comp.string then
         console_event("Thou dost unseal it!")
         if target.components["trigger"] then
             target.components["trigger"]:activate(target, entity)
@@ -811,7 +815,7 @@ function Sealed:activate(target, entity, player_comp)
 
         -- if Entity gets successfully unsealed, remove 'seled' comp
         target.components["sealed"] = nil
-        player_comp.local_string = ""
+        player_comp.string = ""
         return true
     end
 

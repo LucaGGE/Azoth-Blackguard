@@ -14,12 +14,12 @@ local INPUT_DTABLE = {
         love.audio.play(SOUNDS["button_select"])
 
         -- check action command, note that 'console' action is forbidden
-        if player_comp.local_string == "space" then
-            player_comp.local_string = ""
+        if player_comp.string == "space" then
+            player_comp.string = ""
         end
 
         -- if function received valid command, execute action
-        return_value, custom_action = player_commands(player_comp, player_comp.local_string)
+        return_value, custom_action = player_commands(player_comp, player_comp.string)
 
         -- check if player is trying a custom action on Usable Entity
         -- this means any command out of player_commands() local commands
@@ -32,9 +32,9 @@ local INPUT_DTABLE = {
         return false
     end,
     ["backspace"] = function(player_comp)
-        player_comp.local_string = text_backspace(player_comp.local_string)
+        player_comp.string = text_backspace(player_comp.string)
         -- return false, since player is typing action
-        return player_comp.local_string
+        return player_comp.string
     end
 }
 INPUT_DTABLE["return"] = INPUT_DTABLE["enter"]
@@ -112,9 +112,9 @@ IO_DTABLE = {
         end
 
         if not INPUT_DTABLE[key] then
-            player_comp.local_string = text_input(player_comp.valid_input, key, player_comp.local_string, 41)
+            player_comp.string = text_input(player_comp.valid_input, key, player_comp.string, 41)
             -- immediately show console string on screen
-            console_cmd("Your words: " .. player_comp.local_string)            
+            console_cmd("Your words: " .. player_comp.string)            
             -- always return false, since player is typing action
             return false
         end
@@ -241,13 +241,13 @@ IO_DTABLE = {
         -- if usable target is found activate, else warn player
         if entity_ref.components["usable"] then
             local console_string
-            -- if local_string is empty, then player is acting a simple 'use' command
+            -- if player_comp.string is empty, then player is acting a simple 'use' command
             -- in this case, set it to false to let Usable comp & console_event() know
-            if player_comp.local_string == "" then player_comp.local_string = false end
-            console_string = player_comp.local_string or "usae "
+            if player_comp.string == "" then player_comp.string = false end
+            console_string = player_comp.string or "usae "
 
             console_event("Thee " .. console_string .. " " .. entity_ref.name)
-            entity_ref.components["usable"]:activate(entity_ref, player_entity, player_comp.local_string)
+            entity_ref.components["usable"]:activate(entity_ref, player_entity, player_comp.string)
         else
             console_event("Nothing doth happen")
         end
@@ -362,9 +362,9 @@ IO_DTABLE = {
         local return_value
 
         if not INPUT_DTABLE[key] then
-            player_comp.local_string = text_input(player_comp.valid_input, key, player_comp.local_string, 9)
+            player_comp.string = text_input(player_comp.valid_input, key, player_comp.string, 9)
             -- immediately show console string on screen
-            console_cmd("Thy action: " .. player_comp.local_string)            
+            console_cmd("Thy action: " .. player_comp.string)            
             -- always return false, since player is typing action
             return false
         end
@@ -374,7 +374,7 @@ IO_DTABLE = {
 
         -- if backspace, modify string
         if return_value then
-            console_cmd("Thy action: " .. player_comp.local_string)
+            console_cmd("Thy action: " .. player_comp.string)
 
             return false
         end
@@ -474,6 +474,6 @@ function player_commands(player_comp, input_key)
         return false, true
     end
 
-    player_comp.local_string = ""
+    player_comp.string = ""
     return commands[key](player_comp)
 end

@@ -792,7 +792,7 @@ function ui_manager_play()
         PADDING, g.window_height - (PADDING * 2.5)
     )
     love.graphics.print(
-        "Gold "..g.camera["entity"].components["stats"].stats["gold"], -- WARNING: stats component is not forced and therefore 'gold' will crash game. UI system should be modular and adapt to dynamic stats!  
+        "Gold "..g.camera["entity"].components["stats"].stats["gold"],
         PADDING, g.window_height - (PADDING * 1.5)
     )
 

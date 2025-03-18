@@ -203,7 +203,7 @@ function StatePlay:draw()
     -- if inventory is open and there's a player, draw inventory and skip rest of code
     if g.view_inventory and g.camera["entity"] then
         love.graphics.draw(g.canvas_inv, 0, 0)
-        goto continue              
+        return true            
     end
 
     -- draw g.canvas_dynamic on the screen, with g.camera offset.
@@ -220,8 +220,6 @@ function StatePlay:draw()
         -- if for any reason there's no player, g.camera points 0,0 with its left upper corner
         love.graphics.draw(g.canvas_dynamic, 0, 0, 0, SIZE_MULTIPLIER, SIZE_MULTIPLIER)
     end
-    
-    ::continue::
 
     -- drawing UI dedicated canvas on top of everything, always locked on screen
     love.graphics.draw(g.canvas_ui, 0, 0)

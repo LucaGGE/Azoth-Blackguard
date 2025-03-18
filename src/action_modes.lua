@@ -199,11 +199,13 @@ IO_DTABLE = {
 
         if not valid_key then return false end
 
-        -- TO DO TO DO TO DO IMPROVE THIS CODE, UGLY! TO DO TO DO TO DOTO DO TO DO TO DOTO DO TO DO TO DOTO DO TO DO TO DO --------
         if not g.view_inventory then
             -- it is better to avoid player to activate objects when standing on them,
             -- since they could change physics and block him
+            
+            --[ TO DO TO DO TO DO IMPROVE THIS CODE, UGLY! TO DO TO DO TO DOTO DO TO DO TO DOTO DO TO DO TO DOTO DO TO DO ----
             if player_comp.movement_inputs[key][1] == 0 and player_comp.movement_inputs[key][2] == 0 then
+                ------------------------------------------------------------------------------------------ TO DO TO DO TO DO ]
                 console_event("Thou need to step back to accomplish this!")
                 return false
             end

@@ -1,14 +1,14 @@
-@player|:45|player|stats,hp=10,gold=0|movable,walk|slots,head,chest,cape|*slash,str=Slashing,slash=1d4|inventory,26
-@lemure|:65|stats,hp=10|npc,group=self,enemies=none,nature=neutral,sight=15,hearing=5|movable,walk,climb|profile,bleeding=immune
-@crab|:67|stats,hp=15,en=10|npc,group=crabs,enemies=none,nature=aggressive,sight=5,hearing=1|movable,walk,swim|*grab,str=Clamping,slash=1d2|profile,slash=-2
-@gold|:81|pickup|trigger,true,false,collects th' gold|*trigger,statgold=1d5+5,sfx=sfx_gold
-@locket|:71|locked|trigger,true,false,doth open the locket|description,golden locket
-@key|:111|key|pickup|description,key
-@door|:1|obstacle|usable,false,use=linked|*linked,tileswitch=112,physchange=obstacle
-@tome|:28|pickup|sealed|description,old tome|trigger,false,false,reads "Scemo ki legge!!1!"
-@lever|:38|description,old lever|linked|usable,false,use=linked,turn=hidden|*linked,str=Activating|*hidden,str=Turning
-@cape1|:53|description,fur cape|equipable,true,cape|pickup|*equip,str=Putting on,tilechange=46|*unequip,str=Putting off,tilerestore=
-@exit|:110|exit,Thee travel to another level
+@player|:72|player|stats,hp=10,gold=0|movable,walk|slots,head,chest,cape|*slash,str=Slashing,slash=1d4|inventory,26
+@lemure|:108|stats,hp=10|npc,group=self,enemies=none,nature=neutral,sight=15,hearing=5|movable,walk,climb|profile,bleeding=immune
+@crab|:110|stats,hp=15,en=10|npc,group=crabs,enemies=none,nature=aggressive,sight=5,hearing=1|movable,walk,swim|*grab,str=Clamping,slash=1d2|profile,slash=-2
+@gold|:88|pickup|trigger,true,false,collects th' gold|*trigger,statgold=1d5+5,sfx=sfx_gold
+@locket|:101|locked|trigger,true,false,doth open the locket|description,golden locket
+@key|:64|key|pickup|description,key
+@door|:9|obstacle|usable,false,use=linked|*linked,tileswitch=10,physchange=obstacle
+@tome|:121|pickup|sealed|description,old tome|trigger,false,false,reads "Scemo ki legge!!1!"
+@lever|:75|description,old lever|linked|usable,false,use=linked,turn=hidden|*linked,str=Activating|*hidden,str=Turning
+@cape1|:55|description,fur cape|equipable,true,cape|pickup|*equip,str=Putting on,tilechange=65|*unequip,str=Putting off,tilerestore=
+@exit|:1|exit,Thee travel to another level
 @shroom|:shrooms|obstacle|secret,unknown mushroom|description,deadly cap
 @shroom2|:shrooms|obstacle|description,most peculiar-looking mushroom, verily
 @potion1|:potions|secret,potion|description,mana potion

@@ -243,12 +243,23 @@ IO_DTABLE = {
         -- if usable target is found activate, else warn player
         if entity_ref.components["usable"] then
             local console_string
+            local entity_str = entity_ref.name
+            
+            -- as usual, favor Entity description (or secret) to Entity name
+            if entity_ref.components["description"] then
+                entity_str = entity_ref.components["description"].string
+            end
+
+            if entity_ref.components["secret"] then
+                entity_str = entity_ref.components["secret"].string
+            end
+
             -- if player_comp.string is empty, then player is acting a simple 'use' command
             -- in this case, set it to false to let Usable comp & console_event() know
             if player_comp.string == "" then player_comp.string = false end
             console_string = player_comp.string or "usae "
 
-            console_event("Thee " .. console_string .. " " .. entity_ref.name)
+            console_event("Thee " .. console_string .. " " .. entity_str)
             entity_ref.components["usable"]:activate(entity_ref, player_entity, player_comp.string)
         else
             console_event("Nothing doth happen")

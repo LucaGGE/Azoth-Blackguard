@@ -201,6 +201,8 @@ function StatePlay:draw()
     -- if inventory is open and there's a player, draw inventory and skip rest of code
     if g.view_inventory and g.camera["entity"] then
         love.graphics.draw(g.canvas_inv, 0, 0)
+        -- drawing UI dedicated canvas on top of everything, always locked on screen
+        love.graphics.draw(g.canvas_ui, 0, 0)
         return true            
     end
 
@@ -221,7 +223,6 @@ function StatePlay:draw()
 
     -- drawing UI dedicated canvas on top of everything, always locked on screen
     love.graphics.draw(g.canvas_ui, 0, 0)
-
 end
 
 function StatePlay:exit()

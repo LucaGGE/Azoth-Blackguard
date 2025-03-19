@@ -818,39 +818,41 @@ function ui_manager_play()
     -- making the UI semi-transparent
     love.graphics.setColor(0.78, 0.96, 0.94, 1)
     
-    -- print player stats
-    love.graphics.print(
-        g.camera["entity"].name,
-        PADDING, g.window_height - (PADDING * 3.5)
-    )
-    love.graphics.print(
-        "Life "..g.camera["entity"].components["stats"].stats["hp"],
-        PADDING, g.window_height - (PADDING * 2.5)
-    )
-    love.graphics.print(
-        "Gold "..g.camera["entity"].components["stats"].stats["gold"],
-        PADDING, g.window_height - (PADDING * 1.5)
-    )
-
     -- if present, print console["string"]
     if g.console["string"] then
         love.graphics.printf(g.console["string"], 0,
         g.window_height - (PADDING * 1.5), g.window_width, "center")
     end
 
-    -- print console events
-    love.graphics.setColor(g.console["color3"][1], g.console["color3"][2], g.console["color3"][3], 1)
-    love.graphics.print(
-        g.console["event3"] or "Error: fed nothing to console_event() func", PADDING, PADDING
-    )
-    love.graphics.setColor(g.console["color2"][1], g.console["color2"][2], g.console["color2"][3], 1)
-    love.graphics.print(
-        g.console["event2"] or "Error: fed nothing to console_event() func", PADDING, (PADDING * 2)
-    )
-    love.graphics.setColor(g.console["color1"][1], g.console["color1"][2], g.console["color1"][3], 1)
-    love.graphics.print(
-        g.console["event1"] or "Error: fed nothing to console_event() func", PADDING, (PADDING * 3)
-    )
+    if not g.view_inventory then
+        -- print player stats
+        love.graphics.print(
+            g.camera["entity"].name,
+            PADDING, g.window_height - (PADDING * 3.5)
+        )
+        love.graphics.print(
+            "Life "..g.camera["entity"].components["stats"].stats["hp"],
+            PADDING, g.window_height - (PADDING * 2.5)
+        )
+        love.graphics.print(
+            "Gold "..g.camera["entity"].components["stats"].stats["gold"],
+            PADDING, g.window_height - (PADDING * 1.5)
+        )
+
+        -- print console events
+        love.graphics.setColor(g.console["color3"][1], g.console["color3"][2], g.console["color3"][3], 1)
+        love.graphics.print(
+            g.console["event3"] or "Error: fed nothing to console_event() func", PADDING, PADDING
+        )
+        love.graphics.setColor(g.console["color2"][1], g.console["color2"][2], g.console["color2"][3], 1)
+        love.graphics.print(
+            g.console["event2"] or "Error: fed nothing to console_event() func", PADDING, (PADDING * 2)
+        )
+        love.graphics.setColor(g.console["color1"][1], g.console["color1"][2], g.console["color1"][3], 1)
+        love.graphics.print(
+            g.console["event1"] or "Error: fed nothing to console_event() func", PADDING, (PADDING * 3)
+        )
+    end
     
     -- restoring default RGBA, since this function influences ALL graphics
     love.graphics.setColor(1, 1, 1, 1)

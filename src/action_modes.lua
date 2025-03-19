@@ -427,6 +427,8 @@ function player_commands(player_comp, input_key)
         ["inventory"] = function()
             if not player_comp.action_state then
                 g.view_inventory = not g.view_inventory
+                -- necessary to update UI so that only console string is visible
+                g.canvas_ui = ui_manager_play()
                 return false
             end
         end,
@@ -457,6 +459,8 @@ function player_commands(player_comp, input_key)
         ["equip"] = function(player_comp)
             if not player_comp.action_state then
                 g.view_inventory = true
+                -- necessary to update UI so that only console string is visible
+                g.canvas_ui = ui_manager_play()
                 player_comp.action_state = "equip"
                 console_cmd("Equip what?")
                 return false
@@ -465,6 +469,8 @@ function player_commands(player_comp, input_key)
         ["unequip"] = function(player_comp)
             if not player_comp.action_state then
                 g.view_inventory = true
+                -- necessary to update UI so that only console string is visible
+                g.canvas_ui = ui_manager_play()
                 player_comp.action_state = "unequip"
                 console_cmd("Unequip what?")
                 return false

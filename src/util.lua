@@ -1089,6 +1089,9 @@ function inventory_update(player)
     love.graphics.draw(g.TILESET, BORDERS["inventory"][3], g.window_width - TILE_SIZE * SIZE_MULTIPLIER, g.window_height - TILE_SIZE * SIZE_MULTIPLIER, 0, SIZE_MULTIPLIER, SIZE_MULTIPLIER)
     love.graphics.draw(g.TILESET, BORDERS["inventory"][4], g.window_width - TILE_SIZE * SIZE_MULTIPLIER, 0, 0, SIZE_MULTIPLIER, SIZE_MULTIPLIER)
 
+    -- setting font color
+    love.graphics.setColor(0.78, 0.96, 0.94, 1)
+
     -- printing owner's name
     love.graphics.printf(player.name .. "'s bag", 0, FONT_SIZE_DEFAULT, g.window_width, "center")
 

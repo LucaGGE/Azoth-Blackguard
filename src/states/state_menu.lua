@@ -150,13 +150,16 @@ function StateMenu:init()
         love.audio.stop(g.game_track)
     end
 
-    -- setting background color with calming pink for fatal errors
+    -- setting background color to black for menu
     love.graphics.setBackgroundColor(0 / 255, 0 / 255, 0 / 255)
 
     -- starting menu music
     g.game_track = MUSIC["menu"]
     g.game_track:setLooping(true)
     love.audio.play(g.game_track)
+
+    -- store all borderes images in costant BORDERS
+    borders_manager()
     
     g.game_state:refresh()
 end

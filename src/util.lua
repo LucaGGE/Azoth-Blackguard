@@ -1,7 +1,6 @@
 -- useful variables that get used often
 local TILESET_WIDTH = g.TILESET:getWidth()
 local TILESET_HEIGHT = g.TILESET:getHeight()
-local TILE_SIZE = mod.TILE_SIZE or 20 -- used for cell size/tileset slicing.
 local sprites_groups = {}
 
 -- simple, user-friendly error message handler
@@ -410,7 +409,7 @@ function map_reader(map, generate_players)
     -- all the valid tiles features for TILES_VALID_FEATURES table (see pairings in components.lua)
     local TILES_VALID_FEATURES = {
     ["liquid"] = true,
-    ["tricky"] = true,
+    ["climbable"] = true,
     ["untraversable"] = true,
     ["solid"] = true,
     ["ground"] = true
@@ -865,8 +864,18 @@ end
 function ui_manager_menu(text, input_phase, n_of_players, current_player, input_name)
     -- generating a canvas of the proper size
     local new_canvas  = love.graphics.newCanvas(g.window_width, g.window_height)
+    
     love.graphics.setCanvas(new_canvas)
 
+    -- draw borders
+    love.graphics.draw(g.TILESET, BORDERS["menu"][1], 0, 0, 0, SIZE_MULTIPLIER, SIZE_MULTIPLIER)
+    love.graphics.draw(g.TILESET, BORDERS["menu"][2], 0, g.window_height - TILE_SIZE * SIZE_MULTIPLIER, 0, SIZE_MULTIPLIER, SIZE_MULTIPLIER)
+    love.graphics.draw(g.TILESET, BORDERS["menu"][3], g.window_width - TILE_SIZE * SIZE_MULTIPLIER, g.window_height - TILE_SIZE * SIZE_MULTIPLIER, 0, SIZE_MULTIPLIER, SIZE_MULTIPLIER)
+    love.graphics.draw(g.TILESET, BORDERS["menu"][4], g.window_width - TILE_SIZE * SIZE_MULTIPLIER, 0, 0, SIZE_MULTIPLIER, SIZE_MULTIPLIER)
+
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.setFont(FONTS["tag"])
+    love.graphics.printf(GAME_TAG, 0, (g.window_height / 5) - FONT_SIZE_TITLE , g.window_width, "center")    
     love.graphics.setFont(FONTS["title"])
     love.graphics.printf(GAME_TITLE, 0, g.window_height / 5, g.window_width, "center")
 
@@ -884,7 +893,14 @@ end
 function ui_manager_gameover()
     -- generating a canvas of the proper size
     local new_canvas  = love.graphics.newCanvas(g.window_width, g.window_height)
+
     love.graphics.setCanvas(new_canvas)
+
+    -- draw borders
+    love.graphics.draw(g.TILESET, BORDERS["gameover"][1], 0, 0, 0, SIZE_MULTIPLIER, SIZE_MULTIPLIER)
+    love.graphics.draw(g.TILESET, BORDERS["gameover"][2], 0, g.window_height - TILE_SIZE * SIZE_MULTIPLIER, 0, SIZE_MULTIPLIER, SIZE_MULTIPLIER)
+    love.graphics.draw(g.TILESET, BORDERS["gameover"][3], g.window_width - TILE_SIZE * SIZE_MULTIPLIER, g.window_height - TILE_SIZE * SIZE_MULTIPLIER, 0, SIZE_MULTIPLIER, SIZE_MULTIPLIER)
+    love.graphics.draw(g.TILESET, BORDERS["gameover"][4], g.window_width - TILE_SIZE * SIZE_MULTIPLIER, 0, 0, SIZE_MULTIPLIER, SIZE_MULTIPLIER)
 
     love.graphics.setColor(1, 0, 0, 1)
     love.graphics.setFont(FONTS["title"])
@@ -892,7 +908,7 @@ function ui_manager_gameover()
 
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.setFont(FONTS["subtitle"])
-    love.graphics.printf("These souls have left us forever:", 0, g.window_height / 4 + (PADDING), g.window_width, "center")
+    love.graphics.printf("These souls have left us forever:", 0, g.window_height / 4 + PADDING, g.window_width, "center")
 
     -- printing all deceased players and info about their death
     for i, death in ipairs(g.cemetery) do 
@@ -1047,7 +1063,6 @@ end
 
 function inventory_update(player)
     local new_canvas  = love.graphics.newCanvas(g.window_width, g.window_height)
-    local SIZE_MULTIPLIER = mod.IMAGE_SIZE_MULTIPLIER or 2
     local inv_str = "abcdefghijklmnopqrstuvwxyz"
     local inv_ref = player.components["inventory"]
     local available_items = {}
@@ -1070,6 +1085,12 @@ function inventory_update(player)
 
     -- draw borders
     love.graphics.draw(g.TILESET, BORDERS["inventory"][1], 0, 0, 0, SIZE_MULTIPLIER, SIZE_MULTIPLIER)
+    love.graphics.draw(g.TILESET, BORDERS["inventory"][2], 0, g.window_height - TILE_SIZE * SIZE_MULTIPLIER, 0, SIZE_MULTIPLIER, SIZE_MULTIPLIER)
+    love.graphics.draw(g.TILESET, BORDERS["inventory"][3], g.window_width - TILE_SIZE * SIZE_MULTIPLIER, g.window_height - TILE_SIZE * SIZE_MULTIPLIER, 0, SIZE_MULTIPLIER, SIZE_MULTIPLIER)
+    love.graphics.draw(g.TILESET, BORDERS["inventory"][4], g.window_width - TILE_SIZE * SIZE_MULTIPLIER, 0, 0, SIZE_MULTIPLIER, SIZE_MULTIPLIER)
+
+    -- printing owner's name
+    love.graphics.printf(player.name .. "'s bag", 0, FONT_SIZE_DEFAULT, g.window_width, "center")
 
     inv_ref = inv_ref.items -- player inventory table
 
@@ -1091,7 +1112,7 @@ function inventory_update(player)
         love.graphics.setColor(color[equipped])
 
         love.graphics.printf(string.sub(inv_str, i, i) .. ": " .. inv_ref[i].components["description"].string or inv_ref[i].name,
-        FONT_SIZE_DEFAULT, FONT_SIZE_DEFAULT * i, g.window_width, "center"
+        0, FONT_SIZE_DEFAULT * (i + 2), g.window_width, "center"
         )
         available_items[string.sub(inv_str, i, i)] = inv_ref[i]
     end
@@ -1107,25 +1128,6 @@ function inventory_update(player)
     love.graphics.setCanvas()
 
     return true
-end
-
-function ui_manager_inventory()
-    -- generatoring and setting a canvas of the proper size
-    local new_canvas  = love.graphics.newCanvas(g.window_width, g.window_height)
-    love.graphics.setCanvas(new_canvas)
-
-    -- clear to transparent black, set proper font and color
-    love.graphics.clear(0, 0, 0, 0)
-    love.graphics.setFont(FONTS["narration"])
-    love.graphics.setColor(0.78, 0.96, 0.94, 1)
-
-    -- restoring default RGBA, since this function influences ALL graphics
-    love.graphics.setColor(1, 1, 1, 1)
-
-    -- reset default canvas to draw on it in draw() func
-    love.graphics.setCanvas()
-
-    return new_canvas
 end
 
 -- action_modes related function that selects a tile OR an inventory item to perform action on

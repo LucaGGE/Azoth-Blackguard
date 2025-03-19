@@ -21,7 +21,6 @@ require "src.dependencies"
 
 -- initializing main variables
 local GAME_SCREEN
-GAME_TITLE = "Rogue24 - "..GAME_TITLE
 love.window.setTitle(GAME_TITLE)
 love.graphics.setDefaultFilter("nearest", "nearest")
 

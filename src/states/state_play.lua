@@ -1,8 +1,5 @@
 StatePlay = BaseState:extend()
 
-local SIZE_MULTIPLIER = mod.IMAGE_SIZE_MULTIPLIER or 2 -- used to scale final canvas
-local HALF_TILE = (mod.TILE_SIZE or 20) / 2 -- used when centering the screen on player
-
 -- this variable stores the current turn
 local current_turn = 1
 
@@ -70,9 +67,6 @@ function StatePlay:init(map, generate_players)
         g.game_state = StateFatalError()
         g.game_state:init()
     end
-
-    -- then store all borderes images in costant BORDERS
-    borders_manager()
     
     g.game_state:refresh()
     

@@ -1,9 +1,10 @@
 -- variable containing the path to the necessary CSV files
 -- the two current local paths I use are "F:/Development/Dev_Games/GOBLET/source/azoth!_blackguard/modding/" or "C:/Users/foxre/"
 -- you'll need to modify these to your local path since the system, to date, cannot find other than LUA files in the relative path
-PATH_TO_CSV = mod.path_to_csv or "F:/Development/Dev_Games/GOBLET/source/azoth!_blackguard/modding/"
+PATH_TO_CSV = mod.path_to_csv or "C:/Users/foxre/"
 
-GAME_TITLE = type(mod.game_title) == "string" and mod.game_title or "GOBLET"
+GAME_TAG = "Azoth! Blackguard"
+GAME_TITLE = type(mod.game_title) == "string" and mod.game_title or "Descent into the Grim Path"
 
 --[[
     Pay attention to tiles_features_pairs. It will store tile index = tile type,
@@ -25,6 +26,11 @@ FONT_SIZE_TITLE = mod.font_size_title or 60
 FONT_SIZE_SUBTITLE = mod.font_size_subtitle or 30
 FONT_SIZE_DEFAULT = mod.font_size_default or 24
 PADDING = mod.padding or 32
+
+-- sizes relative to tiles
+TILE_SIZE = mod.TILE_SIZE or 20 -- used for cell size/tileset slicing.
+HALF_TILE = (mod.TILE_SIZE or 20) / 2 -- used when centering the screen on player
+SIZE_MULTIPLIER = mod.IMAGE_SIZE_MULTIPLIER or 2
 
 MUSIC = {
     ["swamp"] = love.audio.newSource("sfx/st_swamp.ogg", "static"),
@@ -53,6 +59,7 @@ SOUNDS = {
 }
 
 FONTS = {
+    ["tag"] = love.graphics.newFont("fonts/Bitmgothic.ttf", FONT_SIZE_TITLE * 0.75),
     ["title"] = love.graphics.newFont("fonts/Bitmgothic.ttf", FONT_SIZE_TITLE),
     ["subtitle"] = love.graphics.newFont("fonts/Bitmgothic.ttf", FONT_SIZE_SUBTITLE),
     ["default"] = love.graphics.newFont("fonts/BitPotion.ttf", FONT_SIZE_DEFAULT),
@@ -60,7 +67,9 @@ FONTS = {
 }
 
 BORDERS = {
-    ["inventory"] = {125, 126, 128, 129}
+    ["menu"] = {125, 126, 128, 129},
+    ["inventory"] = {125, 126, 128, 129},
+    ["gameover"] = {125, 126, 128, 129}
 }
 
 --[[

@@ -51,10 +51,14 @@ end
 function love.load()
     -- first thing first, use OS time to obtain unpredictable random numbers
     math.randomseed(os.time())
+    
     -- game screen and tile settings
     GAME_SCREEN = love.window.setMode(g.window_width, g.window_height, 
     {resizable=true, vsync=0, minwidth=400, minheight=300}
     )
+
+    -- set correct filtering for global tileset
+    g.TILESET:setFilter("nearest", "nearest")
 
     -- immediately store in util.lua all sprites_groups for entities blueprints
     sprites_groups_manager()

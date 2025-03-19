@@ -71,7 +71,11 @@ function StatePlay:init(map, generate_players)
         g.game_state:init()
     end
 
+    -- then store all borderes images in costant BORDERS
+    borders_manager()
+    
     g.game_state:refresh()
+    
 end
 
 function StatePlay:update()

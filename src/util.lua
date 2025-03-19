@@ -111,6 +111,41 @@ function csv_reader(input_csv, separator)
     return new_table
 end
 
+-- stores the borders as unchanging images, can only store for pre-established states,
+-- aka the main menu, gameover screen and inventory
+function borders_manager()
+    -- all sprites groups are managed by a single CSV file
+    local borders_csv = csv_reader(PATH_TO_CSV .. "borders.csv")
+
+    -- check if operation went right; if not, activate error_handler
+    if type(borders_csv) == "string" then
+        error_handler("The above error was triggered while trying to read borders.csv")
+        g.game_state:exit()
+        g.game_state = StateFatalError()
+        g.game_state:init()
+
+        return false
+    end
+
+    for i, line in ipairs(borders_csv) do
+        local current_border = {}
+        local border_name = ""
+        -- for each line in the csv, store its data in constants.lua BORDERS as images
+        current_border = strings_separator(line[1], ",", 1)
+        for i2, value in ipairs(current_border) do
+            -- first value is the group's name
+            if i2 == 1 then
+                border_name = value
+                BORDERS[border_name] = {}
+            else
+                table.insert(BORDERS[border_name], tile_to_quad(value))
+            end
+        end
+    end
+    
+    return true
+end
+
 function sprites_groups_manager()
     -- all sprites groups are managed by a single CSV file
     local sprites_groups_csv = csv_reader(PATH_TO_CSV .. "sprites_groups.csv")
@@ -118,6 +153,10 @@ function sprites_groups_manager()
     -- check if operation went right; if not, activate error_handler
     if type(sprites_groups_csv) == "string" then
         error_handler("The above error was triggered while trying to read sprites_groups.csv")
+        g.game_state:exit()
+        g.game_state = StateFatalError()
+        g.game_state:init()
+
         return false
     end
 
@@ -480,8 +519,6 @@ function blueprints_generator(input_table)
     local stored_components = {}
     -- this will be the list of actual components to input as argument to new entity
     local blueprint_components = {}
-    -- this variable will store eventual multi-value input for tile index or a pool name
-    local index_value = {}
 
     for i, element in ipairs(input_table) do
         -- useful copy of element, used for element type check
@@ -1010,6 +1047,7 @@ end
 
 function inventory_update(player)
     local new_canvas  = love.graphics.newCanvas(g.window_width, g.window_height)
+    local SIZE_MULTIPLIER = mod.IMAGE_SIZE_MULTIPLIER or 2
     local inv_str = "abcdefghijklmnopqrstuvwxyz"
     local inv_ref = player.components["inventory"]
     local available_items = {}
@@ -1029,6 +1067,9 @@ function inventory_update(player)
     love.graphics.setCanvas(new_canvas)
     -- clear to transparent black, set proper font and color
     love.graphics.clear(0, 0, 0, 0)
+
+    -- draw borders
+    love.graphics.draw(g.TILESET, BORDERS["inventory"][1], 0, 0, 0, SIZE_MULTIPLIER, SIZE_MULTIPLIER)
 
     inv_ref = inv_ref.items -- player inventory table
 
@@ -1077,9 +1118,6 @@ function ui_manager_inventory()
     love.graphics.clear(0, 0, 0, 0)
     love.graphics.setFont(FONTS["narration"])
     love.graphics.setColor(0.78, 0.96, 0.94, 1)
-
-    -- print player inventory
-
 
     -- restoring default RGBA, since this function influences ALL graphics
     love.graphics.setColor(1, 1, 1, 1)

@@ -59,6 +59,10 @@ FONTS = {
     ["narration"] = love.graphics.newFont("fonts/Pixellove.ttf", FONT_SIZE_DEFAULT),
 }
 
+BORDERS = {
+    ["inventory"] = {125, 126, 128, 129}
+}
+
 --[[
     All the valid components for COMPONENTS_INTERFACE function.
     NOTE: this table requires components.lua to be required first.

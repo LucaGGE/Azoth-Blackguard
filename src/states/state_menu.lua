@@ -151,7 +151,7 @@ function StateMenu:init()
     end
 
     -- setting background color to black for menu
-    love.graphics.setBackgroundColor(0 / 255, 0 / 255, 0 / 255)
+    love.graphics.setBackgroundColor((mod.BKG_R or 12) / 255, (mod.BKG_G or 8) / 255, (mod.BKG_B or 42) / 255)
 
     -- starting menu music
     g.game_track = MUSIC["menu"]

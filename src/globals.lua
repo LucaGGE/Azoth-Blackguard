@@ -20,6 +20,7 @@ g = {
     cemetery = {}, -- a table containing deaths data (player, killer, gold...)
     is_tweening = false, -- suspends player input during animations
     TILESET = love.graphics.newImage(mod.PATH_TO_TILESET or "graphics/tileset.png"),
+    BORDER_TILES = love.graphics.newImage(mod.PATH_TO_BORDER_TILES or "graphics/borders.png"),
     game_state, -- the current game state
     error_messages = {}, -- holds all error messages to print on screen
     console = {

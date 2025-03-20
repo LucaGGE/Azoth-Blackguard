@@ -15,6 +15,7 @@ mod = {
 
     -- variable containing the path to your tileset
     PATH_TO_TILESET = false,
+    PATH_TO_BORDER_TILES = false,
 
     -- the individual tile size, as drawn in the tileset. By default, the game uses 20x20 pixels tiles
     TILE_SIZE = false,

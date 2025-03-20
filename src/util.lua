@@ -113,32 +113,21 @@ end
 -- stores the borders as unchanging images, can only store for pre-established states,
 -- aka the main menu, gameover screen and inventory
 function borders_manager()
-    -- all sprites groups are managed by a single CSV file
-    local borders_csv = csv_reader(PATH_TO_CSV .. "borders.csv")
+    local new_border
 
-    -- check if operation went right; if not, activate error_handler
-    if type(borders_csv) == "string" then
-        error_handler("The above error was triggered while trying to read borders.csv")
-        g.game_state:exit()
-        g.game_state = StateFatalError()
-        g.game_state:init()
-
-        return false
-    end
-
-    for i, line in ipairs(borders_csv) do
-        local current_border = {}
-        local border_name = ""
+    for i = 1, 3 do
+        print("i = "..i)
         -- for each line in the csv, store its data in constants.lua BORDERS as images
-        current_border = strings_separator(line[1], ",", 1)
-        for i2, value in ipairs(current_border) do
-            -- first value is the group's name
-            if i2 == 1 then
-                border_name = value
-                BORDERS[border_name] = {}
-            else
-                table.insert(BORDERS[border_name], tile_to_quad(value))
-            end
+        for j = 1, 2 do
+            print("j = "..j)
+            new_border = love.graphics.newQuad(TILE_SIZE * 2 * (j - 1) + (TILE_SIZE * 4 * (i - 1)), 0, TILE_SIZE * 2, TILE_SIZE * 2, 240, 80)
+            table.insert(BORDERS[i], new_border)
+        end
+
+        for k = 1, 2 do
+            print("k = "..k)
+            new_border = love.graphics.newQuad(TILE_SIZE * 2 * (k - 1) + (TILE_SIZE * 4 * (i - 1)), TILE_SIZE * 2, TILE_SIZE * 2, TILE_SIZE * 2, 240, 80)
+            table.insert(BORDERS[i], new_border)
         end
     end
     
@@ -406,14 +395,6 @@ function map_generator(map_values, generate_players)
 end
 
 function map_reader(map, generate_players)
-    -- all the valid tiles features for TILES_VALID_FEATURES table (see pairings in components.lua)
-    local TILES_VALID_FEATURES = {
-    ["liquid"] = true,
-    ["climbable"] = true,
-    ["untraversable"] = true,
-    ["solid"] = true,
-    ["ground"] = true
-    }
     -- reading map values (static, one-draw pass tiles only)
     local map_values = csv_reader(PATH_TO_CSV .. "map_"..map..".csv")
 
@@ -815,7 +796,7 @@ function ui_manager_play()
     love.graphics.clear(0, 0, 0, 0)
     -- drawing UI on top of everything for the current player    
     love.graphics.setFont(FONTS["subtitle"])
-    -- making the UI semi-transparent
+    -- setting font color
     love.graphics.setColor(0.78, 0.96, 0.94, 1)
     
     -- if present, print console["string"]
@@ -863,6 +844,7 @@ function ui_manager_play()
     return new_canvas
 end
 
+-- main menu UI manager
 function ui_manager_menu(text, input_phase, n_of_players, current_player, input_name)
     -- generating a canvas of the proper size
     local new_canvas  = love.graphics.newCanvas(g.window_width, g.window_height)
@@ -870,12 +852,12 @@ function ui_manager_menu(text, input_phase, n_of_players, current_player, input_
     love.graphics.setCanvas(new_canvas)
 
     -- draw borders
-    love.graphics.draw(g.TILESET, BORDERS["menu"][1], 0, 0, 0, SIZE_MULTIPLIER, SIZE_MULTIPLIER)
-    love.graphics.draw(g.TILESET, BORDERS["menu"][2], 0, g.window_height - TILE_SIZE * SIZE_MULTIPLIER, 0, SIZE_MULTIPLIER, SIZE_MULTIPLIER)
-    love.graphics.draw(g.TILESET, BORDERS["menu"][3], g.window_width - TILE_SIZE * SIZE_MULTIPLIER, g.window_height - TILE_SIZE * SIZE_MULTIPLIER, 0, SIZE_MULTIPLIER, SIZE_MULTIPLIER)
-    love.graphics.draw(g.TILESET, BORDERS["menu"][4], g.window_width - TILE_SIZE * SIZE_MULTIPLIER, 0, 0, SIZE_MULTIPLIER, SIZE_MULTIPLIER)
+    love.graphics.draw(g.BORDER_TILES, BORDERS[1][1], 0, 0, 0, SIZE_MULTIPLIER, SIZE_MULTIPLIER)
+    love.graphics.draw(g.BORDER_TILES, BORDERS[1][3], 0, g.window_height - (TILE_SIZE * 2) * SIZE_MULTIPLIER, 0, SIZE_MULTIPLIER, SIZE_MULTIPLIER)
+    love.graphics.draw(g.BORDER_TILES, BORDERS[1][4], g.window_width - (TILE_SIZE * 2) * SIZE_MULTIPLIER, g.window_height - (TILE_SIZE * 2) * SIZE_MULTIPLIER, 0, SIZE_MULTIPLIER, SIZE_MULTIPLIER)
+    love.graphics.draw(g.BORDER_TILES, BORDERS[1][2], g.window_width - (TILE_SIZE * 2) * SIZE_MULTIPLIER, 0, 0, SIZE_MULTIPLIER, SIZE_MULTIPLIER)
 
-    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.setColor(0.78, 0.96, 0.94, 1)
     love.graphics.setFont(FONTS["tag"])
     love.graphics.printf(GAME_TAG, 0, (g.window_height / 5) - FONT_SIZE_TITLE , g.window_width, "center")    
     love.graphics.setFont(FONTS["title"])
@@ -889,6 +871,8 @@ function ui_manager_menu(text, input_phase, n_of_players, current_player, input_
         0, g.window_height / 5 + (PADDING * 4), g.window_width, "center")
     end
 
+    love.graphics.setColor(1, 1, 1, 1)
+
     return new_canvas
 end
 
@@ -899,16 +883,16 @@ function ui_manager_gameover()
     love.graphics.setCanvas(new_canvas)
 
     -- draw borders
-    love.graphics.draw(g.TILESET, BORDERS["gameover"][1], 0, 0, 0, SIZE_MULTIPLIER, SIZE_MULTIPLIER)
-    love.graphics.draw(g.TILESET, BORDERS["gameover"][2], 0, g.window_height - TILE_SIZE * SIZE_MULTIPLIER, 0, SIZE_MULTIPLIER, SIZE_MULTIPLIER)
-    love.graphics.draw(g.TILESET, BORDERS["gameover"][3], g.window_width - TILE_SIZE * SIZE_MULTIPLIER, g.window_height - TILE_SIZE * SIZE_MULTIPLIER, 0, SIZE_MULTIPLIER, SIZE_MULTIPLIER)
-    love.graphics.draw(g.TILESET, BORDERS["gameover"][4], g.window_width - TILE_SIZE * SIZE_MULTIPLIER, 0, 0, SIZE_MULTIPLIER, SIZE_MULTIPLIER)
+    love.graphics.draw(g.BORDER_TILES, BORDERS[3][1], 0, 0, 0, SIZE_MULTIPLIER, SIZE_MULTIPLIER)
+    love.graphics.draw(g.BORDER_TILES, BORDERS[3][3], 0, g.window_height - (TILE_SIZE * 2) * SIZE_MULTIPLIER, 0, SIZE_MULTIPLIER, SIZE_MULTIPLIER)
+    love.graphics.draw(g.BORDER_TILES, BORDERS[3][4], g.window_width - (TILE_SIZE * 2) * SIZE_MULTIPLIER, g.window_height - (TILE_SIZE * 2) * SIZE_MULTIPLIER, 0, SIZE_MULTIPLIER, SIZE_MULTIPLIER)
+    love.graphics.draw(g.BORDER_TILES, BORDERS[3][2], g.window_width - (TILE_SIZE * 2) * SIZE_MULTIPLIER, 0, 0, SIZE_MULTIPLIER, SIZE_MULTIPLIER)
 
-    love.graphics.setColor(1, 0, 0, 1)
+    love.graphics.setColor(0.93, 0.18, 0.27, 1)
     love.graphics.setFont(FONTS["title"])
     love.graphics.printf("Game Over", 0, g.window_height / 4 - PADDING, g.window_width, "center")
 
-    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.setColor(0.78, 0.96, 0.94, 1)
     love.graphics.setFont(FONTS["subtitle"])
     love.graphics.printf("These souls have left us forever:", 0, g.window_height / 4 + PADDING, g.window_width, "center")
 
@@ -918,6 +902,8 @@ function ui_manager_gameover()
         "has found a final resting place in "..death["place"]..".",
         0, g.window_height / 3.5 + (PADDING * (i * 3)), g.window_width, "center")
     end
+
+    love.graphics.setColor(1, 1, 1, 1)
 
     return new_canvas
 end
@@ -1008,8 +994,8 @@ end
 function death_check(target, damage_dice, type, message)
     -- this is needed to output messages on screen in yellow or red
     local event_color = {
-        [false] = {[1] = 1, [2] = 1, [3] = 0},
-        [true] = {[1] = 1, [2] = 0, [3] = 0}
+        [false] = {[1] = 0.78, [2] = 0.96, [3] = 0.94},
+        [true] = {[1] = 0.93, [2] = 0.18, [3] = 0.27}
     }
     -- reference eventual 'stats' component or set variable to false
     local target_stats = target.components["stats"] and target.components["stats"].stats or false
@@ -1070,7 +1056,7 @@ function inventory_update(player)
     local available_items = {}
     local equipped = false
     local color = {
-        [true] = {1, 0, 0, 1},
+        [true] = {0.93, 0.18, 0.27, 1},
         [false] = {0.78, 0.96, 0.94, 1}    
     }
 
@@ -1086,10 +1072,10 @@ function inventory_update(player)
     love.graphics.clear(0, 0, 0, 0)
 
     -- draw borders
-    love.graphics.draw(g.TILESET, BORDERS["inventory"][1], 0, 0, 0, SIZE_MULTIPLIER, SIZE_MULTIPLIER)
-    love.graphics.draw(g.TILESET, BORDERS["inventory"][2], 0, g.window_height - TILE_SIZE * SIZE_MULTIPLIER, 0, SIZE_MULTIPLIER, SIZE_MULTIPLIER)
-    love.graphics.draw(g.TILESET, BORDERS["inventory"][3], g.window_width - TILE_SIZE * SIZE_MULTIPLIER, g.window_height - TILE_SIZE * SIZE_MULTIPLIER, 0, SIZE_MULTIPLIER, SIZE_MULTIPLIER)
-    love.graphics.draw(g.TILESET, BORDERS["inventory"][4], g.window_width - TILE_SIZE * SIZE_MULTIPLIER, 0, 0, SIZE_MULTIPLIER, SIZE_MULTIPLIER)
+    love.graphics.draw(g.BORDER_TILES, BORDERS[2][1], 0, 0, 0, SIZE_MULTIPLIER, SIZE_MULTIPLIER)
+    love.graphics.draw(g.BORDER_TILES, BORDERS[2][3], 0, g.window_height - (TILE_SIZE * 2) * SIZE_MULTIPLIER, 0, SIZE_MULTIPLIER, SIZE_MULTIPLIER)
+    love.graphics.draw(g.BORDER_TILES, BORDERS[2][4], g.window_width - (TILE_SIZE * 2) * SIZE_MULTIPLIER, g.window_height - (TILE_SIZE * 2) * SIZE_MULTIPLIER, 0, SIZE_MULTIPLIER, SIZE_MULTIPLIER)
+    love.graphics.draw(g.BORDER_TILES, BORDERS[2][2], g.window_width - (TILE_SIZE * 2) * SIZE_MULTIPLIER, 0, 0, SIZE_MULTIPLIER, SIZE_MULTIPLIER)
 
     -- setting font color
     love.graphics.setColor(0.78, 0.96, 0.94, 1)

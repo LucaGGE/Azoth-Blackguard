@@ -23,7 +23,7 @@ function StateGameOver:init()
     end
 
     -- setting background color to black
-    love.graphics.setBackgroundColor(0 / 255, 0 / 255, 0 / 255)
+    love.graphics.setBackgroundColor((mod.BKG_R or 12) / 255, (mod.BKG_G or 8) / 255, (mod.BKG_B or 42) / 255)
 
     -- play the gameover sting
     love.audio.play(MUSIC["gameover_sting"])

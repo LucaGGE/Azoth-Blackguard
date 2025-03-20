@@ -49,7 +49,7 @@ function str_effect(target, input)
         target_str = target.components["secret"].string
     end
 
-    console_event(input .. " " .. target_str .. "!", {[1] = 1, [2] = 1, [3] = 0})
+    console_event(input .. " " .. target_str .. "!", {[1] = 1, [2] = 0.97, [3] = 0.44})
 end
 
 function sfx_play(target, input)

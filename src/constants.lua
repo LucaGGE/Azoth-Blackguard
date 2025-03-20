@@ -1,7 +1,7 @@
 -- variable containing the path to the necessary CSV files
 -- the two current local paths I use are "F:/Development/Dev_Games/GOBLET/source/azoth!_blackguard/modding/" or "C:/Users/foxre/"
 -- you'll need to modify these to your local path since the system, to date, cannot find other than LUA files in the relative path
-PATH_TO_CSV = mod.path_to_csv or "F:/Development/Dev_Games/GOBLET/source/azoth!_blackguard/modding/"
+PATH_TO_CSV = mod.path_to_csv or "C:/Users/foxre/"
 
 GAME_TAG = "Azoth! Blackguard"
 GAME_TITLE = type(mod.game_title) == "string" and mod.game_title or "Descent into the Grim Path"
@@ -14,6 +14,15 @@ GAME_TITLE = type(mod.game_title) == "string" and mod.game_title or "Descent int
     var in Movable:move_entity func is false by default, they won't allow for any movement.
 ]]
 TILES_FEATURES_PAIRS = {["empty"] = "ground"} -- empty cells are considered ground
+
+-- all the valid tiles features for TILES_VALID_FEATURES table (see pairings in components.lua)
+TILES_VALID_FEATURES = {
+    ["liquid"] = true,
+    ["climbable"] = true,
+    ["void"] = true,
+    ["solid"] = true,
+    ["ground"] = true
+}
 
 -- list of all entity blueprints registered from dedicated CSV file
 BLUEPRINTS_LIST = {}
@@ -43,7 +52,7 @@ SOUNDS = {
     ["ground"] = love.audio.newSource("sfx/step_ground.ogg", "static"),
     ["solid"] = love.audio.newSource("sfx/step_solid.ogg", "static"),
     ["climbable"] = love.audio.newSource("sfx/step_climbable.ogg", "static"),
-    ["tricky"] = love.audio.newSource("sfx/step_tricky.ogg", "static"),
+    ["void"] = love.audio.newSource("sfx/step_tricky.ogg", "static"),
     ["liquid"] = love.audio.newSource("sfx/step_liquid.ogg", "static"),
     ["wait"] = love.audio.newSource("sfx/step_wait.wav", "static"),
     ["button_select"] = love.audio.newSource("sfx/button_select.wav", "static"),
@@ -67,9 +76,9 @@ FONTS = {
 }
 
 BORDERS = {
-    ["menu"] = {125, 126, 128, 129},
-    ["inventory"] = {125, 126, 128, 129},
-    ["gameover"] = {125, 126, 128, 129}
+    [1] = {},
+    [2] = {},
+    [3] = {}
 }
 
 --[[

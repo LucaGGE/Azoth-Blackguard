@@ -56,8 +56,9 @@ function love.load()
     {resizable=true, vsync=0, minwidth=400, minheight=300}
     )
 
-    -- set correct filtering for global tileset
+    -- set correct filtering for global tileset & border tiles
     g.TILESET:setFilter("nearest", "nearest")
+    g.BORDER_TILES:setFilter("nearest", "nearest")
 
     -- immediately store in util.lua all sprites_groups for entities blueprints
     sprites_groups_manager()

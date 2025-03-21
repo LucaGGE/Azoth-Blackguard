@@ -848,14 +848,16 @@ end
 function ui_manager_menu(text, input_phase, n_of_players, current_player, input_name)
     -- generating a canvas of the proper size
     local new_canvas  = love.graphics.newCanvas(g.window_width, g.window_height)
+    local size = SIZE_MULTIPLIER * 2
+    local t_size = TILE_SIZE * 2
     
     love.graphics.setCanvas(new_canvas)
 
     -- draw borders
-    love.graphics.draw(g.BORDER_TILES, BORDERS[1][1], 0, 0, 0, SIZE_MULTIPLIER, SIZE_MULTIPLIER)
-    love.graphics.draw(g.BORDER_TILES, BORDERS[1][3], 0, g.window_height - (TILE_SIZE * 2) * SIZE_MULTIPLIER, 0, SIZE_MULTIPLIER, SIZE_MULTIPLIER)
-    love.graphics.draw(g.BORDER_TILES, BORDERS[1][4], g.window_width - (TILE_SIZE * 2) * SIZE_MULTIPLIER, g.window_height - (TILE_SIZE * 2) * SIZE_MULTIPLIER, 0, SIZE_MULTIPLIER, SIZE_MULTIPLIER)
-    love.graphics.draw(g.BORDER_TILES, BORDERS[1][2], g.window_width - (TILE_SIZE * 2) * SIZE_MULTIPLIER, 0, 0, SIZE_MULTIPLIER, SIZE_MULTIPLIER)
+    love.graphics.draw(g.BORDER_TILES, BORDERS[1][1], 0, 0, 0, size, size)
+    love.graphics.draw(g.BORDER_TILES, BORDERS[1][3], 0, g.window_height - (t_size) * size, 0, size, size)
+    love.graphics.draw(g.BORDER_TILES, BORDERS[1][4], g.window_width - (t_size) * size, g.window_height - (t_size) * size, 0, size, size)
+    love.graphics.draw(g.BORDER_TILES, BORDERS[1][2], g.window_width - (t_size) * size, 0, 0, size, size)
 
     love.graphics.setColor(0.78, 0.96, 0.94, 1)
     love.graphics.setFont(FONTS["tag"])
@@ -879,14 +881,16 @@ end
 function ui_manager_gameover()
     -- generating a canvas of the proper size
     local new_canvas  = love.graphics.newCanvas(g.window_width, g.window_height)
+    local size = SIZE_MULTIPLIER * 2
+    local t_size = TILE_SIZE * 2
 
     love.graphics.setCanvas(new_canvas)
 
     -- draw borders
-    love.graphics.draw(g.BORDER_TILES, BORDERS[3][1], 0, 0, 0, SIZE_MULTIPLIER, SIZE_MULTIPLIER)
-    love.graphics.draw(g.BORDER_TILES, BORDERS[3][3], 0, g.window_height - (TILE_SIZE * 2) * SIZE_MULTIPLIER, 0, SIZE_MULTIPLIER, SIZE_MULTIPLIER)
-    love.graphics.draw(g.BORDER_TILES, BORDERS[3][4], g.window_width - (TILE_SIZE * 2) * SIZE_MULTIPLIER, g.window_height - (TILE_SIZE * 2) * SIZE_MULTIPLIER, 0, SIZE_MULTIPLIER, SIZE_MULTIPLIER)
-    love.graphics.draw(g.BORDER_TILES, BORDERS[3][2], g.window_width - (TILE_SIZE * 2) * SIZE_MULTIPLIER, 0, 0, SIZE_MULTIPLIER, SIZE_MULTIPLIER)
+    love.graphics.draw(g.BORDER_TILES, BORDERS[3][1], 0, 0, 0, size, size)
+    love.graphics.draw(g.BORDER_TILES, BORDERS[3][3], 0, g.window_height - (t_size) * size, 0, size, size)
+    love.graphics.draw(g.BORDER_TILES, BORDERS[3][4], g.window_width - (t_size) * size, g.window_height - (t_size) * size, 0, size, size)
+    love.graphics.draw(g.BORDER_TILES, BORDERS[3][2], g.window_width - (t_size) * size, 0, 0, size, size)
 
     love.graphics.setColor(0.93, 0.18, 0.27, 1)
     love.graphics.setFont(FONTS["title"])
@@ -1051,6 +1055,8 @@ end
 
 function inventory_update(player)
     local new_canvas  = love.graphics.newCanvas(g.window_width, g.window_height)
+    local size = SIZE_MULTIPLIER * 2
+    local t_size = TILE_SIZE * 2
     local inv_str = "abcdefghijklmnopqrstuvwxyz"
     local inv_ref = player.components["inventory"]
     local available_items = {}
@@ -1072,10 +1078,10 @@ function inventory_update(player)
     love.graphics.clear(0, 0, 0, 0)
 
     -- draw borders
-    love.graphics.draw(g.BORDER_TILES, BORDERS[2][1], 0, 0, 0, SIZE_MULTIPLIER, SIZE_MULTIPLIER)
-    love.graphics.draw(g.BORDER_TILES, BORDERS[2][3], 0, g.window_height - (TILE_SIZE * 2) * SIZE_MULTIPLIER, 0, SIZE_MULTIPLIER, SIZE_MULTIPLIER)
-    love.graphics.draw(g.BORDER_TILES, BORDERS[2][4], g.window_width - (TILE_SIZE * 2) * SIZE_MULTIPLIER, g.window_height - (TILE_SIZE * 2) * SIZE_MULTIPLIER, 0, SIZE_MULTIPLIER, SIZE_MULTIPLIER)
-    love.graphics.draw(g.BORDER_TILES, BORDERS[2][2], g.window_width - (TILE_SIZE * 2) * SIZE_MULTIPLIER, 0, 0, SIZE_MULTIPLIER, SIZE_MULTIPLIER)
+    love.graphics.draw(g.BORDER_TILES, BORDERS[2][1], 0, 0, 0, size, size)
+    love.graphics.draw(g.BORDER_TILES, BORDERS[2][3], 0, g.window_height - (t_size) * size, 0, size, size)
+    love.graphics.draw(g.BORDER_TILES, BORDERS[2][4], g.window_width - (t_size) * size, g.window_height - (t_size) * size, 0, size, size)
+    love.graphics.draw(g.BORDER_TILES, BORDERS[2][2], g.window_width - (t_size) * size, 0, 0, size, size)
 
     -- setting font color
     love.graphics.setColor(0.78, 0.96, 0.94, 1)

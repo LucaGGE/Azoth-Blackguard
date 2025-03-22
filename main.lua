@@ -33,6 +33,7 @@ function love.keypressed(key)
         fullscreen = not fullscreen
         love.window.setFullscreen(fullscreen)
         g.window_width, g.window_height = pixel_adjust(love.graphics.getDimensions())
+        g.game_state:refresh()
     elseif key == "delete" then
         if g.error_messages and not g.game_state:is(StateFatalError) then
             if love.keyboard.isDown("lctrl") then

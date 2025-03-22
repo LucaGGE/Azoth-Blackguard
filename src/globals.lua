@@ -28,9 +28,9 @@ g = {
         ["event1"] = nil,
         ["event2"] = nil,
         ["event3"] = nil,
-        ["color1"] = {[1] = 0.78, [2] = 0.96, [3] = 0.94},
-        ["color2"] = {[1] = 0.78, [2] = 0.96, [3] = 0.94},
-        ["color3"] = {[1] = 0.78, [2] = 0.96, [3] = 0.94}
+        ["color1"] = {[1] = 0.28, [2] = 0.46, [3] = 0.73},
+        ["color2"] = {[1] = 0.28, [2] = 0.46, [3] = 0.73},
+        ["color3"] = {[1] = 0.28, [2] = 0.46, [3] = 0.73}
     }, -- console's content
     keys_pressed = {} -- variable for storing and clearing keys pressed each update
 }

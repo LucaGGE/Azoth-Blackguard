@@ -796,8 +796,8 @@ function ui_manager_play()
     love.graphics.clear(0, 0, 0, 0)
     -- drawing UI on top of everything for the current player    
     love.graphics.setFont(FONTS["subtitle"])
-    -- setting font color
-    love.graphics.setColor(0.78, 0.96, 0.94, 1)
+    -- setting font color for name/console
+    love.graphics.setColor(0.49, 0.82, 0.90, 1)
     
     -- if present, print console["string"]
     if g.console["string"] then
@@ -811,6 +811,10 @@ function ui_manager_play()
             g.camera["entity"].name,
             PADDING, g.window_height - (PADDING * 3.5)
         )
+
+        -- setting font color for player data
+        love.graphics.setColor(0.28, 0.46, 0.73, 1)
+
         love.graphics.print(
             "Life "..g.camera["entity"].components["stats"].stats["hp"],
             PADDING, g.window_height - (PADDING * 2.5)
@@ -981,8 +985,7 @@ function console_event(event, font_color)
     -- assigning new values to global colors
     g.console["color3"] = events_table["color2"]
     g.console["color2"] = events_table["color1"]
-    g.console["color1"] = font_color or {[1] = 0.78, [2] = 0.96, [3] = 0.94,}
-    
+    g.console["color1"] = font_color or {[1] = 0.28, [2] = 0.46, [3] = 0.73}
     -- assigning new values to global strings
     g.console["event3"] = events_table["event2"]
     g.console["event2"] = events_table["event1"]
@@ -1063,7 +1066,7 @@ function inventory_update(player)
     local equipped = false
     local color = {
         [true] = {0.93, 0.18, 0.27, 1},
-        [false] = {0.78, 0.96, 0.94, 1}    
+        [false] = {0.28, 0.46, 0.73, 1}    
     }
 
     -- immediately check if player is missing inventory component
@@ -1083,8 +1086,8 @@ function inventory_update(player)
     love.graphics.draw(g.BORDER_TILES, BORDERS[2][4], g.window_width - (t_size) * size, g.window_height - (t_size) * size, 0, size, size)
     love.graphics.draw(g.BORDER_TILES, BORDERS[2][2], g.window_width - (t_size) * size, 0, 0, size, size)
 
-    -- setting font color
-    love.graphics.setColor(0.78, 0.96, 0.94, 1)
+    -- setting font color for inventory's title
+    love.graphics.setColor(0.49, 0.82, 0.90, 1)
 
     -- printing owner's name
     love.graphics.printf(player.name .. "'s bag", 0, FONT_SIZE_DEFAULT, g.window_width, "center")
@@ -1109,7 +1112,7 @@ function inventory_update(player)
         love.graphics.setColor(color[equipped])
 
         love.graphics.printf(string.sub(inv_str, i, i) .. ": " .. inv_ref[i].components["description"].string or inv_ref[i].name,
-        0, FONT_SIZE_DEFAULT * (i + 2), g.window_width, "center"
+        0, (FONT_SIZE_DEFAULT + FONT_SIZE_DEFAULT / 3) * (i + 2), g.window_width, "center"
         )
         available_items[string.sub(inv_str, i, i)] = inv_ref[i]
     end

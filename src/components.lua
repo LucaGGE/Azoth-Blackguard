@@ -217,7 +217,7 @@ function Movable:move_entity(entity, direction)
                 }
                 table.insert(g.cemetery, deceased)
                 -- send a 'game over' string to console in red color
-                console_event(deceased["player"] .. " got slain by " .. deceased["killer"], {[1] = 1, [2] = 0, [3] = 0})
+                console_event(deceased["player"] .. " got slain by " .. deceased["killer"], {[1] = 0.93, [2] = 0.18, [3] = 0.27})
             end
         end
 
@@ -714,7 +714,7 @@ end
 
 function Equipable:unequip(owner, target)
     if owner.components["equipable"].cursed then
-        console_event("Thy item is cursed and may not be unequipped!",{0.6,0.2,1})
+        console_event("Thy item is cursed and may not be unequipped!", {0.6, 0.2, 1})
         return false
     end
 

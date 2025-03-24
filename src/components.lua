@@ -275,9 +275,9 @@ function Npc:new(args)
         end
         -- "enemies" is the only 'array' variable 
         if new_var[1] == "enemies" then
-            for i2, values in ipairs(new_var) do
+            for k, values in ipairs(new_var) do
                 -- first new_var value is always index name
-                if i2 ~= 1 then
+                if k ~= 1 then
                     table.insert(variables_group[new_var[1]], values)
                 end
             end
@@ -293,67 +293,18 @@ function Npc:new(args)
     self.group = variables_group["group"]
     self.enemies = variables_group["enemies"]
     self.nature = variables_group["nature"]
-    self.sight = variables_group["sight"]
-    self.hearing = variables_group["hearing"]
+    self.sight = tonumber(variables_group["sight"])
+    self.hearing = tonumber(variables_group["hearing"])
 end
 
-function Npc:activate(entity)
-    -- this code is in draft state... I beg thee pardon
-    if entity.components["movable"] then
-        if self.nature == "aggressive" then
-            local search_row = entity.cell["grid_row"] - 2
-            local search_col
-
-            -- searching for enemy entities in a square. This algorithm is temporary and badly designed.
-            for i = 1, 5, 1 do
-                search_col = entity.cell["grid_column"] - 2
-                for j = 1, 5, 1 do
-                    if search_col > g.grid_x or search_col <= 0 or search_row > g.grid_y or search_row <= 0 then
-                        
-                    else
-                        local other_entity = g.grid[search_row][search_col].occupant
-                        if other_entity then
-                            other_entity = other_entity.components["npc"] or other_entity.components["player"]
-                        end
-                        if other_entity then
-                            if other_entity.group ~= self.group then
-                                -- reset other_entity to its initial value
-                                other_entity = g.grid[search_row][search_col].occupant
-                                local target_row = other_entity.cell["grid_row"]
-                                local target_column = other_entity.cell["grid_column"]
-                                local out_row
-                                local out_col
-
-                                if entity.cell["grid_row"] < target_row then
-                                    out_row = 1
-                                elseif entity.cell["grid_row"] == target_row then
-                                    out_row = 0
-                                else 
-                                    out_row = -1 
-                                end
-                                if entity.cell["grid_column"] < target_column then
-                                    out_col = 1
-                                elseif entity.cell["grid_column"] == target_column then
-                                    out_col = 0
-                                else 
-                                    out_col = -1 
-                                end
-
-                                local direction = {out_row, out_col}
-
-                                entity.components["movable"]:move_entity(entity, direction)
-                                return true
-                            end
-                        end
-                    end
-                    search_col = search_col + 1
-                end
-                search_row = search_row + 1
-            end
-        else
-            --print("The NPC mids it own business")
-        end
+function Npc:activate(owner)
+    -- if NPC cannot move, skip turn
+    if not owner.components["movable"] then
+        return false
     end
+
+    -- choose path of action depending on nature
+    return ai_behavior(owner, self)
 end
 
 Trap = Object:extend()

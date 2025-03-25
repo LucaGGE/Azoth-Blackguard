@@ -3,7 +3,7 @@ local AI_DTABLE = {
         local other_pawn
         local other_controller
 
-        other_pawn = search_entity(owner, npc_comp)
+        other_pawn = target_entity(owner, npc_comp)
 
         if not other_pawn then
             return false
@@ -11,8 +11,6 @@ local AI_DTABLE = {
 
         other_controller = other_pawn.components["npc"] or other_pawn.components["player"]
 
-        print("...")
-        print(other_controller.group)
         if other_controller.group ~= npc_comp.group then
             -- reset other_pawn to its initial value
             local target_row = other_pawn.cell["grid_row"]
@@ -58,20 +56,21 @@ function ai_behavior(owner, npc_comp)
     return AI_DTABLE[npc_comp.nature](owner, npc_comp)    
 end
 
-function search_entity(owner, npc_comp)
+function target_entity(owner, npc_comp)
     print(owner.name)
     local search_row = owner.cell["grid_row"] - npc_comp.sight
     local search_col
     local column_condition
     local row_condition
+    local targets = {}
+    local new_target = false
 
     -- searching for enemy entities in a square. This algorithm is temporary and badly designed.
     -- TO DO TO DO TO DOTO DO TO DO TO DOTO DO TO DO TO DOTO DO TO DO TO DO: need to choose target & ignore ones hidden behind obstacles
     for i = 0, npc_comp.sight * 2 do
         search_col = owner.cell["grid_column"] - npc_comp.sight
         for j = 0, npc_comp.sight * 2 do
-            local other_entity
-
+            local target
             -- check if search is happening beyond grid boundaries
             column_condition = search_col > g.grid_x or search_col <= 0
             row_condition = search_row > g.grid_y or search_row <= 0
@@ -81,17 +80,17 @@ function search_entity(owner, npc_comp)
                 goto continue
             end
 
-            other_entity = g.grid[search_row][search_col].occupant
+            target = g.grid[search_row][search_col].occupant
 
             -- skip code if found no Entity or self
-            if not other_entity or other_entity == owner then
+            if not target or target == owner then
                 goto continue
             end
 
-            -- return other_entity only if it is not an obstacle
-            if other_entity.components["npc"] or other_entity.components["player"] then
-                print("Found other entity: " .. other_entity.name)
-                return other_entity
+            -- evaluate target only if it is not an obstacle
+            if target.components["npc"] or target.components["player"] then
+                print("Found potential target: " .. target.name)
+                table.insert(targets, target)                
             end
 
             ::continue::
@@ -101,6 +100,40 @@ function search_entity(owner, npc_comp)
         search_row = search_row + 1
     end
 
-    -- if no Entity was found, return false
-    return false
+    -- skip rest of code if no Entity was found
+    if not targets[1] then
+        npc_comp.target = false
+        return false
+    end
+
+    -- try to find old target
+    for _, target in ipairs(targets) do
+        if target == npc_comp.target then
+            print("Found old target: " .. target.name)
+            return target
+        end
+        -- if potential new_target was already established, skip rest of code
+        if new_target then
+            goto skip
+        end
+        -- exploit loop to search for potential new target, favor enemies
+        for _, group in ipairs(npc_comp.enemies) do
+            if group == target.group then
+                print("Found Entity from enemy group: " .. target.name)
+                new_target = target
+            end
+        end
+
+        ::skip::
+    end
+    -- at this point, no old target was found; check if new_target is assigned
+    if new_target then
+        npc_comp.target = new_target
+        print("Selected first Entity from enemy group found")
+        return new_target
+    end
+    -- if it wasn't assigned, return first found target
+    npc_comp.target = targets[1]
+    print("Selected first target found: " .. targets[1].name)
+    return targets[1]
 end

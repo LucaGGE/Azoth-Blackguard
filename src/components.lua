@@ -295,6 +295,7 @@ function Npc:new(args)
     self.nature = variables_group["nature"]
     self.sight = tonumber(variables_group["sight"])
     self.hearing = tonumber(variables_group["hearing"])
+    self.target = false -- stores current locked target
 end
 
 function Npc:activate(owner)

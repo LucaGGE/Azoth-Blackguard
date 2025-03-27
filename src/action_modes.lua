@@ -25,7 +25,7 @@ local INPUT_DTABLE = {
         -- this means any command out of player_commands() local commands
         if custom_action then
             player_comp.action_state = "use"
-            console_cmd("Where?")
+            console_cmd("Whither?")
         end
         
         -- false value signals to console that action_mode needs to be changed
@@ -79,19 +79,19 @@ IO_DTABLE = {
 
 
         if not occupant_str and not entity_str then
-            console_event("Thee observe nothing")
+            console_event("Thou dost observe nothing")
         end
 
         if not occupant_str and entity_str then
-            console_event("Thee observe ain " .. entity_str)
+            console_event("Thou dost observe ain " .. entity_str)
         end
 
         if occupant_str and not entity_str then
-            console_event("Thee observe " .. occupant_str)
+            console_event("Thou dost observe " .. occupant_str)
         end
 
         if occupant_str and entity_str then
-            console_event("Thee observe " .. occupant_str .. ", standing on somethende")
+            console_event("Thou dost observe " .. occupant_str .. ", standing on somethende")
         end
 
         -- being a free action it always returns nil, so it needs to set player_comp.action_state = nil
@@ -106,7 +106,7 @@ IO_DTABLE = {
         -- when message is ready, go to non accessible action_state and choose target
         if key == "enter" or key == "return" then
             player_comp.action_state = "/"
-            console_cmd("Tell whom? ")
+            console_cmd("Whom dost thou tell? ")
 
             return false
         end
@@ -114,7 +114,7 @@ IO_DTABLE = {
         if not INPUT_DTABLE[key] then
             player_comp.string = text_input(player_comp.valid_input, key, player_comp.string, 41)
             -- immediately show console string on screen
-            console_cmd("Your words: " .. player_comp.string)            
+            console_cmd("Thy utterances: " .. player_comp.string)            
             -- always return false, since player is typing action
             return false
         end
@@ -123,7 +123,7 @@ IO_DTABLE = {
         return_value = INPUT_DTABLE[key](player_comp)
 
         if return_value then
-            console_cmd("Your words: " .. return_value)
+            console_cmd("Thy utterances: " .. return_value)
         end
 
         return false
@@ -166,7 +166,7 @@ IO_DTABLE = {
 
         -- if no target is found, return a 'nothing found' message
         if not entity_ref then
-            console_event("There's non-other to pick up h're")
+            console_event("There's naught to pick up h're")
             return true
         end
 
@@ -228,7 +228,7 @@ IO_DTABLE = {
 
         -- if no target is found, return a 'nothing found' message
         if not entity_ref then
-            console_event("There is non-other usaeble h're")
+            console_event("There is naught usaeble h're")
             return true
         end
 
@@ -371,6 +371,31 @@ IO_DTABLE = {
 
         return true
     end,
+    ["quit"] = function(player_comp, player_entity, key)
+        if key == "n" then
+            player_comp.string = false
+            console_cmd(nil)
+            player_comp.action_state = nil
+
+            return false
+        end
+
+        if key == "y" then
+            love.event.quit()
+
+            return false
+        end
+
+        player_comp.string = false
+        console_event("Inscribe Y(ea) or N(ay)")
+
+        return false
+    end,
+    ["loose"] = function(player_comp, player_entity, key)
+        console_event("Check if ammo available, list of all in-weapon-range targets...")
+
+        return true
+    end,
     ["console"] = function(player_comp, entity, key)
         local return_value
 
@@ -413,14 +438,14 @@ function player_commands(player_comp, input_key)
         ["use"] = function(player_comp)
             if not player_comp.action_state then
                 player_comp.action_state = "use"
-                console_cmd("Use where?")            
+                console_cmd("Utilize what?")            
                 return false
             end
         end,
         ["unlock"] = function(player_comp)
             if not player_comp.action_state then
                 player_comp.action_state = "unlock"
-                console_cmd("Unlock where?")            
+                console_cmd("Unbar what?")
                 return false
             end
         end,
@@ -435,14 +460,14 @@ function player_commands(player_comp, input_key)
         ["observe"] = function(player_comp)
             if not player_comp.action_state then
                 player_comp.action_state = "observe"
-                console_cmd("Observe where?")             
+                console_cmd("Observe what?")             
                 return false
             end
         end,
         ["talk"] = function(player_comp)
             if not player_comp.action_state then
                 player_comp.action_state = "talk"
-                console_cmd("Your words: ")             
+                console_cmd("Thy utterances: ")             
                 return false
             end
         end,
@@ -452,7 +477,7 @@ function player_commands(player_comp, input_key)
                 g.view_inventory = false
                 
                 player_comp.action_state = "pickup"
-                console_cmd("Pickup where?")          
+                console_cmd("Pickup what?")          
                 return false
             end
         end,
@@ -462,7 +487,7 @@ function player_commands(player_comp, input_key)
                 -- necessary to update UI so that only console string is visible
                 g.canvas_ui = ui_manager_play()
                 player_comp.action_state = "equip"
-                console_cmd("Equip what?")
+                console_cmd("Gear up thyself with what?")
                 return false
             end
         end,
@@ -472,19 +497,53 @@ function player_commands(player_comp, input_key)
                 -- necessary to update UI so that only console string is visible
                 g.canvas_ui = ui_manager_play()
                 player_comp.action_state = "unequip"
-                console_cmd("Unequip what?")
+                console_cmd("Unequip from thyself what?")
+                return false
+            end
+        end,
+        ["loose"] = function(player_comp)
+            if not player_comp.action_state then
+                g.view_inventory = false
+                player_comp.action_state = "loose"
+                console_cmd("Loose thy projectile where?")
+                return false
+            end
+        end,
+        ["bestow"] = function(player_comp)
+            if not player_comp.action_state then
+                g.view_inventory = true
+                -- necessary to update UI so that only console string is visible
+                g.canvas_ui = ui_manager_play()
+                -- used to drop stuff around or to place items in proper places
+                player_comp.action_state = "bestow"
+                console_cmd("Bestow what?")
+                return false
+            end
+        end,
+        ["quit"] = function()
+            if not player_comp.action_state then
+                player_comp.action_state = "quit"
+                console_cmd("Art thou truly certain thou dost wish to depart?")             
                 return false
             end
         end
     }
     -- these are 'hotkeys', aka the action modes 'links' that can be activated by keyboard shortcut
     -- other than with console (note console can only be activated from a hotkey)
+    commands["r"] = commands["unequip"]
+    commands["remove"] = commands["unequip"]
     commands["t"] = commands["talk"]
     commands["u"] = commands["use"]
     commands["i"] = commands["inventory"]
     commands["o"] = commands["observe"]
     commands["p"] = commands["pickup"]
+    commands["escape"] = commands["quit"]
+    commands["g"] = commands["equip"]
+    commands["gear up"] = commands["equip"]
+    commands["l"] = commands["loose"]
+    commands["b"] = commands["bestow"]
     commands["space"] = commands[":"] -- note how console is under an inaccesible key
+
 
     -- if key is invalid, erase eventual console["string"] and return false
     if not commands[key] then

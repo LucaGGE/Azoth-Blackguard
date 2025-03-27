@@ -666,7 +666,7 @@ end
 
 function Equipable:unequip(owner, target)
     if owner.components["equipable"].cursed then
-        console_event("Thy item is cursed and may not be unequipped!", {0.6, 0.2, 1})
+        console_event("Thy item is cursed and may not be removed!", {0.6, 0.2, 1})
         return false
     end
 

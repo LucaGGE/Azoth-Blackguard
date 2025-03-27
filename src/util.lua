@@ -805,7 +805,24 @@ function ui_manager_play()
         g.window_height - (PADDING * 1.5), g.window_width, "center")
     end
 
+    -- print console events
+    love.graphics.setColor(g.console["color3"][1], g.console["color3"][2], g.console["color3"][3], 1)
+    love.graphics.print(
+        g.console["event3"] or "Error: fed nothing to console_event() func", PADDING, PADDING
+    )
+    love.graphics.setColor(g.console["color2"][1], g.console["color2"][2], g.console["color2"][3], 1)
+    love.graphics.print(
+        g.console["event2"] or "Error: fed nothing to console_event() func", PADDING, (PADDING * 2)
+    )
+    love.graphics.setColor(g.console["color1"][1], g.console["color1"][2], g.console["color1"][3], 1)
+    love.graphics.print(
+        g.console["event1"] or "Error: fed nothing to console_event() func", PADDING, (PADDING * 3)
+    )
+
     if not g.view_inventory then
+        -- set proper color
+        love.graphics.setColor(0.49, 0.82, 0.90, 1)
+        
         -- print player stats
         love.graphics.print(
             g.camera["entity"].name,
@@ -822,20 +839,6 @@ function ui_manager_play()
         love.graphics.print(
             "Gold "..g.camera["entity"].components["stats"].stats["gold"],
             PADDING, g.window_height - (PADDING * 1.5)
-        )
-
-        -- print console events
-        love.graphics.setColor(g.console["color3"][1], g.console["color3"][2], g.console["color3"][3], 1)
-        love.graphics.print(
-            g.console["event3"] or "Error: fed nothing to console_event() func", PADDING, PADDING
-        )
-        love.graphics.setColor(g.console["color2"][1], g.console["color2"][2], g.console["color2"][3], 1)
-        love.graphics.print(
-            g.console["event2"] or "Error: fed nothing to console_event() func", PADDING, (PADDING * 2)
-        )
-        love.graphics.setColor(g.console["color1"][1], g.console["color1"][2], g.console["color1"][3], 1)
-        love.graphics.print(
-            g.console["event1"] or "Error: fed nothing to console_event() func", PADDING, (PADDING * 3)
         )
     end
     

@@ -290,8 +290,8 @@ IO_DTABLE = {
 
         return true
     end,
-    ["equip"] = function(player_comp, entity, key)
-        local slots_ref = entity.components["slots"]
+    ["equip"] = function(player_comp, player_entity, key)
+        local slots_ref = player_entity.components["slots"]
         local target_item
 
         if not slots_ref then
@@ -321,7 +321,7 @@ IO_DTABLE = {
                 slots_ref[suit_slot] = g.current_inventory[key]
                 print("Equipped object!")
                 -- activate equip() func in 'equipable' component to trigger dedicated effects
-                g.current_inventory[key].components["equipable"]:equip(g.current_inventory[key], entity)
+                g.current_inventory[key].components["equipable"]:equip(g.current_inventory[key], player_entity)
                 return true
             end
         end
@@ -367,6 +367,108 @@ IO_DTABLE = {
         else
             print("No item at this key address")
             return false
+        end
+
+        return true
+    end,
+    ["bestow"] = function(player_comp, player_entity, key)
+        local slots_ref = player_entity.components["slots"]
+        local item
+
+        if not slots_ref then
+            print("Entity without slots comp trying to bestow")
+            return false
+        end
+
+        item = g.current_inventory[key]
+
+        -- check if there's an item coupled with this letter
+        if not item then
+            return false
+        end
+
+        -- if this variable == false, then the item is currently equipped
+        if item.components["equipable"] and item.components["equipable"].slot_reference then
+            console_event("Thee need to unequip this first")
+            return false
+        end
+
+
+        -- at this point, a valid item was selected
+        g.view_inventory = false
+        player_comp.action_state = "#"
+        -- store selected item in player_comp.string
+        player_comp.string = key
+        console_cmd("Where do you bestow it?")
+
+        return false
+    end,
+    ["#"] = function(player_comp, player_entity, key)
+        local valid_key
+        local occupant_ref, entity_ref
+        local target_cell
+        local item
+        local item_key = player_comp.string
+
+        valid_key, occupant_ref, entity_ref, target_cell = target_selector(player_comp, player_entity, key)
+
+        if not valid_key then
+            print("Invalid key")
+            return false
+        end
+
+        if occupant_ref then
+            local occupant_str = occupant_ref.name
+
+            if occupant_ref.components["description"] then
+                occupant_str = occupant_ref.components["description"].string
+            end
+
+            if occupant_ref.components["secret"] then
+                occupant_str = occupant_ref.components["secret"].string
+            end
+
+            console_event(occupant_str .. " is hindering your action")
+            return false
+        end
+
+        if entity_ref then
+            local entity_str = entity_ref.name
+
+            if entity_ref.components["description"] then
+                entity_str = entity_ref.components["description"].string
+            end
+
+            if entity_ref.components["secret"] then
+                entity_str = entity_ref.components["secret"].string
+            end
+
+            console_event(entity_str .. " is already occupying this space")
+            return false
+        end
+
+        -- at this point, everything is in check. Store item
+        item = g.current_inventory[item_key]
+
+        -- then remove item from inventory using item_key position in alphabet
+        player_entity.components["inventory"]:remove(item_key)
+        inventory_update(player_entity)
+        player_comp.string = false
+
+        -- then position item in target_cell and add to entities_group
+        item.alive = true
+        item.cell["cell"] = target_cell
+        item.cell["grid_row"] = target_cell.y
+        item.cell["grid_column"] = target_cell.x
+        target_cell.entity = item
+        table.insert(g.entities_group, item)
+
+        -- insert item in visible or invisible group
+        if not item.components["invisible"] then
+            -- adding entity in front or back depending if it is an occupant or a simple entity
+            table.insert(g.render_group, 1, item)
+        else
+            table.insert(g.invisible_group, item)
         end
 
         return true

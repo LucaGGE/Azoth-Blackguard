@@ -603,14 +603,20 @@ function Inventory:add(item)
     end
 end
 
-function Inventory:remove(item)
-    for i, stored_item in ipairs(self.items) do
-        if stored_item:is(item) then
+-- removes item from inventory by coupling item_key letter with
+-- its indexed position inside self.items
+function Inventory:remove(item_key)
+    local inv_str = "abcdefghijklmnopqrstuvwxyz"
+
+    for i = 1, string.len(inv_str) do
+        print(i)
+        if string.sub(inv_str, i, i) == item_key then
             table.remove(self.items, i)
             print("Removing object from inventory...")
+
+            return true
         end
     end
-    print("Releasing object on ground...")
 end
 
 -- for all Entities that can equip Equipable Entities, matches Equipable comp tags

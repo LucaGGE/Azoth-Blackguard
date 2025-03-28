@@ -1156,7 +1156,7 @@ function target_selector(player_comp, performer, key)
             occupant_ref = nil
         end
 
-        return true, occupant_ref, entity_ref
+        return true, occupant_ref, entity_ref, target_cell
     end
 
     return true, false, g.current_inventory[key]

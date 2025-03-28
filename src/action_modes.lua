@@ -54,27 +54,12 @@ IO_DTABLE = {
 
         if occupant_ref then
             -- defaut action is to set name for string
-            occupant_str = occupant_ref.name
-            
-            if occupant_ref.components["description"] then
-                occupant_str = occupant_ref.components["description"].string
-            end
-
-            if occupant_ref.components["secret"] then
-                occupant_str = occupant_ref.components["secret"].string
-            end
+            occupant_str = string_selector(occupant_ref)
         end
+
         if entity_ref then
             -- defaut action is to set name for string
-            entity_str = entity_ref.name
-            
-            if entity_ref.components["description"] then
-                entity_str = entity_ref.components["description"].string
-            end
-
-            if entity_ref.components["secret"] then
-                entity_str = entity_ref.components["secret"].string
-            end
+            entity_str = string_selector(entity_ref)
         end
 
 
@@ -212,15 +197,7 @@ IO_DTABLE = {
         end
 
         if occupant_ref then
-            local occupant_str = occupant_ref.name
-
-            if occupant_ref.components["description"] then
-                occupant_str = occupant_ref.components["description"].string
-            end
-
-            if occupant_ref.components["secret"] then
-                occupant_str = occupant_ref.components["secret"].string
-            end
+            local occupant_str = string_selector(occupant_ref)
 
             console_event(occupant_str .. " is hindering your action")
             return false
@@ -243,16 +220,7 @@ IO_DTABLE = {
         -- if usable target is found activate, else warn player
         if entity_ref.components["usable"] then
             local console_string
-            local entity_str = entity_ref.name
-            
-            -- as usual, favor Entity description (or secret) to Entity name
-            if entity_ref.components["description"] then
-                entity_str = entity_ref.components["description"].string
-            end
-
-            if entity_ref.components["secret"] then
-                entity_str = entity_ref.components["secret"].string
-            end
+            local entity_str = string_selector(entity_ref)
 
             -- if player_comp.string is empty, then player is acting a simple 'use' command
             -- in this case, set it to false to let Usable comp & console_event() know
@@ -409,6 +377,7 @@ IO_DTABLE = {
         local target_cell
         local item
         local item_key = player_comp.string
+        local item_str
 
         valid_key, occupant_ref, entity_ref, target_cell = target_selector(player_comp, player_entity, key)
 
@@ -417,31 +386,20 @@ IO_DTABLE = {
             return false
         end
 
+        if not target_cell or TILES_FEATURES_PAIRS[target_cell.index] == "solid" then
+            console_event("You cannot bestow anything here")
+            return false
+        end
+
         if occupant_ref then
-            local occupant_str = occupant_ref.name
-
-            if occupant_ref.components["description"] then
-                occupant_str = occupant_ref.components["description"].string
-            end
-
-            if occupant_ref.components["secret"] then
-                occupant_str = occupant_ref.components["secret"].string
-            end
+            local occupant_str = string_selector(occupant_ref)
 
             console_event(occupant_str .. " is hindering your action")
             return false
         end
 
         if entity_ref then
-            local entity_str = entity_ref.name
-
-            if entity_ref.components["description"] then
-                entity_str = entity_ref.components["description"].string
-            end
-
-            if entity_ref.components["secret"] then
-                entity_str = entity_ref.components["secret"].string
-            end
+            local entity_str = string_selector(entity_ref)
 
             console_event(entity_str .. " is already occupying this space")
             return false
@@ -449,6 +407,9 @@ IO_DTABLE = {
 
         -- at this point, everything is in check. Store item
         item = g.current_inventory[item_key]
+
+        -- set proper item string
+        item_str = string_selector(item)
 
         -- then remove item from inventory using item_key position in alphabet
         player_entity.components["inventory"]:remove(item_key)
@@ -470,6 +431,8 @@ IO_DTABLE = {
         else
             table.insert(g.invisible_group, item)
         end
+
+        console_event("Thee bestow " .. item_str)
 
         return true
     end,

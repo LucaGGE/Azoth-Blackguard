@@ -1099,6 +1099,7 @@ function inventory_update(player)
 
     -- print all item in player inventory and couple them with a letter
     for i = 1, string.len(inv_str) do
+        local item_str
         -- if no more items are available, break loop
         if not inv_ref[i] then
             break
@@ -1114,7 +1115,12 @@ function inventory_update(player)
         -- chosen color setting
         love.graphics.setColor(color[equipped])
 
-        love.graphics.printf(string.sub(inv_str, i, i) .. ": " .. inv_ref[i].components["description"].string or inv_ref[i].name,
+        -- print all items on canvas
+        item_str = string_selector(inv_ref[i])
+
+        print(item_str)
+
+        love.graphics.printf(string.sub(inv_str, i, i) .. ": " .. item_str,
         0, (FONT_SIZE_DEFAULT + FONT_SIZE_DEFAULT / 3) * (i + 2), g.window_width, "center"
         )
         available_items[string.sub(inv_str, i, i)] = inv_ref[i]
@@ -1148,11 +1154,11 @@ function target_selector(player_comp, performer, key)
         end
 
         -- store eventual Occupant Entity or Entity
-        occupant_ref = target_cell.occupant or nil
-        entity_ref = target_cell.entity or nil
+        occupant_ref = target_cell and target_cell.occupant
+        entity_ref = target_cell and target_cell.entity
 
         -- avoiding performer from acting on itself
-        if target_cell.occupant == performer then
+        if target_cell and target_cell.occupant == performer then
             occupant_ref = nil
         end
 
@@ -1160,4 +1166,22 @@ function target_selector(player_comp, performer, key)
     end
 
     return true, false, g.current_inventory[key]
+end
+
+-- based on Entity current components, select best proper string
+function string_selector(entity)
+    local proper_string
+
+    proper_string = entity.name
+
+    if entity.components["description"] then
+        proper_string = entity.components["description"].string
+    end
+
+    if entity.components["secret"] then
+        proper_string = entity.components["secret"].string
+        print("---"..proper_string)
+    end
+
+    return proper_string
 end

@@ -7,7 +7,7 @@
 @door|:9|obstacle|usable,false,use=linked|*linked,tileswitch=10,physchange=obstacle
 @tome|:121|pickup|sealed|description,old tome|trigger,false,false,reads "Scemo ki legge!!1!"
 @lever|:75|description,old lever|linked|usable,false,use=linked,turn=hidden|*linked,str=Activating|*hidden,str=Turning
-@cape1|:55|description,fur cape|equipable,true,cape|pickup|*equip,str=Putting on,tilechange=65|*unequip,str=Putting off,tilerestore=
+@cape1|:55|description,fool's cape|secret,fur cape|equipable,true,cape|pickup|*equip,str=Donning the fur cape upon,tilechange=65|*unequip,str=Unmantling fur cape from,tilerestore=
 @exit|:1|exit,Thee travel to another level
 @shroom|:shrooms|obstacle|secret,unknown mushroom|description,deadly cap
 @shroom2|:shrooms|obstacle|description,most peculiar-looking mushroom, verily

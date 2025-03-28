@@ -673,6 +673,12 @@ end
 function Equipable:unequip(owner, target)
     if owner.components["equipable"].cursed then
         console_event("Thy item is cursed and may not be removed!", {0.6, 0.2, 1})
+
+        -- reveal Entity real description
+        if owner.components["secret"] then
+            owner.components["secret"] = nil
+        end
+
         return false
     end
 

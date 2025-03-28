@@ -41,9 +41,6 @@ function StatePlay:init(map, generate_players)
         -- setting BKG color
         love.graphics.setBackgroundColor((mod.BKG_R or 12) / 255, (mod.BKG_G or 8) / 255, (mod.BKG_B or 42) / 255)
 
-        -- setting the state's font
-        love.graphics.setFont(FONTS["default"])
-
         -- preliminary drawing pass on g.canvas_static, to avoid re-drawing statics each time 
         love.graphics.setCanvas(g.canvas_static)
 

@@ -30,8 +30,10 @@ mod = {
 
     -- font sizes (to change the fonts themselves, just change them in the 'font' folder)
     FONT_SIZE_TITLE = false,
-    FONT_SIZE_SUBTITLE = false,
+    FONT_SIZE_TAG = false,
     FONT_SIZE_DEFAULT = false,
+    FONT_SIZE_SUBTITLE = false,
+    FONT_SIZE_ERROR = false,
     -- padding size (the space used to position strings inside the window)
     PADDING = false,
 

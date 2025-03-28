@@ -116,16 +116,13 @@ function borders_manager()
     local new_border
 
     for i = 1, 3 do
-        print("i = "..i)
         -- for each line in the csv, store its data in constants.lua BORDERS as images
         for j = 1, 2 do
-            print("j = "..j)
             new_border = love.graphics.newQuad(TILE_SIZE * 2 * (j - 1) + (TILE_SIZE * 4 * (i - 1)), 0, TILE_SIZE * 2, TILE_SIZE * 2, 240, 80)
             table.insert(BORDERS[i], new_border)
         end
 
         for k = 1, 2 do
-            print("k = "..k)
             new_border = love.graphics.newQuad(TILE_SIZE * 2 * (k - 1) + (TILE_SIZE * 4 * (i - 1)), TILE_SIZE * 2, TILE_SIZE * 2, TILE_SIZE * 2, 240, 80)
             table.insert(BORDERS[i], new_border)
         end
@@ -730,8 +727,8 @@ function dice_roll(die_set_input, success_input)
     end
     -- apply modifier, if any
     result = result + (modifier or 0)
-    -- if success is request, it must be >= 0 or return false
-    if success and success - result <= 0 then result = false end
+    -- if success is requested, it needs to be >= 0 or return false
+    if success and success - result < 0 then result = false end
     -- numerical results can't be < 0
     if result and result < 0 then result = 0 end
 
@@ -795,7 +792,7 @@ function ui_manager_play()
     -- clear to transparent black
     love.graphics.clear(0, 0, 0, 0)
     -- drawing UI on top of everything for the current player    
-    love.graphics.setFont(FONTS["subtitle"])
+    love.graphics.setFont(FONTS["console"])
     -- setting font color for name/console
     love.graphics.setColor(0.49, 0.82, 0.90, 1)
     
@@ -808,37 +805,40 @@ function ui_manager_play()
     -- print console events
     love.graphics.setColor(g.console["color3"][1], g.console["color3"][2], g.console["color3"][3], 1)
     love.graphics.print(
-        g.console["event3"] or "Error: fed nothing to console_event() func", PADDING, PADDING
+        g.console["event3"] or "Error: fed nothing to console_event() func", PADDING, g.window_height - (PADDING * 3.5)
     )
     love.graphics.setColor(g.console["color2"][1], g.console["color2"][2], g.console["color2"][3], 1)
     love.graphics.print(
-        g.console["event2"] or "Error: fed nothing to console_event() func", PADDING, (PADDING * 2)
+        g.console["event2"] or "Error: fed nothing to console_event() func", PADDING, g.window_height - (PADDING * 2.5)
     )
     love.graphics.setColor(g.console["color1"][1], g.console["color1"][2], g.console["color1"][3], 1)
     love.graphics.print(
-        g.console["event1"] or "Error: fed nothing to console_event() func", PADDING, (PADDING * 3)
+        g.console["event1"] or "Error: fed nothing to console_event() func", PADDING, g.window_height - (PADDING * 1.5)
     )
 
     if not g.view_inventory then
+        -- set proper font
+        love.graphics.setFont(FONTS["tag"])
+
         -- set proper color
         love.graphics.setColor(0.49, 0.82, 0.90, 1)
         
         -- print player stats
-        love.graphics.print(
-            g.camera["entity"].name,
-            PADDING, g.window_height - (PADDING * 3.5)
-        )
+        love.graphics.print(g.camera["entity"].name, PADDING, PADDING)
+
+        
+        love.graphics.setFont(FONTS["ui"])
 
         -- setting font color for player data
         love.graphics.setColor(0.28, 0.46, 0.73, 1)
 
         love.graphics.print(
             "Life "..g.camera["entity"].components["stats"].stats["hp"],
-            PADDING, g.window_height - (PADDING * 2.5)
+            PADDING, PADDING * 2.5
         )
         love.graphics.print(
             "Gold "..g.camera["entity"].components["stats"].stats["gold"],
-            PADDING, g.window_height - (PADDING * 1.5)
+            PADDING, PADDING * 3.5
         )
     end
     
@@ -866,9 +866,9 @@ function ui_manager_menu(text, input_phase, n_of_players, current_player, input_
     love.graphics.draw(g.BORDER_TILES, BORDERS[1][4], g.window_width - (t_size) * size, g.window_height - (t_size) * size, 0, size, size)
     love.graphics.draw(g.BORDER_TILES, BORDERS[1][2], g.window_width - (t_size) * size, 0, 0, size, size)
 
-    love.graphics.setColor(0.78, 0.96, 0.94, 1)
-    love.graphics.setFont(FONTS["tag"])
-    love.graphics.printf(GAME_TAG, 0, (g.window_height / 5) - FONT_SIZE_TITLE , g.window_width, "center")    
+    love.graphics.setColor(0.78, 0.96, 0.94, 1) 
+    love.graphics.setFont(FONTS["logo"])
+    love.graphics.printf(GAME_TAG, 0, (g.window_height / 5) - FONT_SIZE_TITLE , g.window_width, "center")   
     love.graphics.setFont(FONTS["title"])
     love.graphics.printf(GAME_TITLE, 0, g.window_height / 5, g.window_width, "center")
 
@@ -1089,6 +1089,8 @@ function inventory_update(player)
     love.graphics.draw(g.BORDER_TILES, BORDERS[2][4], g.window_width - (t_size) * size, g.window_height - (t_size) * size, 0, size, size)
     love.graphics.draw(g.BORDER_TILES, BORDERS[2][2], g.window_width - (t_size) * size, 0, 0, size, size)
 
+    -- setting font for inventory's title
+    love.graphics.setFont(FONTS["tag"])
     -- setting font color for inventory's title
     love.graphics.setColor(0.49, 0.82, 0.90, 1)
 
@@ -1096,6 +1098,9 @@ function inventory_update(player)
     love.graphics.printf(player.name .. "'s bag", 0, FONT_SIZE_DEFAULT, g.window_width, "center")
 
     inv_ref = inv_ref.items -- player inventory table
+
+    -- setting font for inventory's items
+    love.graphics.setFont(FONTS["ui"])
 
     -- print all item in player inventory and couple them with a letter
     for i = 1, string.len(inv_str) do
@@ -1117,8 +1122,6 @@ function inventory_update(player)
 
         -- print all items on canvas
         item_str = string_selector(inv_ref[i])
-
-        print(item_str)
 
         love.graphics.printf(string.sub(inv_str, i, i) .. ": " .. item_str,
         0, (FONT_SIZE_DEFAULT + FONT_SIZE_DEFAULT / 3) * (i + 2), g.window_width, "center"
@@ -1180,7 +1183,6 @@ function string_selector(entity)
 
     if entity.components["secret"] then
         proper_string = entity.components["secret"].string
-        print("---"..proper_string)
     end
 
     return proper_string

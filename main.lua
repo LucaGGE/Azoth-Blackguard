@@ -83,8 +83,10 @@ end
 function love.draw()
     g.game_state:draw()
     -- errors will always be printed on screen, to aid modders
-    love.graphics.setFont(FONTS["default"])
+    love.graphics.setFont(FONTS["error"])
+    love.graphics.setColor(1, 0.56, 0.68, 1)
     for i, error_msg in ipairs(g.error_messages) do
-        love.graphics.print(error_msg, 0, (i - 1) * FONT_SIZE_DEFAULT)
+        love.graphics.printf(error_msg, 0, (i - 1) * FONT_SIZE_DEFAULT, g.window_width, "right")
     end
+    love.graphics.setColor(1, 1, 1, 1)
 end

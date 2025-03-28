@@ -295,7 +295,7 @@ IO_DTABLE = {
         end
 
         -- if no compatible/free slot is found on Entity, return false
-        print("No compatible/free slot found")
+        console_event("Thou hast no vacant slot to don this")
         return false
     end,
     ["unequip"] = function(player_comp, player_entity, key)

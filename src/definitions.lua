@@ -36,6 +36,18 @@ function Entity:new(id, tile, components, powers, name)
     self.base_tile = tile
 end
 
+-- Selectors spawn Entities based on their arbitrary family and a die throw
+Selector = Object:extend()
+
+function Selector:new(input)
+end
+
+-- Spawners spawn Selectors
+Spawner = Object:extend()
+
+function Spawner:new(input)
+end
+
 -- Powers are built with Effects, and can be applied on self/target by Entities
 -- they can be simple or complex and they range from damage to teleport and hallucination
 Power = Object:extend()

@@ -1,7 +1,7 @@
 -- variable containing the path to the necessary CSV files
 -- the two current local paths I use are "F:/Development/Dev_Games/GOBLET/source/azoth!_blackguard/modding/" or "C:/Users/foxre/"
 -- you'll need to modify these to your local path since the system, to date, cannot find other than LUA files in the relative path
-PATH_TO_CSV = mod.path_to_csv or "C:/Users/foxre/"
+PATH_TO_CSV = mod.path_to_csv or "F:/Development/Dev_Games/GOBLET/source/azoth!_blackguard/modding/"
 
 GAME_TAG = "Azoth! Blackguard"
 GAME_TITLE = type(mod.game_title) == "string" and mod.game_title or "Descent into the Grim Path"
@@ -32,8 +32,10 @@ TWEENING_TIME = 0.25
 
 -- sizes relative to all available fonts
 FONT_SIZE_TITLE = mod.font_size_title or 60
-FONT_SIZE_SUBTITLE = mod.font_size_subtitle or 30
-FONT_SIZE_DEFAULT = mod.font_size_default or 24
+FONT_SIZE_TAG = mod.font_size_tag or 45
+FONT_SIZE_SUBTITLE = mod.font_size_subtitle or 35
+FONT_SIZE_DEFAULT = mod.font_size_default or 30
+FONT_SIZE_ERROR = mod.font_size_default or 24
 PADDING = mod.padding or 32
 
 -- sizes relative to tiles
@@ -68,11 +70,13 @@ SOUNDS = {
 }
 
 FONTS = {
-    ["tag"] = love.graphics.newFont("fonts/Bitmgothic.ttf", FONT_SIZE_TITLE * 0.75),
-    ["title"] = love.graphics.newFont("fonts/Bitmgothic.ttf", FONT_SIZE_TITLE),
-    ["subtitle"] = love.graphics.newFont("fonts/Bitmgothic.ttf", FONT_SIZE_SUBTITLE),
-    ["default"] = love.graphics.newFont("fonts/BitPotion.ttf", FONT_SIZE_DEFAULT),
-    ["narration"] = love.graphics.newFont("fonts/Pixellove.ttf", FONT_SIZE_DEFAULT),
+    ["tag"] = love.graphics.newFont("fonts/GothicPixels.ttf", FONT_SIZE_TAG),
+    ["logo"] = love.graphics.newFont("fonts/GothicPixels.ttf", FONT_SIZE_DEFAULT),
+    ["title"] = love.graphics.newFont("fonts/GothicPixels.ttf", FONT_SIZE_TITLE),
+    ["subtitle"] = love.graphics.newFont("fonts/alagard.ttf", FONT_SIZE_SUBTITLE),
+    ["ui"] = love.graphics.newFont("fonts/alagard.ttf", FONT_SIZE_DEFAULT),
+    ["error"] = love.graphics.newFont("fonts/BitPotion.ttf", FONT_SIZE_ERROR),
+    ["console"] = love.graphics.newFont("fonts/VeniceClassic.ttf", FONT_SIZE_DEFAULT),
 }
 
 BORDERS = {

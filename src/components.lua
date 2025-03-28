@@ -609,7 +609,6 @@ function Inventory:remove(item_key)
     local inv_str = "abcdefghijklmnopqrstuvwxyz"
 
     for i = 1, string.len(inv_str) do
-        print(i)
         if string.sub(inv_str, i, i) == item_key then
             table.remove(self.items, i)
             print("Removing object from inventory...")
@@ -626,7 +625,6 @@ function Slots:new(args)
     -- slot is available if == true and ~= Entity
     self.slots = {}
     for _,slot in ipairs(args) do
-        print("->->-> "..slot)
         -- adding all input slots from args (true = available)
         self.slots[slot] = "empty"
     end

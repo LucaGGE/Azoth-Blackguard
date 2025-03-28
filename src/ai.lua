@@ -57,7 +57,6 @@ function ai_behavior(owner, npc_comp)
 end
 
 function target_entity(owner, npc_comp)
-    print(owner.name)
     local search_row = owner.cell["grid_row"] - npc_comp.sight
     local search_col
     local column_condition

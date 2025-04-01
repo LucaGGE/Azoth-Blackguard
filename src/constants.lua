@@ -17,6 +17,7 @@ TILES_FEATURES_PAIRS = {["empty"] = "ground"} -- empty cells are considered grou
 
 -- all the valid tiles features for TILES_VALID_FEATURES table (see pairings in components.lua)
 TILES_VALID_FEATURES = {
+    ["difficult"] = true,
     ["liquid"] = true,
     ["climbable"] = true,
     ["void"] = true,

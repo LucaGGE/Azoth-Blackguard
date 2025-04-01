@@ -10,11 +10,12 @@ code_reference = nil
 -- this stores all the legal movement-tile_type pairings
 -- (see TILES_VALID_FEATURES in util.lua)
 local pairings = {
-    ["walk"] = "ground",
+    ["ruck"] = "difficult",
     ["swim"] = "liquid",
     ["climb"] = "climbable",
+    ["fly"] = "void",
     ["phase"] = "solid",
-    ["fly"] = "untraversable"
+    ["walk"] = "ground"
 }
 
 -- note this is NOT found in BLUEPRINTS_TABLE, as it is restricted to the game menu

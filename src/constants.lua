@@ -56,6 +56,7 @@ SOUNDS = {
     ["solid"] = love.audio.newSource("sfx/step_solid.ogg", "static"),
     ["climbable"] = love.audio.newSource("sfx/step_climbable.ogg", "static"),
     ["void"] = love.audio.newSource("sfx/step_tricky.ogg", "static"),
+    ["difficult"] = love.audio.newSource("sfx/step_tricky.ogg", "static"),
     ["liquid"] = love.audio.newSource("sfx/step_liquid.ogg", "static"),
     ["wait"] = love.audio.newSource("sfx/step_wait.wav", "static"),
     ["button_select"] = love.audio.newSource("sfx/button_select.wav", "static"),

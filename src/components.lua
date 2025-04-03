@@ -7,9 +7,8 @@
 -- this is needed during dynamic code generation, since loadstring() is limited to global variables
 code_reference = nil
 
--- this stores all the legal movement-tile_type pairings
--- (see TILES_VALID_FEATURES in util.lua)
-local pairings = {
+-- this stores all the legal movement-phys MOV_TO_PHYS (see VALID_PHYSICS)
+local MOV_TO_PHYS = {
     ["ruck"] = "difficult",
     ["swim"] = "liquid",
     ["climb"] = "climbable",
@@ -58,7 +57,7 @@ function Player:input_management(entity, key)
         end
 
         -- check if player has inventory open, to avoid undesired movement input
-        if g.view_inventory then
+        if g.view_inv then
             return false
         end
     
@@ -127,17 +126,17 @@ function Movable:move_entity(owner, dir)
         -- since movement is diagonal, add to adj_tiles the adjacent tiles
         local adj_tile
         adj_tile = g.grid[owner.cell["grid_row"]][owner.cell["grid_col"] + dir[2]]
-        table.insert(adj_tiles, TILES_FEATURES_PAIRS[adj_tile.index])
+        table.insert(adj_tiles, TILES_PHYSICS[adj_tile.index])
         adj_tile = g.grid[owner.cell["grid_row"] + dir[1]][owner.cell["grid_col"]]
-        table.insert(adj_tiles, TILES_FEATURES_PAIRS[adj_tile.index])
+        table.insert(adj_tiles, TILES_PHYSICS[adj_tile.index])
     end
 
     -- now checking if tile feature is compatible with movement abilities
-    table.insert(adj_tiles, TILES_FEATURES_PAIRS[dest.index])
-    for i, tile_type in ipairs(adj_tiles) do
+    table.insert(adj_tiles, TILES_PHYSICS[dest.index])
+    for i, phys in ipairs(adj_tiles) do
         local can_traverse = false
         for i2, mov_type in ipairs(self.movement_type) do
-            if pairings[mov_type] == tile_type or pairings[mov_type] == "wiggle" then
+            if MOV_TO_PHYS[mov_type] == phys or MOV_TO_PHYS[mov_type] == "wiggle" then
                 can_traverse = true
                 break
             end
@@ -233,9 +232,9 @@ function Movable:move_entity(owner, dir)
     owner.cell["cell"].pawn = owner -- occupying new cell
     
     -- playing sound based on tile type, check if valid to avoid crashes
-    if SOUNDS[TILES_FEATURES_PAIRS[dest.index]] then
-        love.audio.stop(SOUNDS[TILES_FEATURES_PAIRS[dest.index]])
-        love.audio.play(SOUNDS[TILES_FEATURES_PAIRS[dest.index]])
+    if SOUNDS[TILES_PHYSICS[dest.index]] then
+        love.audio.stop(SOUNDS[TILES_PHYSICS[dest.index]])
+        love.audio.play(SOUNDS[TILES_PHYSICS[dest.index]])
     else
         print("WARNING: dest has no related sound")
     end

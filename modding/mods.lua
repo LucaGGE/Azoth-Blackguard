@@ -8,14 +8,14 @@
 -- this is a table that gathers all your modded values. DO NOT TOUCH!
 mod = {
     -- variable containing the path to your modified CSV files (change \ symbols with / symbols!)
-    PATH_TO_CSV = false,
+    FILES_PATH = false,
 
     -- the final image size multiplier: think of zooming what you see in the game screen. 2 by default
     IMAGE_SIZE_MULTIPLIER = false,
 
     -- variable containing the path to your tileset
     PATH_TO_TILESET = false,
-    PATH_TO_BORDER_TILES = false,
+    PATH_TO_FRAMESET = false,
 
     -- the individual tile size, as drawn in the tileset. By default, the game uses 20x20 pixels tiles
     TILE_SIZE = false,
@@ -29,11 +29,10 @@ mod = {
     GAME_TITLE = false,
 
     -- font sizes (to change the fonts themselves, just change them in the 'font' folder)
-    FONT_SIZE_TITLE = false,
-    FONT_SIZE_TAG = false,
-    FONT_SIZE_DEFAULT = false,
-    FONT_SIZE_SUBTITLE = false,
-    FONT_SIZE_ERROR = false,
+    SIZE_MAX = false,
+    SIZE_TAG = false,
+    SIZE_DEF = false,
+    SIZE_ERROR = false,
     -- padding size (the space used to position strings inside the window)
     PADDING = false,
 

@@ -7,8 +7,8 @@ local input_phase
 
 local n_of_players
 local current_player
--- clearing g.players_party in case we are restarting game
-g.players_party = {}
+-- clearing g.party_group in case we are restarting game
+g.party_group = {}
 
 local input_name
 local names_table
@@ -82,7 +82,7 @@ local INPUT_DTABLE2 = {
         if current_player > n_of_players then
             -- finding and assigning to player_blueprint the player's blueprint
             local player_blueprint = nil
-            player_blueprint = BLUEPRINTS_LIST["player"]
+            player_blueprint = BP_LIST["player"]
 
             -- checking if modders did not create a player blueprint to avoid a crash
             if player_blueprint == nil then
@@ -94,16 +94,16 @@ local INPUT_DTABLE2 = {
                 goto continue_menu
             end
 
-            -- if everything is fine, then continue spawning. Assigning  new players to g.players_party
+            -- if everything is fine, then continue spawning. Assigning  new players to g.party_group
             for i = 1, n_of_players do
                 -- creating a new Entity() and feeding it all player_blueprint data + Players names
                 --local new_player = Entity(player_blueprint.id, player_blueprint.tile, player_blueprint.features, names_table[i])
-                local blueprint_plus_name = {["bp"] = BLUEPRINTS_LIST["player"],
+                local blueprint_plus_name = {["bp"] = BP_LIST["player"],
                 ["name"] = names_table[i]
                 }
-                -- NOTE: this is a first assignment to g.players_party. Players will need to be extracted from
+                -- NOTE: this is a first assignment to g.party_group. Players will need to be extracted from
                 -- here and added again in entities_spawner(), this time with their input ('player') components!
-                table.insert(g.players_party, blueprint_plus_name)
+                table.insert(g.party_group, blueprint_plus_name)
             end
 
             -- move to StatePlay(), giving 1 and "true" to :Init() for map_n and player_regen(eration)
@@ -125,16 +125,16 @@ INPUT_DTABLE2["return"] = INPUT_DTABLE2["enter"]
 INPUT_DTABLE2["'"] = INPUT_DTABLE1["'"]
 
 function StateMenu:init()
-    -- resetting every global variable of interest but BLUEPRINTS_LIST, as it's set once in main.load() 
-    g.players_party = {}
+    -- resetting every global variable of interest but BP_LIST, as it's set once in main.load() 
+    g.party_group = {}
     g.camera["entity"] = nil
     g.npcs_group = {}
     g.render_group = {}
-    g.invisible_group = {}
-    g.canvas_static  = nil
-    g.canvas_dynamic = nil
+    g.hidden_group = {}
+    g.cnv_static  = nil
+    g.cnv_dynamic = nil
     g.cemetery = {}
-    g.is_tweening = false
+    g.tweening = false
     g.console["event3"] = ""
     g.console["event2"] = ""
     g.console["event1"] = ""

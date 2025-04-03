@@ -184,7 +184,7 @@ IO_DTABLE = {
 
         if not valid_key then return false end
 
-        if not g.view_inventory then
+        if not g.view_inv then
             -- it is better to avoid player to activate objects when standing on them,
             -- since they could change physics and block him
             
@@ -270,26 +270,26 @@ IO_DTABLE = {
         slots_ref = slots_ref.slots -- player slots
 
         -- check if there's an item coupled with this letter
-        if not g.current_inventory[key] then
+        if not g.current_inv[key] then
             return false
         end
 
         -- check if the selected item is equipable
-        if not g.current_inventory[key].comps["equipable"] then
+        if not g.current_inv[key].comps["equipable"] then
             console_event("Thee can't equip this")
             return true
         end
 
         -- check if the slot required by the item is available in Entity Slots component
-        for _, suit_slot in ipairs(g.current_inventory[key].comps["equipable"].suitable_slots) do
+        for _, suit_slot in ipairs(g.current_inv[key].comps["equipable"].suitable_slots) do
             if slots_ref[suit_slot] == "empty" then
                 -- save occupied slot in equipped object for easier referencing
-                g.current_inventory[key].comps["equipable"].slot_reference = suit_slot
+                g.current_inv[key].comps["equipable"].slot_reference = suit_slot
                 -- store item inside slots component
-                slots_ref[suit_slot] = g.current_inventory[key]
+                slots_ref[suit_slot] = g.current_inv[key]
                 print("Equipped object!")
                 -- activate equip() func in 'equipable' component to trigger dedicated effects
-                g.current_inventory[key].comps["equipable"]:equip(g.current_inventory[key], player_entity)
+                g.current_inv[key].comps["equipable"]:equip(g.current_inv[key], player_entity)
                 return true
             end
         end
@@ -308,11 +308,11 @@ IO_DTABLE = {
         -- if an item player_entity was equipped and still is, we can assume its data is predictable
         slots_ref = player_entity.comps["slots"].slots
 
-        if g.current_inventory[key] then
+        if g.current_inv[key] then
             local item
             local success
 
-            item = g.current_inventory[key]
+            item = g.current_inv[key]
 
             if not item.comps["equipable"] then
                 print("Trying to unequip an unequippable object!")
@@ -348,7 +348,7 @@ IO_DTABLE = {
             return false
         end
 
-        item = g.current_inventory[key]
+        item = g.current_inv[key]
 
         -- check if there's an item coupled with this letter
         if not item then
@@ -363,7 +363,7 @@ IO_DTABLE = {
 
 
         -- at this point, a valid item was selected
-        g.view_inventory = false
+        g.view_inv = false
         player_comp.action_state = "#"
         -- store selected item in player_comp.string
         player_comp.string = key
@@ -386,7 +386,7 @@ IO_DTABLE = {
             return false
         end
 
-        if not target_cell or TILES_FEATURES_PAIRS[target_cell.index] == "solid" then
+        if not target_cell or TILES_PHYSICS[target_cell.index] == "solid" then
             console_event("You cannot bestow anything here")
             return false
         end
@@ -406,7 +406,7 @@ IO_DTABLE = {
         end
 
         -- at this point, everything is in check. Store item
-        item = g.current_inventory[item_key]
+        item = g.current_inv[item_key]
 
         -- set proper item string
         item_str = string_selector(item)
@@ -429,7 +429,7 @@ IO_DTABLE = {
             -- adding entity in front or back depending if it is an pawn or a simple entity
             table.insert(g.render_group, 1, item)
         else
-            table.insert(g.invisible_group, item)
+            table.insert(g.hidden_group, item)
         end
 
         console_event("Thee bestow " .. item_str)
@@ -516,9 +516,9 @@ function player_commands(player_comp, input_key)
         end,
         ["inventory"] = function()
             if not player_comp.action_state then
-                g.view_inventory = not g.view_inventory
+                g.view_inv = not g.view_inv
                 -- necessary to update UI so that only console string is visible
-                g.canvas_ui = ui_manager_play()
+                g.cnv_ui = ui_manager_play()
                 return false
             end
         end,
@@ -539,7 +539,7 @@ function player_commands(player_comp, input_key)
         ["pickup"] = function(player_comp)
             if not player_comp.action_state then
                 -- avoid picking up entities already in inventory
-                g.view_inventory = false
+                g.view_inv = false
                 
                 player_comp.action_state = "pickup"
                 console_cmd("Pickup what?")          
@@ -548,9 +548,9 @@ function player_commands(player_comp, input_key)
         end,
         ["equip"] = function(player_comp)
             if not player_comp.action_state then
-                g.view_inventory = true
+                g.view_inv = true
                 -- necessary to update UI so that only console string is visible
-                g.canvas_ui = ui_manager_play()
+                g.cnv_ui = ui_manager_play()
                 player_comp.action_state = "equip"
                 console_cmd("Gear up thyself with what?")
                 return false
@@ -558,9 +558,9 @@ function player_commands(player_comp, input_key)
         end,
         ["unequip"] = function(player_comp)
             if not player_comp.action_state then
-                g.view_inventory = true
+                g.view_inv = true
                 -- necessary to update UI so that only console string is visible
-                g.canvas_ui = ui_manager_play()
+                g.cnv_ui = ui_manager_play()
                 player_comp.action_state = "unequip"
                 console_cmd("Unequip from thyself what?")
                 return false
@@ -568,7 +568,7 @@ function player_commands(player_comp, input_key)
         end,
         ["loose"] = function(player_comp)
             if not player_comp.action_state then
-                g.view_inventory = false
+                g.view_inv = false
                 player_comp.action_state = "loose"
                 console_cmd("Loose thy projectile where?")
                 return false
@@ -576,9 +576,9 @@ function player_commands(player_comp, input_key)
         end,
         ["bestow"] = function(player_comp)
             if not player_comp.action_state then
-                g.view_inventory = true
+                g.view_inv = true
                 -- necessary to update UI so that only console string is visible
-                g.canvas_ui = ui_manager_play()
+                g.cnv_ui = ui_manager_play()
                 -- used to drop stuff around or to place items in proper places
                 player_comp.action_state = "bestow"
                 console_cmd("Bestow what?")

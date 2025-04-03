@@ -1,22 +1,22 @@
 -- variable containing the path to the necessary CSV files
 -- the two current local paths I use are "F:/Development/Dev_Games/GOBLET/source/azoth!_blackguard/modding/" or "C:/Users/foxre/"
 -- you'll need to modify these to your local path since the system, to date, cannot find other than LUA files in the relative path
-PATH_TO_CSV = mod.path_to_csv or "C:/Users/foxre/"
+FILES_PATH = mod.FILES_PATH or "C:/Users/foxre/"
 
-GAME_TAG = "Azoth! Blackguard"
+GAME_LOGO = "Azoth! Blackguard"
 GAME_TITLE = type(mod.game_title) == "string" and mod.game_title or "Descent into the Grim Path"
 
 --[[
-    Pay attention to tiles_features_pairs. It will store tile index = tile type,
+    Pay attention to TILES_PHYSICS. It will store tile index = tile type,
     to easily check how to interact with a specific tile. Also note that each tile can 
     have one 'physical state' at a given time, but it can change anytime.
     Tile indexes without a type will give a 'nil' value, and since the can_transverse
     var in Movable:move_entity func is false by default, they won't allow for any movement.
 ]]
-TILES_FEATURES_PAIRS = {["empty"] = "ground"} -- empty cells are considered ground
+TILES_PHYSICS = {["empty"] = "ground"} -- empty cells are considered ground
 
--- all the valid tiles features for TILES_VALID_FEATURES table (see pairings in components.lua)
-TILES_VALID_FEATURES = {
+-- all the valid tiles features for VALID_PHYSICS table (see pairings in components.lua)
+VALID_PHYSICS = {
     ["difficult"] = true,
     ["liquid"] = true,
     ["climbable"] = true,
@@ -26,23 +26,26 @@ TILES_VALID_FEATURES = {
 }
 
 -- list of all entity blueprints registered from dedicated CSV file
-BLUEPRINTS_LIST = {}
+BP_LIST = {}
+-- graphics sets
+TILESET = love.graphics.newImage(mod.PATH_TO_TILESET or "graphics/tileset.png")
+FRAMESET = love.graphics.newImage(mod.PATH_TO_FRAMESET or "graphics/borders.png")
 
 -- duration of normal tweening animations
 TWEENING_TIME = 0.25
 
 -- sizes relative to all available fonts
-FONT_SIZE_TITLE = mod.font_size_title or 60
-FONT_SIZE_TAG = mod.font_size_tag or 45
-FONT_SIZE_SUBTITLE = mod.font_size_subtitle or 35
-FONT_SIZE_DEFAULT = mod.font_size_default or 30
-FONT_SIZE_ERROR = mod.font_size_default or 24
+SIZE_MAX = mod.SIZE_MAX or 60
+SIZE_SUB = mod.SIZE_SUB or 35
+SIZE_TAG = mod.SIZE_TAG or 45
+SIZE_DEF = mod.SIZE_DEF or 30
+SIZE_ERR = mod.SIZE_DEF or 24
 PADDING = mod.padding or 32
 
 -- sizes relative to tiles
 TILE_SIZE = mod.TILE_SIZE or 20 -- used for cell size/tileset slicing.
 HALF_TILE = (mod.TILE_SIZE or 20) / 2 -- used when centering the screen on player
-SIZE_MULTIPLIER = mod.IMAGE_SIZE_MULTIPLIER or 2
+SIZE_MULT = mod.IMAGE_SIZE_MULTIPLIER or 2
 
 MUSIC = {
     ["swamp"] = love.audio.newSource("sfx/st_swamp.ogg", "static"),
@@ -72,13 +75,13 @@ SOUNDS = {
 }
 
 FONTS = {
-    ["tag"] = love.graphics.newFont("fonts/GothicPixels.ttf", FONT_SIZE_TAG),
-    ["logo"] = love.graphics.newFont("fonts/GothicPixels.ttf", FONT_SIZE_DEFAULT),
-    ["title"] = love.graphics.newFont("fonts/GothicPixels.ttf", FONT_SIZE_TITLE),
-    ["subtitle"] = love.graphics.newFont("fonts/alagard.ttf", FONT_SIZE_SUBTITLE),
-    ["ui"] = love.graphics.newFont("fonts/alagard.ttf", FONT_SIZE_DEFAULT),
-    ["error"] = love.graphics.newFont("fonts/BitPotion.ttf", FONT_SIZE_ERROR),
-    ["console"] = love.graphics.newFont("fonts/VeniceClassic.ttf", FONT_SIZE_DEFAULT),
+    ["tag"] = love.graphics.newFont("fonts/GothicPixels.ttf", SIZE_TAG),
+    ["logo"] = love.graphics.newFont("fonts/GothicPixels.ttf", SIZE_SUB),
+    ["title"] = love.graphics.newFont("fonts/GothicPixels.ttf", SIZE_MAX),
+    ["subtitle"] = love.graphics.newFont("fonts/alagard.ttf", SIZE_SUB),
+    ["ui"] = love.graphics.newFont("fonts/alagard.ttf", SIZE_DEF),
+    ["error"] = love.graphics.newFont("fonts/BitPotion.ttf", SIZE_ERR),
+    ["console"] = love.graphics.newFont("fonts/VeniceClassic.ttf", SIZE_DEF),
 }
 
 BORDERS = {

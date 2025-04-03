@@ -1,6 +1,6 @@
 -- useful variables that get used often
-local TILESET_WIDTH = g.TILESET:getWidth()
-local TILESET_HEIGHT = g.TILESET:getHeight()
+local TILESET_WIDTH = TILESET:getWidth()
+local TILESET_HEIGHT = TILESET:getHeight()
 local sprites_groups = {}
 
 -- simple, user-friendly error message handler
@@ -133,7 +133,7 @@ end
 
 function sprites_groups_manager()
     -- all sprites groups are managed by a single CSV file
-    local sprites_groups_csv = csv_reader(PATH_TO_CSV .. "sprites_groups.csv")
+    local sprites_groups_csv = csv_reader(FILES_PATH .. "sprites_groups.csv")
 
     -- check if operation went right; if not, activate error_handler
     if type(sprites_groups_csv) == "string" then
@@ -228,7 +228,7 @@ function entities_spawner(blueprint, loc_row, loc_col, name)
         end
 
         new_player["entity"] = instanced_entity
-        table.insert(g.players_party, new_player)
+        table.insert(g.party_group, new_player)
     end
 
     -- positioning entities
@@ -253,7 +253,7 @@ function entities_spawner(blueprint, loc_row, loc_col, name)
             table.insert(g.render_group, 1, instanced_entity)
         end
     else
-        table.insert(g.invisible_group, instanced_entity)
+        table.insert(g.hidden_group, instanced_entity)
     end
 end
 
@@ -293,8 +293,8 @@ function map_generator(map_values, generate_players)
             -- else, if it is = x, it's a player spawn point!
             if tile_index:match("%d") then
                 -- save entity in the blueprint variable
-                if BLUEPRINTS_LIST[tile_value_2] then
-                    blueprint = BLUEPRINTS_LIST[tile_value_2]
+                if BP_LIST[tile_value_2] then
+                    blueprint = BP_LIST[tile_value_2]
                     -- checking if a special name for the entity was fed in the map
                     entity_name = tile_value_3
                 else
@@ -363,10 +363,10 @@ function map_generator(map_values, generate_players)
     -- not spawning the players again if we just changed level
     if generate_players then
         -- spawning players: in the menu we have inserted players entities but not their input_comp!
-        local players_party_copy = g.players_party
-        g.players_party = {}
+        local party_group_copy = g.party_group
+        g.party_group = {}
 
-        for i, bpandname in ipairs(players_party_copy) do
+        for i, bpandname in ipairs(party_group_copy) do
             local bp = bpandname["bp"]
             local name = bpandname["name"]
             -- check that all 4 spawn locations for players were set
@@ -381,7 +381,7 @@ function map_generator(map_values, generate_players)
         end
     else
         -- if players already got generated once, just position them on their ordered spawn points
-        for i, player in ipairs(g.players_party)  do
+        for i, player in ipairs(g.party_group)  do
             player["entity"].cell["cell"] = player_spawn_loc[i]["cell"]
             player["entity"].cell["cell"].pawn = player["entity"]
             player["entity"].cell["grid_row"] = player_spawn_loc[i]["row"]
@@ -393,7 +393,7 @@ end
 
 function map_reader(map, generate_players)
     -- reading map values (static, one-draw pass tiles only)
-    local map_values = csv_reader(PATH_TO_CSV .. "map_"..map..".csv")
+    local map_values = csv_reader(FILES_PATH .. "map_"..map..".csv")
 
     -- check if operation went right; if not, activate error_handler and return
     if type(map_values) == "string" then
@@ -409,12 +409,12 @@ function map_reader(map, generate_players)
         end
     end
 
-    -- initializing game canvases (g.canvas_static  with tiles, g.canvas_dynamic adds entities)
-    g.canvas_static  = love.graphics.newCanvas(g.grid_x * TILE_SIZE, g.grid_y * TILE_SIZE)
-    g.canvas_dynamic = love.graphics.newCanvas(g.grid_x * TILE_SIZE, g.grid_y * TILE_SIZE)
+    -- initializing game canvases (g.cnv_static  with tiles, g.cnv_dynamic adds entities)
+    g.cnv_static  = love.graphics.newCanvas(g.grid_x * TILE_SIZE, g.grid_y * TILE_SIZE)
+    g.cnv_dynamic = love.graphics.newCanvas(g.grid_x * TILE_SIZE, g.grid_y * TILE_SIZE)
 
     -- getting tiles features groups from the specific CSV file
-    local tiles_features_csv = csv_reader(PATH_TO_CSV .. "tiles_features.csv")
+    local tiles_features_csv = csv_reader(FILES_PATH .. "tiles_features.csv")
 
     -- check if operation went right; if not, activate error_handler and return
     if type(tiles_features_csv) == "string" then
@@ -424,13 +424,13 @@ function map_reader(map, generate_players)
 
     for i, tile_type in ipairs(tiles_features_csv) do
         -- check if the type is valid and has tile indexes assigned to it
-        if tile_type[2] and TILES_VALID_FEATURES[tile_type[1]] then
+        if tile_type[2] and VALID_PHYSICS[tile_type[1]] then
             -- separating tile indexes inside tile_type[2]
             tile_type[2] = str_slicer(tile_type[2], ",", 1)
             -- tile_type[1] == tile_type name, tile_type[2] == tiles
             for i2, tile in ipairs(tile_type[2]) do
                 -- each tile == its type
-                TILES_FEATURES_PAIRS[tile] = tile_type[1]
+                TILES_PHYSICS[tile] = tile_type[1]
             end
         end
     end
@@ -449,7 +449,7 @@ function tile_to_quad(index)
     local max_index = tileset_width_in_cells * tileset_height_in_cells
     local row = 1
 
-    -- checking if index is in g.TILESET's range (NOTE: indexes start from 1)
+    -- checking if index is in TILESET's range (NOTE: indexes start from 1)
     if tile_index <= 0 or tile_index > max_index then
         return nil
     end
@@ -481,7 +481,7 @@ end
 
 -- screen resizing handling
 function love.resize(w, h)
-    g.window_width, g.window_height = pixel_adjust(w, h)
+    g.w_width, g.w_height = pixel_adjust(w, h)
     g.game_state:refresh()
 end
 
@@ -514,7 +514,7 @@ function blueprints_generator(input_table)
             id = element_output[2]
 
             -- checking to ensure Blueprint id uniqueness
-            if BLUEPRINTS_LIST[id] then
+            if BP_LIST[id] then
                 error_handler('Blueprint "'..id..'" is not unique, duplicates ignored.')
                 return false
             end
@@ -631,14 +631,14 @@ function blueprints_generator(input_table)
         ::continue::
     end
 
-    -- create final blueprint from entity and its components and save it in BLUEPRINTS_LIST
+    -- create final blueprint from entity and its components and save it in BP_LIST
     local new_blueprint = Entity(id, tile, blueprint_components, blueprint_powers)
-    BLUEPRINTS_LIST[id] = new_blueprint
+    BP_LIST[id] = new_blueprint
 end
 
 function blueprints_manager()
     -- all game entities are managed by a single CSV file.
-    local entities_csv = csv_reader(PATH_TO_CSV .. "blueprints.csv")
+    local entities_csv = csv_reader(FILES_PATH .. "blueprints.csv")
 
     -- check if operation went right; if not, activate error_handler
     if type(entities_csv) == "string" then
@@ -670,7 +670,7 @@ end
 
 function camera_setting()
     -- setting g.camera to the first spawned player
-    local camera_entity = g.players_party[1]["entity"]
+    local camera_entity = g.party_group[1]["entity"]
     if g.camera["entity"] == nil then
         g.camera["entity"] = camera_entity
         g.camera["x"] = camera_entity.cell["cell"].x
@@ -778,7 +778,7 @@ function turns_manager(current_player, npc_turn)
         end
 
         ::continue::
-        g.is_tweening = false
+        g.tweening = false
         console_cmd(nil)
         g.game_state:refresh()        
     end)
@@ -786,7 +786,7 @@ end
 
 function ui_manager_play()
     -- generating and setting a canvas of the proper size
-    local new_canvas  = love.graphics.newCanvas(g.window_width, g.window_height)
+    local new_canvas  = love.graphics.newCanvas(g.w_width, g.w_height)
     love.graphics.setCanvas(new_canvas)
 
     -- clear to transparent black
@@ -799,24 +799,24 @@ function ui_manager_play()
     -- if present, print console["string"]
     if g.console["string"] then
         love.graphics.printf(g.console["string"], 0,
-        g.window_height - (PADDING * 1.5), g.window_width, "center")
+        g.w_height - (PADDING * 1.5), g.w_width, "center")
     end
 
     -- print console events
     love.graphics.setColor(g.console["color3"][1], g.console["color3"][2], g.console["color3"][3], 1)
     love.graphics.print(
-        g.console["event3"] or "Error: fed nothing to console_event() func", PADDING, g.window_height - (PADDING * 3.5)
+        g.console["event3"] or "Error: fed nothing to console_event() func", PADDING, g.w_height - (PADDING * 3.5)
     )
     love.graphics.setColor(g.console["color2"][1], g.console["color2"][2], g.console["color2"][3], 1)
     love.graphics.print(
-        g.console["event2"] or "Error: fed nothing to console_event() func", PADDING, g.window_height - (PADDING * 2.5)
+        g.console["event2"] or "Error: fed nothing to console_event() func", PADDING, g.w_height - (PADDING * 2.5)
     )
     love.graphics.setColor(g.console["color1"][1], g.console["color1"][2], g.console["color1"][3], 1)
     love.graphics.print(
-        g.console["event1"] or "Error: fed nothing to console_event() func", PADDING, g.window_height - (PADDING * 1.5)
+        g.console["event1"] or "Error: fed nothing to console_event() func", PADDING, g.w_height - (PADDING * 1.5)
     )
 
-    if not g.view_inventory then
+    if not g.view_inv then
         -- set proper font
         love.graphics.setFont(FONTS["tag"])
 
@@ -854,30 +854,30 @@ end
 -- main menu UI manager
 function ui_manager_menu(text, input_phase, n_of_players, current_player, input_name)
     -- generating a canvas of the proper size
-    local new_canvas  = love.graphics.newCanvas(g.window_width, g.window_height)
-    local size = SIZE_MULTIPLIER * 2
+    local new_canvas  = love.graphics.newCanvas(g.w_width, g.w_height)
+    local size = SIZE_MULT * 2
     local t_size = TILE_SIZE * 2
     
     love.graphics.setCanvas(new_canvas)
 
     -- draw borders
-    love.graphics.draw(g.BORDER_TILES, BORDERS[1][1], 0, 0, 0, size, size)
-    love.graphics.draw(g.BORDER_TILES, BORDERS[1][3], 0, g.window_height - (t_size) * size, 0, size, size)
-    love.graphics.draw(g.BORDER_TILES, BORDERS[1][4], g.window_width - (t_size) * size, g.window_height - (t_size) * size, 0, size, size)
-    love.graphics.draw(g.BORDER_TILES, BORDERS[1][2], g.window_width - (t_size) * size, 0, 0, size, size)
+    love.graphics.draw(FRAMESET, BORDERS[1][1], 0, 0, 0, size, size)
+    love.graphics.draw(FRAMESET, BORDERS[1][3], 0, g.w_height - (t_size) * size, 0, size, size)
+    love.graphics.draw(FRAMESET, BORDERS[1][4], g.w_width - (t_size) * size, g.w_height - (t_size) * size, 0, size, size)
+    love.graphics.draw(FRAMESET, BORDERS[1][2], g.w_width - (t_size) * size, 0, 0, size, size)
 
     love.graphics.setColor(0.78, 0.96, 0.94, 1) 
     love.graphics.setFont(FONTS["logo"])
-    love.graphics.printf(GAME_TAG, 0, (g.window_height / 5) - FONT_SIZE_TITLE , g.window_width, "center")   
+    love.graphics.printf(GAME_LOGO, 0, (g.w_height / 5) - SIZE_MAX , g.w_width, "center")   
     love.graphics.setFont(FONTS["title"])
-    love.graphics.printf(GAME_TITLE, 0, g.window_height / 5, g.window_width, "center")
+    love.graphics.printf(GAME_TITLE, 0, g.w_height / 5, g.w_width, "center")
 
     love.graphics.setFont(FONTS["subtitle"])
     if input_phase == 1 then
-        love.graphics.printf(text[input_phase] .. n_of_players, 0, g.window_height / 5 + (PADDING * 4), g.window_width, "center")
+        love.graphics.printf(text[input_phase] .. n_of_players, 0, g.w_height / 5 + (PADDING * 4), g.w_width, "center")
     else
         love.graphics.printf(text[input_phase] .. text[current_player + 2] .. "rogue:\n" .. input_name,
-        0, g.window_height / 5 + (PADDING * 4), g.window_width, "center")
+        0, g.w_height / 5 + (PADDING * 4), g.w_width, "center")
     end
 
     love.graphics.setColor(1, 1, 1, 1)
@@ -887,31 +887,31 @@ end
 
 function ui_manager_gameover()
     -- generating a canvas of the proper size
-    local new_canvas  = love.graphics.newCanvas(g.window_width, g.window_height)
-    local size = SIZE_MULTIPLIER * 2
+    local new_canvas  = love.graphics.newCanvas(g.w_width, g.w_height)
+    local size = SIZE_MULT * 2
     local t_size = TILE_SIZE * 2
 
     love.graphics.setCanvas(new_canvas)
 
     -- draw borders
-    love.graphics.draw(g.BORDER_TILES, BORDERS[3][1], 0, 0, 0, size, size)
-    love.graphics.draw(g.BORDER_TILES, BORDERS[3][3], 0, g.window_height - (t_size) * size, 0, size, size)
-    love.graphics.draw(g.BORDER_TILES, BORDERS[3][4], g.window_width - (t_size) * size, g.window_height - (t_size) * size, 0, size, size)
-    love.graphics.draw(g.BORDER_TILES, BORDERS[3][2], g.window_width - (t_size) * size, 0, 0, size, size)
+    love.graphics.draw(FRAMESET, BORDERS[3][1], 0, 0, 0, size, size)
+    love.graphics.draw(FRAMESET, BORDERS[3][3], 0, g.w_height - (t_size) * size, 0, size, size)
+    love.graphics.draw(FRAMESET, BORDERS[3][4], g.w_width - (t_size) * size, g.w_height - (t_size) * size, 0, size, size)
+    love.graphics.draw(FRAMESET, BORDERS[3][2], g.w_width - (t_size) * size, 0, 0, size, size)
 
     love.graphics.setColor(0.93, 0.18, 0.27, 1)
     love.graphics.setFont(FONTS["title"])
-    love.graphics.printf("Game Over", 0, g.window_height / 4 - PADDING, g.window_width, "center")
+    love.graphics.printf("Game Over", 0, g.w_height / 4 - PADDING, g.w_width, "center")
 
     love.graphics.setColor(0.78, 0.96, 0.94, 1)
     love.graphics.setFont(FONTS["subtitle"])
-    love.graphics.printf("These souls have left us forever:", 0, g.window_height / 4 + PADDING, g.window_width, "center")
+    love.graphics.printf("These souls have left us forever:", 0, g.w_height / 4 + PADDING, g.w_width, "center")
 
     -- printing all deceased players and info about their death
     for i, death in ipairs(g.cemetery) do 
         love.graphics.printf(death["player"]..", killed by "..death["killer"].." for "..death["loot"].." gold,\n"..
         "has found a final resting place in "..death["place"]..".",
-        0, g.window_height / 3.5 + (PADDING * (i * 3)), g.window_width, "center")
+        0, g.w_height / 3.5 + (PADDING * (i * 3)), g.w_width, "center")
     end
 
     love.graphics.setColor(1, 1, 1, 1)
@@ -921,18 +921,18 @@ end
 
 function ui_manager_credits(credits_image)
     -- generating a canvas of the proper size
-    local new_canvas  = love.graphics.newCanvas(g.window_width, g.window_height)
+    local new_canvas  = love.graphics.newCanvas(g.w_width, g.w_height)
     love.graphics.setCanvas(new_canvas)
 
     -- this is simply an optimal proportion between the image size and the screen size
-    local scale = g.window_height / 1300
+    local scale = g.w_height / 1300
     local credits_width = credits_image:getWidth()
     local credits_height = credits_image:getHeight()
 
     -- always keeping the image with its original proportions and in the screen center
     love.graphics.draw(
         credits_image,
-        g.window_width / 2 - (credits_width / 2 * scale), g.window_height / 2 - (credits_height / 2 * scale),
+        g.w_width / 2 - (credits_width / 2 * scale), g.w_height / 2 - (credits_height / 2 * scale),
         0, scale, scale
     )
     return new_canvas
@@ -993,12 +993,12 @@ function console_event(event, font_color)
     g.console["event3"] = events_table["event2"]
     g.console["event2"] = events_table["event1"]
     g.console["event1"] = event
-    g.canvas_ui = ui_manager_play()
+    g.cnv_ui = ui_manager_play()
 end
 
 function console_cmd(cmd)
     g.console["string"] = cmd
-    g.canvas_ui = ui_manager_play()
+    g.cnv_ui = ui_manager_play()
 end
 
 function death_check(target, damage_dice, type, message)
@@ -1060,8 +1060,8 @@ function entity_available(target)
 end
 
 function inventory_update(player)
-    local new_canvas  = love.graphics.newCanvas(g.window_width, g.window_height)
-    local size = SIZE_MULTIPLIER * 2
+    local new_canvas  = love.graphics.newCanvas(g.w_width, g.w_height)
+    local size = SIZE_MULT * 2
     local t_size = TILE_SIZE * 2
     local inv_str = "abcdefghijklmnopqrstuvwxyz"
     local inv_ref = player.comps["inventory"]
@@ -1084,10 +1084,10 @@ function inventory_update(player)
     love.graphics.clear(0, 0, 0, 0)
 
     -- draw borders
-    love.graphics.draw(g.BORDER_TILES, BORDERS[2][1], 0, 0, 0, size, size)
-    love.graphics.draw(g.BORDER_TILES, BORDERS[2][3], 0, g.window_height - (t_size) * size, 0, size, size)
-    love.graphics.draw(g.BORDER_TILES, BORDERS[2][4], g.window_width - (t_size) * size, g.window_height - (t_size) * size, 0, size, size)
-    love.graphics.draw(g.BORDER_TILES, BORDERS[2][2], g.window_width - (t_size) * size, 0, 0, size, size)
+    love.graphics.draw(FRAMESET, BORDERS[2][1], 0, 0, 0, size, size)
+    love.graphics.draw(FRAMESET, BORDERS[2][3], 0, g.w_height - (t_size) * size, 0, size, size)
+    love.graphics.draw(FRAMESET, BORDERS[2][4], g.w_width - (t_size) * size, g.w_height - (t_size) * size, 0, size, size)
+    love.graphics.draw(FRAMESET, BORDERS[2][2], g.w_width - (t_size) * size, 0, 0, size, size)
 
     -- setting font for inventory's title
     love.graphics.setFont(FONTS["tag"])
@@ -1095,7 +1095,7 @@ function inventory_update(player)
     love.graphics.setColor(0.49, 0.82, 0.90, 1)
 
     -- printing owner's name
-    love.graphics.printf(player.name .. "'s bag", 0, FONT_SIZE_DEFAULT, g.window_width, "center")
+    love.graphics.printf(player.name .. "'s bag", 0, SIZE_DEF, g.w_width, "center")
 
     inv_ref = inv_ref.items -- player inventory table
 
@@ -1124,15 +1124,15 @@ function inventory_update(player)
         item_str = string_selector(inv_ref[i])
 
         love.graphics.printf(string.sub(inv_str, i, i) .. ": " .. item_str,
-        0, (FONT_SIZE_DEFAULT + FONT_SIZE_DEFAULT / 3) * (i + 2), g.window_width, "center"
+        0, (SIZE_DEF + SIZE_DEF / 3) * (i + 2), g.w_width, "center"
         )
         available_items[string.sub(inv_str, i, i)] = inv_ref[i]
     end
 
     -- storing available_items to be used with action_modes
-    g.current_inventory = available_items
-    -- copying updated inventory canvas to g.canvas_inv (global inventory canvas)
-    g.canvas_inv = new_canvas
+    g.current_inv = available_items
+    -- copying updated inventory canvas to g.cnv_inv (global inventory canvas)
+    g.cnv_inv = new_canvas
 
     -- restoring default RGBA, since this function influences ALL graphics
     love.graphics.setColor(1, 1, 1, 1)
@@ -1147,7 +1147,7 @@ function target_selector(player_comp, performer, key)
     local target_cell
     local pawn_ref, entity_ref -- Entities references
 
-    if not g.view_inventory then
+    if not g.view_inv then
         if player_comp.movement_inputs[key] then
             target_cell = g.grid[performer.cell["grid_row"] + player_comp.movement_inputs[key][1]]
             [performer.cell["grid_col"] + player_comp.movement_inputs[key][2]]
@@ -1168,7 +1168,7 @@ function target_selector(player_comp, performer, key)
         return true, pawn_ref, entity_ref, target_cell
     end
 
-    return true, false, g.current_inventory[key]
+    return true, false, g.current_inv[key]
 end
 
 -- based on Entity current components, select best proper string

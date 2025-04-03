@@ -32,7 +32,7 @@ function love.keypressed(key)
     if key == "f11" then
         fullscreen = not fullscreen
         love.window.setFullscreen(fullscreen)
-        g.window_width, g.window_height = pixel_adjust(love.graphics.getDimensions())
+        g.w_width, g.w_height = pixel_adjust(love.graphics.getDimensions())
         g.game_state:refresh()
     elseif key == "delete" then
         if g.error_messages and not g.game_state:is(StateFatalError) then
@@ -53,13 +53,11 @@ function love.load()
     math.randomseed(os.time())
     
     -- game screen and tile settings
-    GAME_SCREEN = love.window.setMode(g.window_width, g.window_height, 
-    {resizable=true, vsync=0, minwidth=400, minheight=300}
-    )
+    GAME_SCREEN = love.window.setMode(g.w_width, g.w_height, {resizable=true, vsync=0, minwidth=400, minheight=300})
 
     -- set correct filtering for global tileset & border tiles
-    g.TILESET:setFilter("nearest", "nearest")
-    g.BORDER_TILES:setFilter("nearest", "nearest")
+    TILESET:setFilter("nearest", "nearest")
+    FRAMESET:setFilter("nearest", "nearest")
 
     -- immediately store in util.lua all sprites_groups for entities blueprints
     sprites_groups_manager()
@@ -86,7 +84,7 @@ function love.draw()
     love.graphics.setFont(FONTS["error"])
     love.graphics.setColor(1, 0.56, 0.68, 1)
     for i, error_msg in ipairs(g.error_messages) do
-        love.graphics.printf(error_msg, 0, (i - 1) * FONT_SIZE_DEFAULT, g.window_width, "right")
+        love.graphics.printf(error_msg, 0, (i - 1) * SIZE_DEF, g.w_width, "right")
     end
     love.graphics.setColor(1, 1, 1, 1)
 end

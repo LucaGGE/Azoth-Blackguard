@@ -5,9 +5,8 @@ cell = {
     -- tiles are only drawn once. Note that doors and other 'interactives' are entities.
     tile = nil, -- represented by a quad on the tileset. 
     index = nil, -- tile index. Most entities are unable to traverse solid tiles, but some can climb trees.
-    trigger = nil, -- a special slot reserved to triggers (ie next-level triggers)
-    occupant = nil, -- a player/npc or an entity with a 'Obstacle' component, occupying the cell
-    entity = nil -- any entity that is not a 'occupant'. Limited to one per cell
+    pawn = nil, -- a player/npc or an entity with a 'Obstacle' component, occupying the cell
+    entity = nil -- any entity that is not a 'pawn'. Limited to one per cell
 }
 
 -- entity definition. Entities are very simple containers for components!
@@ -15,17 +14,17 @@ Entity = Object:extend()
 
 function Entity:new(id, tile, components, powers, name)
     -- can be either a player or a NPC component. Used to check groups
-    self.controller = nil
+    self.pilot = nil
     -- checked everytime an entity gets drawn, to see if it need to be eliminated
     self.alive = true
     -- an entity can only live inside cells. They also give x and y coords for drawing
-    self.cell = {["cell"] = nil, ["grid_column"] = nil, ["grid_row"] = nil}
+    self.cell = {["cell"] = nil, ["grid_col"] = nil, ["grid_row"] = nil}
     -- obligatory, first CSV arg. Necessary to give a player context, since entities are universal containers
     self.id = id
     -- obligatory, second CSV arg. Necessary to draw entities to screen, even invisible ones (see design docs)
     self.tile = tile
     -- completely optional. This is where all entity components are defined, in an Object Aggregation fashion
-    self.components = components or {}
+    self.comps = components or {}
     -- effects applied on Entity by other Entities powers. Activated before Entity turn
     self.effects = {} 
     -- completely optional. This is where all entity powers (abilities) are defined
@@ -33,7 +32,7 @@ function Entity:new(id, tile, components, powers, name)
     -- completely optional. Used for Players names and special NPCs/objects
     self.name = name or id
     -- original tile. Storing it makes much easier and faster to change Entities appearence
-    self.base_tile = tile
+    self.og_tile = tile
 end
 
 -- Selectors spawn Entities based on their arbitrary family and a die throw
@@ -61,13 +60,13 @@ function Power:new(input)
     for i, effect in ipairs(input) do
         -- first element of the table is power's name, skip
         if i ~= 1 then
-            local effect_input = strings_separator(effect, "=", 1)
+            local fx_input = str_slicer(effect, "=", 1)
 
             -- checking effects validity, storing valid ones
-            if EFFECTS_TABLE[effect_input[1]] then
-                self.effects[effect_input[1]] = effect_input[2]
+            if EFFECTS_TABLE[fx_input[1]] then
+                self.effects[fx_input[1]] = fx_input[2]
             else
-                error_handler(effect_input[1] .. ": this effect doesn't exist, ignored")
+                error_handler(fx_input[1] .. ": this effect doesn't exist, ignored")
             end
         end
     end

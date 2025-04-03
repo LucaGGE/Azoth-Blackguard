@@ -1,7 +1,7 @@
 -- variable containing the path to the necessary CSV files
 -- the two current local paths I use are "F:/Development/Dev_Games/GOBLET/source/azoth!_blackguard/modding/" or "C:/Users/foxre/"
 -- you'll need to modify these to your local path since the system, to date, cannot find other than LUA files in the relative path
-PATH_TO_CSV = mod.path_to_csv or "F:/Development/Dev_Games/GOBLET/source/azoth!_blackguard/modding/"
+PATH_TO_CSV = mod.path_to_csv or "C:/Users/foxre/"
 
 GAME_TAG = "Azoth! Blackguard"
 GAME_TITLE = type(mod.game_title) == "string" and mod.game_title or "Descent into the Grim Path"

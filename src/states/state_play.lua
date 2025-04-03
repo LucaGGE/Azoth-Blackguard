@@ -142,7 +142,7 @@ function StatePlay:refresh()
     -- removing dead players from g.players_party
     for i, player_ref in ipairs(g.players_party) do
         if player_ref["entity"].alive == false then
-            player_ref["entity"].cell["cell"].occupant = nil
+            player_ref["entity"].cell["cell"].pawn = nil
             table.remove(g.players_party, i)
         end
     end
@@ -150,7 +150,7 @@ function StatePlay:refresh()
     -- removing dead NPCs from g.npcs_group
     for i, npc in ipairs(g.npcs_group) do
         if npc.alive == false then
-            npc.cell["cell"].occupant = nil
+            npc.cell["cell"].pawn = nil
             table.remove(g.npcs_group, i)
         end
     end

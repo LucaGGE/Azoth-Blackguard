@@ -41,12 +41,12 @@ function str_effect(target, input)
     local target_str = target.name
             
     -- as usual, favor Entity description (or secret) to Entity name
-    if target.components["description"] then
-        target_str = target.components["description"].string
+    if target.comps["description"] then
+        target_str = target.comps["description"].string
     end
 
-    if target.components["secret"] then
-        target_str = target.components["secret"].string
+    if target.comps["secret"] then
+        target_str = target.comps["secret"].string
     end
 
     console_event(input .. " " .. target_str .. "!", {[1] = 1, [2] = 0.97, [3] = 0.44})
@@ -65,7 +65,7 @@ function sfx_play(target, input)
 end
 
 function stat_gold(target, input)
-    local target_stats = target.components["stats"].stats
+    local target_stats = target.comps["stats"].stats
 
     -- give feedback to eventual trigger that Entity has no stats or 'gold' stat
     if not target_stats or not target_stats["gold"] then
@@ -81,8 +81,8 @@ end
 -- simple function swapping between two tiles, depending on the current one.
 function tile_switch(target, new_tile)
     -- swap current target tile with other tile
-    if target.tile == new_tile then target.tile = target.base_tile return true end
-    if target.tile == target.base_tile then target.tile = new_tile return true end
+    if target.tile == new_tile then target.tile = target.og_tile return true end
+    if target.tile == target.og_tile then target.tile = new_tile return true end
 
     -- if neither is true, then target.tile has been changed in unexpected way
     print("Warning: the Entity has been morphed and is now unable to tile_switch until de-morphed")
@@ -96,18 +96,18 @@ end
 
 -- restoring Entity's tile to original one
 function tile_restore(target)
-    print("Tile restored to: " .. target.base_tile)
-    target.tile = target.base_tile
+    print("Tile restored to: " .. target.og_tile)
+    target.tile = target.og_tile
 end
 
 -- this effect changes physical properties of Entities. Currently only used to add/remove
 -- 'Obstacle' component, more complexity will require a decision table and not if statements.
 function phys_change(target, property)
     if property == "obstacle" then
-        if target.components["obstacle"] then
-            target.components["obstacle"] = nil
+        if target.comps["obstacle"] then
+            target.comps["obstacle"] = nil
         else
-            target.components["obstacle"] = Obstacle()
+            target.comps["obstacle"] = Obstacle()
         end
     end
 end

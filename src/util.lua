@@ -38,7 +38,7 @@ function components_interface(tags)
     return COMPONENTS_TABLE[tags[1]](component_tags(tags))
 end
 
-function strings_separator(line, separator, pos)
+function str_slicer(line, separator, pos)
     local line = line
     local separator = separator
     local pos = pos
@@ -97,7 +97,7 @@ function csv_reader(input_csv, separator)
     -- reading line by line from CSV, starting from first char
     local pos = 1 -- start position in file
     for line in file:lines() do
-        local results = strings_separator(line, separator, pos)
+        local results = str_slicer(line, separator, pos)
         -- reset all values for next line, and append result to return table
         pos = 1
         new_table[count] = results
@@ -149,7 +149,7 @@ function sprites_groups_manager()
         local current_group = {}
         local group_name = ""
         -- for each line in the csv, store its data in util.lua local sprites_groups
-        current_group = strings_separator(line[1], ",", 1)
+        current_group = str_slicer(line[1], ",", 1)
         for i2, value in ipairs(current_group) do
             -- first value is the group's name
             if i2 == 1 then
@@ -168,9 +168,9 @@ end
 
 -- spawns all Entities in map. NOTE: players get spawned on spawn points and get generated only once
 -- at game's start, to avoid erasing their data; both cases are found in map_generator() func
-function entities_spawner(blueprint, loc_row, loc_column, name)
+function entities_spawner(blueprint, loc_row, loc_col, name)
     local player_num = 1
-    local is_occupant = false
+    local is_pawn = false
     local is_npc = false
     local new_player = {
         ["entity"] = nil,
@@ -181,7 +181,7 @@ function entities_spawner(blueprint, loc_row, loc_column, name)
     local instanced_components = {}
     local instanced_entity = nil
 
-    for i, comp_tags in ipairs(blueprint.components) do
+    for i, comp_tags in ipairs(blueprint.comps) do
         -- translating components tags into actual components thanks to components_interface
         local new_component = components_interface(comp_tags)
         instanced_components[comp_tags[1]] = new_component
@@ -189,10 +189,10 @@ function entities_spawner(blueprint, loc_row, loc_column, name)
         -- checking for components that need to be stored in special groups for easier, faster calling
         if comp_tags[1] == "npc" then
             is_npc = true
-            is_occupant = true
+            is_pawn = true
         elseif comp_tags[1] == "player" then
             new_player["player_component"] = new_component
-            is_occupant = true
+            is_pawn = true
         end
     end
 
@@ -200,12 +200,12 @@ function entities_spawner(blueprint, loc_row, loc_column, name)
 
     -- once special components are stored, finish entityt identity 
     if is_npc then
-        -- save NPC controller in entity.controller
-        instanced_entity.controller = instanced_entity.components["npc"]
+        -- save NPC pilot in entity.pilot
+        instanced_entity.pilot = instanced_entity.comps["npc"]
         table.insert(g.npcs_group, instanced_entity)
     -- if one uses a 'Npc' comp with a player, it just becomes a Npc!
     elseif instanced_entity.id == "player" and not is_npc then
-        if not loc_row and not loc_column then
+        if not loc_row and not loc_col then
             -- as soon as missing player spawn locations are called, call FatalError State
             error_handler("Insufficient player spawning locations in current map. Each player needs one.")
             g.game_state:exit()
@@ -215,16 +215,16 @@ function entities_spawner(blueprint, loc_row, loc_column, name)
             return nil
         end
 
-        -- save Player controller in entity.controller
-        instanced_entity.controller = instanced_entity.components["player"]
+        -- save Player pilot in entity.pilot
+        instanced_entity.pilot = instanced_entity.comps["player"]
         -- immediately check if player has Stats() component with "hp". If not, add it/them
-        if not instanced_entity.components["stats"] then
+        if not instanced_entity.comps["stats"] then
             local stat_component = components_interface({"stats", "hp:1"})
-            instanced_entity.components["stats"] = stat_component
+            instanced_entity.comps["stats"] = stat_component
         end
 
-        if not instanced_entity.components["stats"].stats["hp"] then
-            instanced_entity.components["stats"].stats["hp"] = 1
+        if not instanced_entity.comps["stats"].stats["hp"] then
+            instanced_entity.comps["stats"].stats["hp"] = 1
         end
 
         new_player["entity"] = instanced_entity
@@ -232,20 +232,20 @@ function entities_spawner(blueprint, loc_row, loc_column, name)
     end
 
     -- positioning entities
-    instanced_entity.cell["cell"] = g.grid[loc_row][loc_column]
+    instanced_entity.cell["cell"] = g.grid[loc_row][loc_col]
     instanced_entity.cell["grid_row"] = loc_row
-    instanced_entity.cell["grid_column"] = loc_column
+    instanced_entity.cell["grid_col"] = loc_col
 
     -- occupying the cell appropriately depending on entity type
-    if is_occupant then
-        g.grid[loc_row][loc_column].occupant = instanced_entity
+    if is_pawn then
+        g.grid[loc_row][loc_col].pawn = instanced_entity
     else
-        g.grid[loc_row][loc_column].entity = instanced_entity
+        g.grid[loc_row][loc_col].entity = instanced_entity
     end
     -- adding the entity to the g.render_group IF it is not invisible by default
-    if not instanced_entity.components["invisible"] then
-        -- adding entity in front or back depending if it is an occupant or a simple entity
-        if is_occupant then
+    if not instanced_entity.comps["invisible"] then
+        -- adding entity in front or back depending if it is an pawn or a simple entity
+        if is_pawn then
             -- insert to front in drawing order (last in group)
             table.insert(g.render_group, instanced_entity)
         else
@@ -304,7 +304,7 @@ function map_generator(map_values, generate_players)
                 finalize_cell(tile_index, blueprint, i, j)
             elseif tile_index == "x" and tile_value_2:match("%d") then
                 -- if that's a spawn point, save locations for players to be spawned later
-                player_spawn_loc[tonumber(tile_value_2)] = {["row"] = i, ["column"] = j, ["cell"] = g.grid[i][j]}
+                player_spawn_loc[tonumber(tile_value_2)] = {["row"] = i, ["col"] = j, ["cell"] = g.grid[i][j]}
                 -- no need for the finalize_cell() function, just set cell to 'empty'
                 g.grid[i][j].index = "empty"
             else
@@ -344,7 +344,7 @@ function map_generator(map_values, generate_players)
             g.grid[i][j].y = cell_y
 
             -- checking if a cell contains entities...
-            local tile_values = strings_separator(map_values[i][j], ",", 1)
+            local tile_values = str_slicer(map_values[i][j], ",", 1)
             -- ...if it does, the table will have at least a second element:
             if tile_values[2] then
                 CELL_DTABLE[true](tile_values[1], tile_values[2], tile_values[3], i, j)
@@ -377,15 +377,15 @@ function map_generator(map_values, generate_players)
                 g.game_state:init()
                 break
             end
-            entities_spawner(bp, player_spawn_loc[i]["row"], player_spawn_loc[i]["column"], name)
+            entities_spawner(bp, player_spawn_loc[i]["row"], player_spawn_loc[i]["col"], name)
         end
     else
         -- if players already got generated once, just position them on their ordered spawn points
         for i, player in ipairs(g.players_party)  do
             player["entity"].cell["cell"] = player_spawn_loc[i]["cell"]
-            player["entity"].cell["cell"].occupant = player["entity"]
+            player["entity"].cell["cell"].pawn = player["entity"]
             player["entity"].cell["grid_row"] = player_spawn_loc[i]["row"]
-            player["entity"].cell["grid_column"] = player_spawn_loc[i]["column"]
+            player["entity"].cell["grid_col"] = player_spawn_loc[i]["col"]
             table.insert(g.render_group, player["entity"])
         end
     end
@@ -426,7 +426,7 @@ function map_reader(map, generate_players)
         -- check if the type is valid and has tile indexes assigned to it
         if tile_type[2] and TILES_VALID_FEATURES[tile_type[1]] then
             -- separating tile indexes inside tile_type[2]
-            tile_type[2] = strings_separator(tile_type[2], ",", 1)
+            tile_type[2] = str_slicer(tile_type[2], ",", 1)
             -- tile_type[1] == tile_type name, tile_type[2] == tiles
             for i2, tile in ipairs(tile_type[2]) do
                 -- each tile == its type
@@ -460,10 +460,10 @@ function tile_to_quad(index)
         tile_index = tile_index - (tileset_width_in_cells)
     end
 
-    local column = tile_index -- since what is left is the column position
+    local col = tile_index -- since what is left is the column position
     
     -- note how the 0 based coords for drawing are kept with -1 subtractions
-    return love.graphics.newQuad((column - 1) * TILE_SIZE, (row - 1) * TILE_SIZE,
+    return love.graphics.newQuad((col - 1) * TILE_SIZE, (row - 1) * TILE_SIZE,
     TILE_SIZE, TILE_SIZE, TILESET_WIDTH, TILESET_HEIGHT)
 end
 
@@ -508,7 +508,7 @@ function blueprints_generator(input_table)
         local component_tags = {}
 
         -- checking if the element is the Blueprint's id
-        element_output = strings_separator(element, "@", 1)
+        element_output = str_slicer(element, "@", 1)
         
         if element_output[2] then
             id = element_output[2]
@@ -523,7 +523,7 @@ function blueprints_generator(input_table)
         end
 
         -- checking if the element is the Blueprint's tile/tile_group
-        element_output = strings_separator(element, ":", 1)
+        element_output = str_slicer(element, ":", 1)
         -- an entity can have a fixed tile, or a random tile from a group in sprites_groups.
         -- In the latter case, the selected tile will be removed from the pool once used.
         -- Now it is being checked if the Entity has a fixed tile or a random one from a group.
@@ -580,11 +580,11 @@ function blueprints_generator(input_table)
         end
 
         -- checking if the element is a power
-        element_output = strings_separator(element, "*", 1)
+        element_output = str_slicer(element, "*", 1)
 
         if element_output[2] then
             -- only used for powers. Structure is like components, but effects are functions
-            local power_effects = strings_separator(element_output[2], ",", pos)
+            local power_effects = str_slicer(element_output[2], ",", pos)
             
             -- check power name uniqueness
             if blueprint_powers[power_effects[1]] then
@@ -602,7 +602,7 @@ function blueprints_generator(input_table)
 
         -- if nothing of the above is true, then element must be a component
 
-        component_tags = strings_separator(element, ",", pos)
+        component_tags = str_slicer(element, ",", pos)
         -- all_components contains tables with a element tag and its optional arguments tags
         table.insert(all_components, component_tags)
 
@@ -690,7 +690,7 @@ function dice_roll(die_set_input, success_input)
     local success = success_input
 
     -- immediately check if it's a dice set or a constant
-    die_set = strings_separator(die_set_input, "d", 1)
+    die_set = str_slicer(die_set_input, "d", 1)
 
     -- die_set_input is constant, immediately return it as result
     if not die_set[2] then
@@ -704,7 +704,7 @@ function dice_roll(die_set_input, success_input)
     die_value = tonumber(die_set[2])
 
     -- check if actual die set has positive modifier
-    value_modifier_couple = strings_separator(die_set[2], "+", 1)
+    value_modifier_couple = str_slicer(die_set[2], "+", 1)
     if value_modifier_couple[2] then
         die_value = tonumber(value_modifier_couple[1])
         modifier = tonumber(value_modifier_couple[2])
@@ -713,7 +713,7 @@ function dice_roll(die_set_input, success_input)
     end
 
     -- check if actual die set has negative modifier
-    value_modifier_couple = strings_separator(die_set[2], "-", 1)
+    value_modifier_couple = str_slicer(die_set[2], "-", 1)
     if value_modifier_couple[2] then
         die_value = tonumber(value_modifier_couple[1])
         modifier = tonumber(value_modifier_couple[2]) * -1
@@ -727,7 +727,7 @@ function dice_roll(die_set_input, success_input)
     end
     -- apply modifier, if any
     result = result + (modifier or 0)
-    -- if success is requested, it needs to be >= 0 or return false
+    -- if success is requested, throw needs to be <= success
     if success and success - result < 0 then result = false end
     -- numerical results can't be < 0
     if result and result < 0 then result = 0 end
@@ -773,7 +773,7 @@ function turns_manager(current_player, npc_turn)
             end
             -- double check if NPC is still alive after the receiving lasting effects
             if npc.alive then
-                g.npcs_group[i].components["npc"]:activate(g.npcs_group[i])
+                g.npcs_group[i].comps["npc"]:activate(g.npcs_group[i])
             end
         end
 
@@ -833,11 +833,11 @@ function ui_manager_play()
         love.graphics.setColor(0.28, 0.46, 0.73, 1)
 
         love.graphics.print(
-            "Life "..g.camera["entity"].components["stats"].stats["hp"],
+            "Life "..g.camera["entity"].comps["stats"].stats["hp"],
             PADDING, PADDING * 2.5
         )
         love.graphics.print(
-            "Gold "..g.camera["entity"].components["stats"].stats["gold"],
+            "Gold "..g.camera["entity"].comps["stats"].stats["gold"],
             PADDING, PADDING * 3.5
         )
     end
@@ -968,10 +968,10 @@ end
 
 function entity_kill(entity, index, group)
     table.remove(group, index)
-    if entity.components["obstacle"] or entity.components["player"] or entity.components["npc"] then
-        print("Occupant entity destroyed")
+    if entity.comps["obstacle"] or entity.comps["player"] or entity.comps["npc"] then
+        print("pawn entity destroyed")
 
-        entity.cell["cell"].occupant = nil
+        entity.cell["cell"].pawn = nil
     else
         entity.cell["cell"].entity = nil
     end
@@ -1008,11 +1008,11 @@ function death_check(target, damage_dice, type, message)
         [true] = {[1] = 0.93, [2] = 0.18, [3] = 0.27}
     }
     -- reference eventual 'stats' component or set variable to false
-    local target_stats = target.components["stats"] and target.components["stats"].stats or false
+    local target_stats = target.comps["stats"] and target.comps["stats"].stats or false
     -- reference eventual 'profile' component or set variable to false
-    local target_modifier = target.components["profile"] and target.components["profile"].profile[type] or false
+    local target_modifier = target.comps["profile"] and target.comps["profile"].profile[type] or false
     -- choose color depending on player (red) or npc (yellow)
-    local target_family = target.components["player"] or false
+    local target_family = target.comps["player"] or false
     -- stores final damage score to subtract from target's HP
     local damage_score = 0
 
@@ -1047,10 +1047,10 @@ end
 
 -- check if Entity can be interacted with actions such as pickup, use, etc
 function entity_available(target)
-    if target.components["locked"] or target.components["sealed"] then
+    if target.comps["locked"] or target.comps["sealed"] then
         console_event(
-            target.components["locked"] and "You require a key"
-            or target.components["sealed"] and "It is sealed by magic"
+            target.comps["locked"] and "You require a key"
+            or target.comps["sealed"] and "It is sealed by magic"
         )
         
         return false
@@ -1064,7 +1064,7 @@ function inventory_update(player)
     local size = SIZE_MULTIPLIER * 2
     local t_size = TILE_SIZE * 2
     local inv_str = "abcdefghijklmnopqrstuvwxyz"
-    local inv_ref = player.components["inventory"]
+    local inv_ref = player.comps["inventory"]
     local available_items = {}
     local equipped = false
     local color = {
@@ -1111,7 +1111,7 @@ function inventory_update(player)
         end
 
         -- choosing printf color to discriminate equipped/unequipped items
-        if inv_ref[i].components["equipable"] and inv_ref[i].components["equipable"].slot_reference then
+        if inv_ref[i].comps["equipable"] and inv_ref[i].comps["equipable"].slot_reference then
             equipped = true
         else
             equipped = false
@@ -1145,27 +1145,27 @@ end
 -- action_modes related function that selects a tile OR an inventory item to perform action on
 function target_selector(player_comp, performer, key)
     local target_cell
-    local occupant_ref, entity_ref -- Entities references
+    local pawn_ref, entity_ref -- Entities references
 
     if not g.view_inventory then
         if player_comp.movement_inputs[key] then
             target_cell = g.grid[performer.cell["grid_row"] + player_comp.movement_inputs[key][1]]
-            [performer.cell["grid_column"] + player_comp.movement_inputs[key][2]]
+            [performer.cell["grid_col"] + player_comp.movement_inputs[key][2]]
         else
             -- if input is not a valid direction, turn is not valid
             return false
         end
 
-        -- store eventual Occupant Entity or Entity
-        occupant_ref = target_cell and target_cell.occupant
+        -- store eventual pawn Entity or Entity
+        pawn_ref = target_cell and target_cell.pawn
         entity_ref = target_cell and target_cell.entity
 
         -- avoiding performer from acting on itself
-        if target_cell and target_cell.occupant == performer then
-            occupant_ref = nil
+        if target_cell and target_cell.pawn == performer then
+            pawn_ref = nil
         end
 
-        return true, occupant_ref, entity_ref, target_cell
+        return true, pawn_ref, entity_ref, target_cell
     end
 
     return true, false, g.current_inventory[key]
@@ -1177,12 +1177,12 @@ function string_selector(entity)
 
     proper_string = entity.name
 
-    if entity.components["description"] then
-        proper_string = entity.components["description"].string
+    if entity.comps["description"] then
+        proper_string = entity.comps["description"].string
     end
 
-    if entity.components["secret"] then
-        proper_string = entity.components["secret"].string
+    if entity.comps["secret"] then
+        proper_string = entity.comps["secret"].string
     end
 
     return proper_string

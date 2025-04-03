@@ -70,13 +70,13 @@ function Player:input_management(entity, key)
         end
 
         -- 'Movable' component can be modified/added/removed during gameplay, so always check
-        if not entity.components["movable"] then
+        if not entity.comps["movable"] then
             print("INFO: The entity does not contain a movement component")
             return false
         end
 
         -- if no guard statements were activated, player is legally trying to move
-        return entity.components["movable"]:move_entity(entity, self.movement_inputs[key])
+        return entity.comps["movable"]:move_entity(entity, self.movement_inputs[key])
     end
 
     -- managing self.action_state mode of input  
@@ -104,37 +104,37 @@ end
     and it can still attack - think of a living tree that can bash players with its branches
     but cannot move around!
 ]]
-function Movable:move_entity(entity, direction)
-    local target_cell
-    local relevant_tiles = {} -- if moving diagonally, check if adjacent cells are transversable
-    local row_movement = entity.cell["grid_row"] + direction[1]
-    local column_movement = entity.cell["grid_column"] + direction[2]
-    local score_to_succeed = 7
-    local successful_attack
+function Movable:move_entity(owner, dir)
+    local dest -- destination, the target cell
+    local adj_tiles = {} -- if moving diagonally, check if adjacent cells are transversable
+    local row_mov = owner.cell["grid_row"] + dir[1]
+    local col_mov = owner.cell["grid_col"] + dir[2]
+    local succ_score = 7 -- score to succeed, throw need to be less or equal
+    local succ_atk = false -- by default, not needed and set to false
 
-    -- making sure that the Player isn't trying to move out of g.grid
-    if column_movement > g.grid_x or column_movement <= 0 or row_movement > g.grid_y or row_movement <= 0 then
-        target_cell = nil
+    -- making sure that the comp owner isn't trying to move out of g.grid
+    if col_mov > g.grid_x or col_mov <= 0 or row_mov > g.grid_y or row_mov <= 0 then
+        dest = nil
         print("Trying to move out of g.grid boundaries")
         return false
     end
 
-    -- once we are sure the cell exists and is part of the g.grid, store it as target_cell
-    target_cell = g.grid[entity.cell["grid_row"] + direction[1]][entity.cell["grid_column"] + direction[2]]
+    -- once we are sure the cell exists and is part of the g.grid, store it as dest
+    dest = g.grid[owner.cell["grid_row"] + dir[1]][owner.cell["grid_col"] + dir[2]]
 
     -- checking for additional tiles to check, since diagonal mov requires entity to be able to traverse all of them
-    if direction[1] ~= 0 and direction[2] ~= 0 then
-        -- since movement is diagonal, add to relevant_tiles the adjacent tiles
-        local new_target_cell
-        new_target_cell = g.grid[entity.cell["grid_row"]][entity.cell["grid_column"] + direction[2]]
-        table.insert(relevant_tiles, TILES_FEATURES_PAIRS[new_target_cell.index])
-        new_target_cell = g.grid[entity.cell["grid_row"] + direction[1]][entity.cell["grid_column"]]
-        table.insert(relevant_tiles, TILES_FEATURES_PAIRS[new_target_cell.index])
+    if dir[1] ~= 0 and dir[2] ~= 0 then
+        -- since movement is diagonal, add to adj_tiles the adjacent tiles
+        local adj_tile
+        adj_tile = g.grid[owner.cell["grid_row"]][owner.cell["grid_col"] + dir[2]]
+        table.insert(adj_tiles, TILES_FEATURES_PAIRS[adj_tile.index])
+        adj_tile = g.grid[owner.cell["grid_row"] + dir[1]][owner.cell["grid_col"]]
+        table.insert(adj_tiles, TILES_FEATURES_PAIRS[adj_tile.index])
     end
 
     -- now checking if tile feature is compatible with movement abilities
-    table.insert(relevant_tiles, TILES_FEATURES_PAIRS[target_cell.index])
-    for i, tile_type in ipairs(relevant_tiles) do
+    table.insert(adj_tiles, TILES_FEATURES_PAIRS[dest.index])
+    for i, tile_type in ipairs(adj_tiles) do
         local can_traverse = false
         for i2, mov_type in ipairs(self.movement_type) do
             if pairings[mov_type] == tile_type or pairings[mov_type] == "wiggle" then
@@ -142,64 +142,64 @@ function Movable:move_entity(entity, direction)
                 break
             end
         end
-        -- if even one cell isn't compatible with entity mov, entity cannot interact with it
+        -- if even one cell isn't compatible with Entity mov, Entity cannot interact with it
         if not can_traverse then
             print("Incompatible tile terrain in path for entity")
             return false
         end 
     end
 
-    -- check if player is dealing with an obstacle Entity, not an occupant
-    if target_cell.entity and target_cell.entity.components["obstacle"] then
-        print("Cell is already occupied by: " .. target_cell.entity.id)
+    -- check if owner movement is impeded by an obstacle Entity
+    if dest.entity and dest.entity.comps["obstacle"] then
+        print("Cell is blocked by obstacle: " .. dest.entity.id)
         return false
     end
 
-    -- checking if there are entities on the target_cell. These always have precedence of interaction
-    if target_cell.occupant then
-        -- a lack of controller means the player is dealing with an object entity, not a creature entity
-        if not target_cell.occupant.controller then
-            print("Cell is already occupied by: " .. target_cell.occupant.id)
-            return false
-        end
-
-        -- moving against another entity = attack, if they are part of different groups or the special "self" group
-        if entity.controller.group ~= "self" and entity.controller.group == target_cell.occupant.controller.group then
-            print("Entity interacts with teammate")
+    -- checking for NPC/Player Entities. These always have precedence of interaction
+    if dest.pawn then
+        -- moving against an Entity = interaction. If part of different groups
+        -- or of special 'self' group, the interaction results in an attack
+        if owner.pilot.group ~= "self" and owner.pilot.group == dest.pawn.pilot.group then
+            print("Entity interacts with another Entity of the same group")
             return true
         end
 
-        if entity.controller.group == "players" and target_cell.occupant.controller.nature == "civilized" then
+        -- Player/Civilised interaction is always peaceful
+        if owner.pilot.group == "players" and dest.pawn.pilot.nature == "civilized" then
+            print("Player dialogues with civilized creature")
+            return true -- this will actually lead to a dialogue func() that will return true/false
+        end
+        if owner.pilot.group == "civilised" and dest.pawn.pilot.nature == "player" then
             print("Player dialogues with civilized creature")
             return true -- this will actually lead to a dialogue func() that will return true/false
         end
 
-        -- checking if entity has stats and can take damage
-        if not target_cell.occupant.components["stats"] then
-            print("NPC has no Stats component")
+        -- at this point, it must be an enemy. Checki if it has stats and can take damage
+        if not dest.pawn.comps["stats"] then
+            print("Target entity has no Stats component")
             return false
         end
 
-        local target_stats = target_cell.occupant.components["stats"].stats
+        local target_stats = dest.pawn.comps["stats"].stats
         if not target_stats["hp"] then
-            print("This NPC has no HP and cannot die")
+            print("Target entity has no HP and cannot die")
             return false
         end
 
         -- if target is invisible, you need to roll a lower number
-        if target_cell.occupant.components["invisible"] then
-            print("Trying to hit invisible entity, success when: roll < 4")
-            score_to_succeed = 4
+        if dest.pawn.comps["invisible"] then
+            print("Trying to hit invisible entity, success when: roll <= 4")
+            succ_score = 4
         end
 
         -- dices get rolled to identify successful hit and eventual damage
-        successful_attack = dice_roll("1d12+1", score_to_succeed)
+        succ_atk = dice_roll("1d12+1", succ_score)
         
-        if successful_attack then 
+        if succ_atk then 
             love.audio.stop(SOUNDS["hit_blow"])
             love.audio.play(SOUNDS["hit_blow"])
-            for power_tag, power_class in pairs(entity.powers) do
-                power_class:activate(target_cell.occupant)
+            for power_tag, power_class in pairs(owner.powers) do
+                power_class:activate(dest.pawn)
             end
         else
             love.audio.play(SOUNDS["hit_miss"])
@@ -207,13 +207,13 @@ function Movable:move_entity(entity, direction)
 
         if target_stats["hp"] <= 0 then
             target_stats["hp"] = 0
-            -- entity will be removed from render_group and cell automatically in StatePlay:refresh()
-            target_cell.occupant.alive = false
+            -- Entity will be removed from render_group and cell automatically in StatePlay:refresh()
+            dest.pawn.alive = false
             -- if a player just died, save all deceased's relevant info in cemetery for Game Over screen
-            if target_cell.occupant.components["player"] then
-                local deceased = {["player"] = target_cell.occupant.name,
-                ["killer"] = entity.name,
-                ["loot"] = target_cell.occupant.components["stats"].stats["gold"],
+            if dest.pawn.comps["player"] then
+                local deceased = {["player"] = dest.pawn.name,
+                ["killer"] = owner.name,
+                ["loot"] = dest.pawn.comps["stats"].stats["gold"],
                 ["place"] = "Black Swamps"
                 }
                 table.insert(g.cemetery, deceased)
@@ -225,36 +225,35 @@ function Movable:move_entity(entity, direction)
         return true
     end
 
-    -- if no occupants are found in target cell, you're good to go
-    entity.cell["cell"].occupant = nil -- freeing old cell
-    entity.cell["grid_row"] = entity.cell["grid_row"] + direction[1]
-    entity.cell["grid_column"] = entity.cell["grid_column"] + direction[2]
-    entity.cell["cell"] = target_cell -- storing new cell
-    entity.cell["cell"].occupant = entity -- occupying new cell
+    -- if no pawns are found in target cell, you're good to go
+    owner.cell["cell"].pawn = nil -- freeing old cell
+    owner.cell["grid_row"] = owner.cell["grid_row"] + dir[1]
+    owner.cell["grid_col"] = owner.cell["grid_col"] + dir[2]
+    owner.cell["cell"] = dest -- storing new cell
+    owner.cell["cell"].pawn = owner -- occupying new cell
     
     -- playing sound based on tile type, check if valid to avoid crashes
-    if SOUNDS[TILES_FEATURES_PAIRS[target_cell.index]] then
-        love.audio.stop(SOUNDS[TILES_FEATURES_PAIRS[target_cell.index]])
-        love.audio.play(SOUNDS[TILES_FEATURES_PAIRS[target_cell.index]])
+    if SOUNDS[TILES_FEATURES_PAIRS[dest.index]] then
+        love.audio.stop(SOUNDS[TILES_FEATURES_PAIRS[dest.index]])
+        love.audio.play(SOUNDS[TILES_FEATURES_PAIRS[dest.index]])
     else
-        print("WARNING: target_cell has no related sound")
+        print("WARNING: dest has no related sound")
     end
 
-    -- lastly, check if there's an entity in the new cell
-    if not target_cell.entity then
+    -- lastly, check if there's an item Entity in the new cell
+    if not dest.entity then
+        return true
+    end
+    -- see if the Entity is an exit
+    if dest.entity.comps["exit"] then
+        dest.entity.comps["exit"]:activate(dest.entity, owner)
         return true
     end
 
-    -- see if the entity is an exit
-    if target_cell.entity.components["exit"] then
-        target_cell.entity.components["exit"]:activate(target_cell.entity, entity)
-        return true
-    end
-
-    -- see if entity is has trigger component
-    if target_cell.entity.components["trigger"] and target_cell.entity.components["trigger"].triggeroncollision then
-        -- trigger may work or not, but entity still moved, so return true
-        target_cell.entity.components["trigger"]:activate(target_cell.entity, entity)
+    -- see if Entity is has trigger component
+    if dest.entity.comps["trigger"] and dest.entity.comps["trigger"].triggeroncollision then
+        -- trigger may work or not, but Entity still moved, so return true
+        dest.entity.comps["trigger"]:activate(dest.entity, owner)
         return true
     end
 
@@ -273,7 +272,7 @@ function Npc:new(args)
         ["hearing"] = true
     }
     for i, var in ipairs(args) do
-        local new_var = strings_separator(var, "=", 1)
+        local new_var = str_slicer(var, "=", 1)
         -- if it is a valid table variable, assign values to it
         if not variables_group[new_var[1]] then
             goto continue
@@ -305,7 +304,7 @@ end
 
 function Npc:activate(owner)
     -- if NPC cannot move, skip turn
-    if not owner.components["movable"] then
+    if not owner.comps["movable"] then
         return false
     end
 
@@ -376,7 +375,7 @@ function Usable:new(args)
             goto continue
         end
 
-        key_power = strings_separator(arg, "=", 1)
+        key_power = str_slicer(arg, "=", 1)
         if not key_power then
             print("Warning: blank Usable component has no key-action couple")
             return false
@@ -393,8 +392,8 @@ function Usable:activate(target, input_entity, input_key)
     local entity = input_entity
 
     -- trigger always hits activating Entity, even if linked comp is present
-    if target.components["trigger"] then
-        target.components["trigger"]:activate(target, entity)
+    if target.comps["trigger"] then
+        target.comps["trigger"]:activate(target, entity)
     end
 
     -- if Entity is destroyontrigger, don't bother with rest of code
@@ -426,15 +425,15 @@ function Usable:activate(target, input_entity, input_key)
     end
     
     -- search for linked comp and store eventual linked Entity
-    if target.components["linked"] then
+    if target.comps["linked"] then
         print("Linked component was found")
-        local row, column = target.components["linked"]:activate(target)
+        local row, col = target.comps["linked"]:activate(target)
         row = tonumber(row)
-        column = tonumber(column)
+        col = tonumber(col)
         -- check immediately for NPC/Player
-        entity = g.grid[row][column] and g.grid[row][column].occupant or false
+        entity = g.grid[row][col] and g.grid[row][col].pawn or false
         -- if absent, check for Entity
-        if not entity then entity = g.grid[row][column].entity or false end
+        if not entity then entity = g.grid[row][col].entity or false end
     else
         -- no linked component, return true
         return true
@@ -469,8 +468,8 @@ end
 
 function StatChange:activate(entity)
     -- entities without the stat of interest won't be affected
-    if entity.components["stats"].stats[self.stat] then
-        code_reference = entity.components["stats"].stats
+    if entity.comps["stats"].stats[self.stat] then
+        code_reference = entity.comps["stats"].stats
 
         -- creating final string for code conversion
         local codeblock = 'code_reference["' .. self.stat .. '"]'
@@ -504,7 +503,7 @@ end
 -- Simple class to jump between levels or from game to menu (game end)
 function Exit:activate(owner, entity)
     console_event(self.event_string)
-    if entity.components["player"] then
+    if entity.comps["player"] then
         -- the entity's name indicates the level to load
         if owner.name ~= "menu" then
             g.game_state:exit()
@@ -525,7 +524,7 @@ Stats = Object:extend()
 function Stats:new(stats_table)
     self.stats = {}
     for i, stat in ipairs(stats_table) do
-        local new_stat = strings_separator(stat, "=", 1)
+        local new_stat = str_slicer(stat, "=", 1)
         -- automatically convert numerical stats to numbers
         if new_stat[2]:match("%d") then
             new_stat[2] = tonumber(new_stat[2])
@@ -540,7 +539,7 @@ Profile = Object:extend()
 function Profile:new(input_table)
     self.profile = {}
     for i, stat in ipairs(input_table) do
-        local new_stat = strings_separator(stat, "=", 1)
+        local new_stat = str_slicer(stat, "=", 1)
         -- automatically convert numerical stats to numbers
         if new_stat[2]:match("%d") then
             new_stat[2] = tonumber(new_stat[2])
@@ -587,12 +586,12 @@ function Inventory:add(item)
     if self.spaces > 0 then
         local item_ref = item.name
 
-        if item.components["description"] then
-            item_ref = item.components["description"].string
+        if item.comps["description"] then
+            item_ref = item.comps["description"].string
         end
 
-        if item.components["secret"] then
-            item_ref = item.components["secret"].string
+        if item.comps["secret"] then
+            item_ref = item.comps["secret"].string
         end
 
         self.spaces = self.spaces - 1
@@ -674,12 +673,12 @@ function Equipable:equip(owner, target)
 end
 
 function Equipable:unequip(owner, target)
-    if owner.components["equipable"].cursed then
+    if owner.comps["equipable"].cursed then
         console_event("Thy item is cursed and may not be removed!", {0.6, 0.2, 1})
 
         -- reveal Entity real description
-        if owner.components["secret"] then
-            owner.components["secret"] = nil
+        if owner.comps["secret"] then
+            owner.comps["secret"] = nil
         end
 
         return false
@@ -706,7 +705,7 @@ end
 
 function Effect:add(input_effects)
     for i, effect in ipairs(input_effects) do
-        local assigned_effect = strings_separator(effect, "=", 1)
+        local assigned_effect = str_slicer(effect, "=", 1)
         -- checking that first arg is a valid effect
         if not EFFECTS_TABLE[assigned_effect[1]] then
             error_handler('In component "Effect" tried to input invalid effect, ignored')
@@ -776,12 +775,12 @@ end
 function Sealed:activate(target, entity, player_comp)
     if target.name == player_comp.string then
         console_event("Thou dost unseal it!")
-        if target.components["trigger"] then
-            target.components["trigger"]:activate(target, entity)
+        if target.comps["trigger"] then
+            target.comps["trigger"]:activate(target, entity)
         end
 
         -- if Entity gets successfully unsealed, remove 'seled' comp
-        target.components["sealed"] = nil
+        target.comps["sealed"] = nil
         player_comp.string = ""
         return true
     end
@@ -800,16 +799,16 @@ function Locked:new(input)
 end
 
 function Locked:activate(target, entity)
-    if entity.components["inventory"] then
-        for _, item in ipairs(entity.components["inventory"].items) do
-            if item.components["key"] and item.name == target.name then
+    if entity.comps["inventory"] then
+        for _, item in ipairs(entity.comps["inventory"].items) do
+            if item.comps["key"] and item.name == target.name then
                 console_event("Thou dost unlock it!")
-                if target.components["trigger"] then
-                    target.components["trigger"]:activate(target, entity)
+                if target.comps["trigger"] then
+                    target.comps["trigger"]:activate(target, entity)
                 end
 
                 -- if Entity was successfully unlocked, remove 'Locked' comp
-                target.components["locked"] = nil
+                target.comps["locked"] = nil
                 return true
             end
         end
@@ -843,7 +842,7 @@ end
 
 -- note how changing the Entity's name will change its cell of interest
 function Linked:activate(owner)
-    local row_column = strings_separator(owner.name, "-", 1)
+    local row_column = str_slicer(owner.name, "-", 1)
     local row = row_column[1]
     local column = row_column[2]
 

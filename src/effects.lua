@@ -112,7 +112,6 @@ function phys_change(target, property)
     end
 end
 
-
 -- TO MOVE IN CONSTANTS ---------- TODO ---------- TODO ---------- TODO ---------- TODO ---------- TODO ---------- TODO ---------- TODO
 -- valid effects for the that can be applied to entities with consequence
 EFFECTS_TABLE = {

@@ -232,9 +232,13 @@ function Movable:move_entity(entity, direction)
     entity.cell["cell"] = target_cell -- storing new cell
     entity.cell["cell"].occupant = entity -- occupying new cell
     
-    -- playing sound based on tile type
-    love.audio.stop(SOUNDS[TILES_FEATURES_PAIRS[target_cell.index]])
-    love.audio.play(SOUNDS[TILES_FEATURES_PAIRS[target_cell.index]])
+    -- playing sound based on tile type, check if valid to avoid crashes
+    if SOUNDS[TILES_FEATURES_PAIRS[target_cell.index]] then
+        love.audio.stop(SOUNDS[TILES_FEATURES_PAIRS[target_cell.index]])
+        love.audio.play(SOUNDS[TILES_FEATURES_PAIRS[target_cell.index]])
+    else
+        print("WARNING: target_cell has no related sound")
+    end
 
     -- lastly, check if there's an entity in the new cell
     if not target_cell.entity then

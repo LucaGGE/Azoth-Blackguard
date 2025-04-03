@@ -1004,7 +1004,7 @@ end
 function death_check(target, damage_dice, type, message)
     -- this is needed to output messages on screen in yellow or red
     local event_color = {
-        [false] = {[1] = 0.78, [2] = 0.96, [3] = 0.94},
+        [false] = {[1] = 1, [2] = 0.97, [3] = 0.44},
         [true] = {[1] = 0.93, [2] = 0.18, [3] = 0.27}
     }
     -- reference eventual 'stats' component or set variable to false

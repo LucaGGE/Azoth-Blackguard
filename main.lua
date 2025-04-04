@@ -84,7 +84,7 @@ function love.draw()
     love.graphics.setFont(FONTS["error"])
     love.graphics.setColor(1, 0.56, 0.68, 1)
     for i, error_msg in ipairs(g.error_messages) do
-        love.graphics.printf(error_msg, 0, (i - 1) * SIZE_DEF, g.w_width, "right")
+        love.graphics.printf(error_msg, 0, (i - 1) * SIZE_ERR, g.w_width, "left")
     end
     love.graphics.setColor(1, 1, 1, 1)
 end

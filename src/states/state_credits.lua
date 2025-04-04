@@ -1,7 +1,9 @@
 StateCredits = BaseState:extend()
 
 -- credits image
-local credits_image = love.graphics.newImage(mod.path_to_tileset or "graphics/grislycreations.jpg")
+local credits_image = love.graphics.newImage(
+    mod.path_to_tileset or "graphics/grislycreations.jpg"
+)
 
 -- menu dedicated canvas (credits only)
 local canvas_credits
@@ -15,7 +17,7 @@ function StateCredits:init()
         love.audio.stop(g.game_track)
     end
     
-    love.graphics.setBackgroundColor(0 / 255, 0 / 255, 0 / 255)
+    love.graphics.setBackgroundColor(0, 0, 0)
     g.game_state:refresh()
 end
 

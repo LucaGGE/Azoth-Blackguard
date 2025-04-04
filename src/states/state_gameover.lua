@@ -1,11 +1,9 @@
 StateGameOver = BaseState:extend()
 
--- used to avoid skipping game over screen by error
+-- used to avoid skipping game over screen by mistake
 local can_input
-
 -- used to print all the death messages on screen
 local players_count
-
 -- menu dedicated canvas (gameover only)
 local canvas_gameover
 
@@ -22,8 +20,10 @@ function StateGameOver:init()
         love.audio.stop(g.game_track)
     end
 
-    -- setting background color to black
-    love.graphics.setBackgroundColor((mod.BKG_R or 12) / 255, (mod.BKG_G or 8) / 255, (mod.BKG_B or 42) / 255)
+    -- setting background color to base dark blue or mod color
+    love.graphics.setBackgroundColor(
+        (mod.BKG_R or 12) / 255, (mod.BKG_G or 8) / 255, (mod.BKG_B or 42) / 255
+    )
 
     -- play the gameover sting
     love.audio.play(MUSIC["gameover_sting"])
@@ -46,7 +46,6 @@ function StateGameOver:init()
 end
 
 function StateGameOver:update()
-    -- guard statement to check if player can input or not
     if not can_input then return end
 
     -- checking for input to resolve turns

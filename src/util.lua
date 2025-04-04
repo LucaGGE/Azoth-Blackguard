@@ -174,7 +174,7 @@ function entities_spawner(blueprint, loc_row, loc_col, name)
     local is_npc = false
     local new_player = {
         ["entity"] = nil,
-        ["player_component"] = nil
+        ["player_comp"] = nil
     }
 
     -- now create component instances to feed to new entity
@@ -191,7 +191,7 @@ function entities_spawner(blueprint, loc_row, loc_col, name)
             is_npc = true
             is_pawn = true
         elseif comp_tags[1] == "player" then
-            new_player["player_component"] = new_component
+            new_player["player_comp"] = new_component
             is_pawn = true
         end
     end

@@ -39,7 +39,7 @@ function Player:new()
     }
 end
 
-function Player:input_management(entity, key)
+function Player:manage_input(entity, key)
     if key == "escape" then 
         self.action_state = nil
         self.string = ""

@@ -1,21 +1,24 @@
 -- variable containing the path to the necessary CSV files
 -- the two current local paths I use are "F:/Development/Dev_Games/GOBLET/source/azoth!_blackguard/modding/" or "C:/Users/foxre/"
 -- you'll need to modify these to your local path since the system, to date, cannot find other than LUA files in the relative path
-FILES_PATH = mod.FILES_PATH or "C:/Users/foxre/"
+FILES_PATH = mod.FILES_PATH or "F:/Development/Dev_Games/GOBLET/source/azoth!_blackguard/modding/"
 
 GAME_LOGO = "Azoth! Blackguard"
-GAME_TITLE = type(mod.game_title) == "string" and mod.game_title or "Descent into the Grim Path"
+local game_title = "Descent into the Grim Path"
+GAME_TITLE = type(mod.game_title) == "string" and mod.game_title or game_title
+-- garbage collect unnecessary variable
+game_title = nil
 
 --[[
-    Pay attention to TILES_PHYSICS. It will store tile index = tile type,
-    to easily check how to interact with a specific tile. Also note that each tile can 
-    have one 'physical state' at a given time, but it can change anytime.
-    Tile indexes without a type will give a 'nil' value, and since the can_transverse
-    var in Movable:move_entity func is false by default, they won't allow for any movement.
+    Pay attention to TILES_PHYSICS. It will store tile index = tile type, to easily
+    check how to interact with a specific tile. Also note that each tile can have
+    one 'physical state' at a given time, but it can change anytime. Tile indexes
+    without a type will give a 'nil' value, and since the can_transverse var in
+    Movable:move_entity func is false by default, they won't allow for any movement.
 ]]
 TILES_PHYSICS = {["empty"] = "ground"} -- empty cells are considered ground
 
--- all the valid tiles features for VALID_PHYSICS table (see pairings in components.lua)
+-- valid values for VALID_PHYSICS table (see pairings in components.lua)
 VALID_PHYSICS = {
     ["difficult"] = true,
     ["liquid"] = true,
@@ -92,7 +95,7 @@ BORDERS = {
 
 --[[
     All the valid components for COMPONENTS_INTERFACE function.
-    NOTE: this table requires components.lua to be required first.
+    NOTE: this table requires components.lua to be required before constants.lua.
     Still, components can use constants.lua variables since they're called inside
     the classes and not executed until main.lua has finished loading everything.
 ]]

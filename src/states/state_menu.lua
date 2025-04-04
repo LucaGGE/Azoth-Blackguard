@@ -3,14 +3,14 @@ StateMenu = BaseState:extend()
 -- not 'space' at the end of the string, to make spacebar a valid key
 local valid_input = "qwertyuiopasdfghjklzxcvbnm1234567890space"
 
-local input_phase
+local in_phase
 
 local n_of_players
 local current_player
 -- clearing g.party_group in case we are restarting game
 g.party_group = {}
 
-local input_name
+local in_name
 local names_table
 
 local text = {
@@ -23,7 +23,7 @@ local text = {
 }
 
 -- menu dedicated canvas (state_play only)
-local canvas_menu
+local cnv_menu
 
 function StateMenu:manage_input(key)
     table.insert(g.keys_pressed, key)
@@ -32,7 +32,7 @@ end
 -- key_output variable
 local key_output
 
--- input decision table 1 (for input_phase == 1)
+-- input decision table 1 (for in_phase == 1)
 local INPUT_DTABLE1 = {
     ["escape"] = love.event.quit,
     ["right"] = function()
@@ -58,7 +58,7 @@ local INPUT_DTABLE1 = {
     ["enter"] = function()
         love.audio.stop(SOUNDS["button_select"])
         love.audio.play(SOUNDS["button_select"])
-        input_phase = 2
+        in_phase = 2
     end,
     ["'"] = function()
         g.game_state = StateCredits()
@@ -72,41 +72,51 @@ local INPUT_DTABLE2 = {
         love.audio.stop(SOUNDS["button_select"])
         love.audio.play(SOUNDS["button_select"])
         -- set a name if player skipped name insertion
-        if input_name == "" then input_name = "Nameless Wanderer" end
+        if in_name == "" then in_name = "Nameless Wanderer" end
 
         -- saving players names, checking if all players have a name
-        names_table[current_player] = input_name
-        input_name = ""
+        names_table[current_player] = in_name
+        in_name = ""
         current_player = current_player + 1
 
         if current_player > n_of_players then
-            -- finding and assigning to player_blueprint the player's blueprint
-            local player_blueprint = nil
-            player_blueprint = BP_LIST["player"]
+            -- finding and assigning to player_bp the player's blueprint
+            local player_bp = nil
+            player_bp = BP_LIST["player"]
 
-            -- checking if modders did not create a player blueprint to avoid a crash
-            if player_blueprint == nil then
-                error_handler("blueprints.csv does NOT contain a blueprint to spawn players!",
-                "blueprints.csv always needs a blueprint with id = player (all lowercase).")
+            -- check if player blueprint is missing, to avoid a crash
+            if player_bp == nil then
+                error_handler(
+                    "blueprints.csv does NOT contain a blueprint to spawn players!",
+                    "blueprints.csv always needs a blueprint with id = player."
+                )
                 g.game_state:exit()
                 g.game_state = StateFatalError()
                 g.game_state:init()
                 goto continue_menu
             end
 
-            -- if everything is fine, then continue spawning. Assigning  new players to g.party_group
+            -- all fine, continue spawning. Assigning  new players to g.party_group
             for i = 1, n_of_players do
-                -- creating a new Entity() and feeding it all player_blueprint data + Players names
-                --local new_player = Entity(player_blueprint.id, player_blueprint.tile, player_blueprint.features, names_table[i])
-                local blueprint_plus_name = {["bp"] = BP_LIST["player"],
+                --[[
+                    Creating a new Entity() and feeding it all player_bp data
+                    + Players names.
+                    local new_player = Entity(player_bp.id, player_bp.tile,
+                    player_bp.features, names_table[i])
+                ]]--
+                local bp_plus_name = {["bp"] = BP_LIST["player"],
                 ["name"] = names_table[i]
                 }
-                -- NOTE: this is a first assignment to g.party_group. Players will need to be extracted from
-                -- here and added again in entities_spawner(), this time with their input ('player') components!
-                table.insert(g.party_group, blueprint_plus_name)
+                --[[
+                    NOTE: this is a first assignment to g.party_group. Players will
+                    need to be extracted from here and added again in
+                    entities_spawner(), this time with their input ('player') comps!
+                ]]--
+                table.insert(g.party_group, bp_plus_name)
             end
 
-            -- move to StatePlay(), giving 1 and "true" to :Init() for map_n and player_regen(eration)
+            -- move to StatePlay(), giving 1 and "true" to :Init() for map_n and
+            -- player_regen (regeneration)
             g.game_state = StatePlay()
             g.game_state:init(1, true)
 
@@ -115,7 +125,7 @@ local INPUT_DTABLE2 = {
         end
     end,
     ["backspace"] = function()
-        input_name = text_backspace(input_name)
+        in_name = text_backspace(in_name)
     end
 }
 
@@ -125,7 +135,7 @@ INPUT_DTABLE2["return"] = INPUT_DTABLE2["enter"]
 INPUT_DTABLE2["'"] = INPUT_DTABLE1["'"]
 
 function StateMenu:init()
-    -- resetting every global variable of interest but BP_LIST, as it's set once in main.load() 
+    -- reset all proper global values (not BP_LIST, as it's set once in main.load())
     g.party_group = {}
     g.camera["entity"] = nil
     g.npcs_group = {}
@@ -140,10 +150,10 @@ function StateMenu:init()
     g.console["event1"] = ""
     
         
-    input_phase = 1
+    in_phase = 1
     n_of_players = 1
     current_player = 1
-    input_name = ""
+    in_name = ""
     names_table = {}
     -- stopping old soundtrack
     if g.game_track then
@@ -151,7 +161,9 @@ function StateMenu:init()
     end
 
     -- setting background color to black for menu
-    love.graphics.setBackgroundColor((mod.BKG_R or 12) / 255, (mod.BKG_G or 8) / 255, (mod.BKG_B or 42) / 255)
+    love.graphics.setBackgroundColor(
+        (mod.BKG_R or 12) / 255, (mod.BKG_G or 8) / 255, (mod.BKG_B or 42) / 255
+    )
 
     -- starting menu music
     g.game_track = MUSIC["menu"]
@@ -167,7 +179,7 @@ end
 function StateMenu:update()
     -- checking for input to resolve turns
     for i,key in ipairs(g.keys_pressed) do
-        if input_phase == 1 then
+        if in_phase == 1 then
             key_output = INPUT_DTABLE1[key] or function()
                 love.audio.stop(SOUNDS["type_nil"])
                 love.audio.play(SOUNDS["type_nil"])
@@ -175,7 +187,7 @@ function StateMenu:update()
         else
             key_output = INPUT_DTABLE2[key] or function()
                 -- the input is an alphanumeric char, call dedicated function
-                input_name = text_input(valid_input, key, input_name, 20)
+                in_name = text_input(valid_input, key, in_name, 20)
             end
         end
         key_output()
@@ -185,12 +197,12 @@ function StateMenu:update()
 end
 
 function StateMenu:refresh()
-    canvas_menu = ui_manager_menu(text, input_phase, n_of_players, current_player, input_name)
+    cnv_menu = ui_manager_menu(text, in_phase, n_of_players, current_player, in_name)
 
     -- reset default canvas to draw on it in draw() func
     love.graphics.setCanvas()
 end
 
 function StateMenu:draw()
-    love.graphics.draw(canvas_menu, 0, 0)
+    love.graphics.draw(cnv_menu, 0, 0)
 end

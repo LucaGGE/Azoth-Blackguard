@@ -1,11 +1,9 @@
 --[[
-    Implemented components. NOTE: some will be checked for when a blueprint is created (i.e. npc, player),
-    as they will be added to special groups, needed to avoid searching for specific components each time
-    an event is fired (i.e. when Player gives input, or the Player position).
+    Implemented components. NOTE: some will be checked for when a blueprint is
+    created (i.e. npc, player), as they will be added to special groups, needed to
+    avoid searching for specific components each time an event is fired (i.e. when
+    Player gives input, or the Player position).
 ]]
-
--- this is needed during dynamic code generation, since loadstring() is limited to global variables
-code_reference = nil
 
 -- this stores all the legal movement-phys MOV_TO_PHYS (see VALID_PHYSICS)
 local MOV_TO_PHYS = {
@@ -25,7 +23,8 @@ function Player:new()
     self.action_state = nil
     self.valid_input = "qwertyuiopasdfghjklzxcvbnmspace"
     self.string = "" -- stores player input for all action_modes
-    -- this variable contains all the movement inputs key-values for keypad and keyboard, with key = (row, column)
+    -- this variable contains all the movement inputs key-values
+    -- for both keypad and keyboard, with key corresponding to (row, column)
     self.movement_inputs = {
         ["kp7"] = {-1,-1}, ["q"] = {-1,-1},
         ["kp8"] = {-1,0}, ["w"] = {-1,0},
@@ -49,11 +48,13 @@ function Player:manage_input(entity, key)
     end
 
     if not self.action_state then
+        local mov_input = self.movement_inputs[key]
+
         -- checking if player is trying to use a hotkey
-        if not self.movement_inputs[key] and not self.action_state then
-            -- note that hotkeys allow access only to a few states
-            -- also note the difference between 'self' (this comp) and 'entity' (the player entity)
-            return player_commands(self, key)
+        if not mov_input and not self.action_state then
+            -- hotkeys allow access only to a few selected states/interactions.
+            -- NOTE: 'self' = this comp, and 'entity' = player entity
+            return player_cmd(self, key)
         end
 
         -- check if player has inventory open, to avoid undesired movement input
@@ -61,21 +62,22 @@ function Player:manage_input(entity, key)
             return false
         end
     
-        -- check if player is skipping turn (always possible, even without a mov comp)
-        if self.movement_inputs[key][1] == 0 and self.movement_inputs[key][2] == 0 then
+        -- check if player is skipping turn (possible even without a mov comp)
+        if mov_input[1] == 0 and mov_input[2] == 0 then
             love.audio.stop(SOUNDS["wait"])
             love.audio.play(SOUNDS["wait"])
             return true
         end
 
-        -- 'Movable' component can be modified/added/removed during gameplay, so always check
+        -- 'Movable' component can be modified/added/removed during gameplay,
+        -- so it is imperative to check for it each time
         if not entity.comps["movable"] then
             print("INFO: The entity does not contain a movement component")
             return false
         end
 
         -- if no guard statements were activated, player is legally trying to move
-        return entity.comps["movable"]:move_entity(entity, self.movement_inputs[key])
+        return entity.comps["movable"]:move_entity(entity, mov_input)
     end
 
     -- managing self.action_state mode of input  
@@ -98,14 +100,19 @@ function Movable:new(optional_args)
 end
 
 --[[
-    NOTE: if something can move, it can attack. Moving against an entity = attacking it.
-    This also means that something can have a movable component but no movement_type,
-    and it can still attack - think of a living tree that can bash players with its branches
-    but cannot move around!
+    NOTE: if something can move, it can attack.
+    Moving against another entity = attacking it (groups prevent this movement).
+    This also means that something can have a movable comp but no movement_type,
+    and it can still attack - think of a living tree that can bash players with its
+    branches but that cannot move around!
 ]]
 function Movable:move_entity(owner, dir)
-    local dest -- destination, the target cell
-    local adj_tiles = {} -- if moving diagonally, check if adjacent cells are transversable
+    -- destination, the target cell
+    local destination
+    -- target entity, the target cell eventual entity
+    local entity
+    -- necessary to check if adjacent cells are transversable when moving diagonally
+    local adj_tiles = {}
     local row_mov = owner.cell["grid_row"] + dir[1]
     local col_mov = owner.cell["grid_col"] + dir[2]
     local succ_score = 7 -- score to succeed, throw need to be less or equal
@@ -113,15 +120,18 @@ function Movable:move_entity(owner, dir)
 
     -- making sure that the comp owner isn't trying to move out of g.grid
     if col_mov > g.grid_x or col_mov <= 0 or row_mov > g.grid_y or row_mov <= 0 then
-        dest = nil
+        destination = nil
         print("Trying to move out of g.grid boundaries")
         return false
     end
 
-    -- once we are sure the cell exists and is part of the g.grid, store it as dest
-    dest = g.grid[owner.cell["grid_row"] + dir[1]][owner.cell["grid_col"] + dir[2]]
+    -- if cell exists and is part of the g.grid, store it as destination
+    destination = g.grid[owner.cell["grid_row"] + dir[1]][owner.cell["grid_col"] + dir[2]]
+    -- store its eventual Entity for later reference
+    entity = destination.entity
 
-    -- checking for additional tiles to check, since diagonal mov requires entity to be able to traverse all of them
+    -- checking for additional tiles to check, since diagonal mov requires entity
+    -- to be able to traverse all of them!
     if dir[1] ~= 0 and dir[2] ~= 0 then
         -- since movement is diagonal, add to adj_tiles the adjacent tiles
         local adj_tile
@@ -132,7 +142,7 @@ function Movable:move_entity(owner, dir)
     end
 
     -- now checking if tile feature is compatible with movement abilities
-    table.insert(adj_tiles, TILES_PHYSICS[dest.index])
+    table.insert(adj_tiles, TILES_PHYSICS[destination.index])
     for i, phys in ipairs(adj_tiles) do
         local can_traverse = false
         for i2, mov_type in ipairs(self.movement_type) do
@@ -141,7 +151,7 @@ function Movable:move_entity(owner, dir)
                 break
             end
         end
-        -- if even one cell isn't compatible with Entity mov, Entity cannot interact with it
+        -- if even one cell isn't compatible with Entity mov, Entity is blocked
         if not can_traverse then
             print("Incompatible tile terrain in path for entity")
             return false
@@ -149,44 +159,48 @@ function Movable:move_entity(owner, dir)
     end
 
     -- check if owner movement is impeded by an obstacle Entity
-    if dest.entity and dest.entity.comps["obstacle"] then
-        print("Cell is blocked by obstacle: " .. dest.entity.id)
+    if entity and entity.comps["obstacle"] then
+        print("Cell is blocked by obstacle: " .. entity.id)
         return false
     end
 
     -- checking for NPC/Player Entities. These always have precedence of interaction
-    if dest.pawn then
+    if destination.pawn then
+        local pilot = owner.pilot
+        local pawn = destination.pawn
         -- moving against an Entity = interaction. If part of different groups
         -- or of special 'self' group, the interaction results in an attack
-        if owner.pilot.group ~= "self" and owner.pilot.group == dest.pawn.pilot.group then
+        if pilot.group ~= "self" and pilot.group == pawn.pilot.group then
             print("Entity interacts with another Entity of the same group")
             return true
         end
 
         -- Player/Civilised interaction is always peaceful
-        if owner.pilot.group == "players" and dest.pawn.pilot.nature == "civilized" then
+        if pilot.group == "players" and pawn.pilot.nature == "civilized" then
             print("Player dialogues with civilized creature")
-            return true -- this will actually lead to a dialogue func() that will return true/false
+            -- this will actually lead to a dialogue func() that will return true/false
+            return true
         end
-        if owner.pilot.group == "civilised" and dest.pawn.pilot.nature == "player" then
+        if pilot.group == "civilised" and pawn.pilot.nature == "player" then
             print("Player dialogues with civilized creature")
-            return true -- this will actually lead to a dialogue func() that will return true/false
+            -- this will actually lead to a dialogue func() that will return true/false
+            return true
         end
 
-        -- at this point, it must be an enemy. Checki if it has stats and can take damage
-        if not dest.pawn.comps["stats"] then
+        -- an enemy was found. Check if it has stats and can take damage
+        if not pawn.comps["stats"] then
             print("Target entity has no Stats component")
             return false
         end
 
-        local target_stats = dest.pawn.comps["stats"].stats
+        local target_stats = pawn.comps["stats"].stats
         if not target_stats["hp"] then
             print("Target entity has no HP and cannot die")
             return false
         end
 
         -- if target is invisible, you need to roll a lower number
-        if dest.pawn.comps["invisible"] then
+        if pawn.comps["invisible"] then
             print("Trying to hit invisible entity, success when: roll <= 4")
             succ_score = 4
         end
@@ -198,7 +212,7 @@ function Movable:move_entity(owner, dir)
             love.audio.stop(SOUNDS["hit_blow"])
             love.audio.play(SOUNDS["hit_blow"])
             for power_tag, power_class in pairs(owner.powers) do
-                power_class:activate(dest.pawn)
+                power_class:activate(pawn)
             end
         else
             love.audio.play(SOUNDS["hit_miss"])
@@ -206,18 +220,21 @@ function Movable:move_entity(owner, dir)
 
         if target_stats["hp"] <= 0 then
             target_stats["hp"] = 0
-            -- Entity will be removed from render_group and cell automatically in StatePlay:refresh()
-            dest.pawn.alive = false
-            -- if a player just died, save all deceased's relevant info in cemetery for Game Over screen
-            if dest.pawn.comps["player"] then
-                local deceased = {["player"] = dest.pawn.name,
+            -- Entity will be removed from render_group and cell during refresh()
+            pawn.alive = false
+            -- if a player just died, save all deceased's relevant info in cemetery
+            -- variable for recap in Game Over screen
+            if pawn.comps["player"] then
+                local deceased = {["player"] = pawn.name,
                 ["killer"] = owner.name,
-                ["loot"] = dest.pawn.comps["stats"].stats["gold"],
+                ["loot"] = pawn.comps["stats"].stats["gold"],
                 ["place"] = "Black Swamps"
                 }
                 table.insert(g.cemetery, deceased)
                 -- send a 'game over' string to console in red color
-                console_event(deceased["player"] .. " got slain by " .. deceased["killer"], {[1] = 0.93, [2] = 0.18, [3] = 0.27})
+                console_event(
+                    deceased["player"] .. " got slain by " .. deceased["killer"], {[1] = 0.93, [2] = 0.18, [3] = 0.27}
+                )
             end
         end
 
@@ -228,35 +245,36 @@ function Movable:move_entity(owner, dir)
     owner.cell["cell"].pawn = nil -- freeing old cell
     owner.cell["grid_row"] = owner.cell["grid_row"] + dir[1]
     owner.cell["grid_col"] = owner.cell["grid_col"] + dir[2]
-    owner.cell["cell"] = dest -- storing new cell
+    owner.cell["cell"] = destination -- storing new cell
     owner.cell["cell"].pawn = owner -- occupying new cell
     
     -- playing sound based on tile type, check if valid to avoid crashes
-    if SOUNDS[TILES_PHYSICS[dest.index]] then
-        love.audio.stop(SOUNDS[TILES_PHYSICS[dest.index]])
-        love.audio.play(SOUNDS[TILES_PHYSICS[dest.index]])
+    if SOUNDS[TILES_PHYSICS[destination.index]] then
+        love.audio.stop(SOUNDS[TILES_PHYSICS[destination.index]])
+        love.audio.play(SOUNDS[TILES_PHYSICS[destination.index]])
     else
-        print("WARNING: dest has no related sound")
+        print("WARNING: destination has no related sound")
     end
 
     -- lastly, check if there's an item Entity in the new cell
-    if not dest.entity then
+    if not entity then
         return true
     end
     -- see if the Entity is an exit
-    if dest.entity.comps["exit"] then
-        dest.entity.comps["exit"]:activate(dest.entity, owner)
+    if entity.comps["exit"] then
+        entity.comps["exit"]:activate(entity, owner)
         return true
     end
 
     -- see if Entity is has trigger component
-    if dest.entity.comps["trigger"] and dest.entity.comps["trigger"].triggeroncollision then
+    if entity.comps["trigger"] and entity.comps["trigger"].trig_on_coll then
         -- trigger may work or not, but Entity still moved, so return true
-        dest.entity.comps["trigger"]:activate(dest.entity, owner)
+        entity.comps["trigger"]:activate(entity, owner)
         return true
     end
 
-    -- if a non-reactive, non-NPC, non-Player, non-Obstacle Entity is in target cell, simply ignore 
+    -- if a non-reactive, non-NPC, non-Player, non-Obstacle Entity is in target cell
+    -- simply ignore it anad return true for successful movement 
     return true
 end
 
@@ -278,17 +296,24 @@ function Npc:new(args)
         end
         -- "enemies" is the only 'array' variable 
         if new_var[1] == "enemies" then
-            for k, values in ipairs(new_var) do
-                -- first new_var value is always index name
-                if k ~= 1 then
-                    table.insert(variables_group[new_var[1]], values)
-                end
+            -- each enemy group will be stored in 'enemies'
+            local enemies = str_slicer(new_var[2], "-", 1)
+
+            for k, value in ipairs(enemies) do              
+                table.insert(variables_group[new_var[1]], value)
             end
         else
-            variables_group[new_var[1]] = new_var[2]
-            if new_var[3] then
-                error_handler('Trying to assign multiple values to a NPC variable. Only "enemies" can take multiple args.')
+            -- check if variable was improperly fed multiple values
+            local sub_values = str_slicer(new_var[2], "-", 1)
+
+            if sub_values[2] then
+                error_handler(
+                    "Trying to assign multiple values to NPC variable: " .. new_var[1],
+                    'Only "enemies" variable can take multiple args, all but first arg ignored.'
+                )
             end
+
+            variables_group[new_var[1]] = sub_values[1]
         end
         ::continue::
     end
@@ -315,7 +340,8 @@ Trap = Object:extend()
 function Trap:new()
 end
 
--- for all the entities that are not Players but occupy it entirely (trees, boulders...)
+-- this is a 'flag' class for all the entities that are not Players but phisically
+-- occupy entire cells and block other Entity movements (trees, boulders, doors...)
 Obstacle = Object:extend()
 function Obstacle:new()
 
@@ -329,7 +355,7 @@ function Trigger:new(args)
         ["true"] = true
     }
     self.destroyontrigger = string_to_bool[args[1]]
-    self.triggeroncollision = string_to_bool[args[2]]
+    self.trig_on_coll = string_to_bool[args[2]]
     self.event_string = args[3]
 end
 
@@ -348,17 +374,18 @@ function Trigger:activate(owner, entity)
     
     -- if owner is to 'destroyontrigger', destroy it
     if self.destroyontrigger then
-        -- will be removed from render_group and cell automatically in StatePlay:refresh()
+        -- will be removed from render_group and cell during refresh()
         owner.alive = false
     end
 end
 
--- Pickup is a 'flag' class, where its only utility is to let the game know an entity can be picked up
+-- Pickup is a 'flag' class, where its only utility is to let other Entities know
+-- that owner Entity can be picked up
 Pickup = Object:extend()
 function Pickup:new()
 end
 
--- Usable is a for all objects that can be used in some way and then trigger an event
+-- Usable is a for all objects that can be somehow used and then trigger an event
 Usable = Object:extend()
 function Usable:new(args)
     local string_to_bool = {
@@ -405,7 +432,9 @@ function Usable:activate(target, input_entity, input_key)
     end
 
     if not target.powers[self.uses[key]] then
-        error_handler("Usable comp has valid key-power couple called, but no corresponding power")
+        error_handler(
+            "Usable comp has valid key-power couple called, but no corresponding power"
+        )
 
         return false
     end
@@ -457,49 +486,13 @@ function Usable:activate(target, input_entity, input_key)
     return true
 end
 
--- StatChange class is useful for things like gold or traps, since they change player's stats
-StatChange = Object:extend()
-function StatChange:new(args)
-    self.stat = args[1]
-    self.change = args[2]
-    self.sound = args[3]
-end
-
-function StatChange:activate(entity)
-    -- entities without the stat of interest won't be affected
-    if entity.comps["stats"].stats[self.stat] then
-        code_reference = entity.comps["stats"].stats
-
-        -- creating final string for code conversion
-        local codeblock = 'code_reference["' .. self.stat .. '"]'
-        local code_script = codeblock .. "=" .. codeblock .. "+" .. self.change
-
-        print("Script executed: "..code_script)
-
-        -- creating function from string and executing it
-        local f = loadstring(code_script); f()
-        -- resetting global code_reference to nil
-        code_reference = nil
-        -- play eventual sound
-        if self.sound and SOUNDS[self.sound] then
-            love.audio.stop(SOUNDS[self.sound])
-            love.audio.play(SOUNDS[self.sound])
-        end
-
-        -- return successful statchange
-        return true
-    else
-        return false
-    end
-end
-
+-- simple class used only to jump between levels or from game to menu (game end)
 Exit = Object:extend()
 function Exit:new(args)
     -- string to print on level change
     self.event_string = args[1]
 end
 
--- Simple class to jump between levels or from game to menu (game end)
 function Exit:activate(owner, entity)
     console_event(self.event_string)
     if entity.comps["player"] then
@@ -516,9 +509,11 @@ function Exit:activate(owner, entity)
     end
 end
 
--- this contains all the entity's stats
--- NPCs need this comp or they won't have hp = they will be immortal
--- if a Player doesn't have it, the system automatically adds it with hp = 1, gold = 0
+--[[
+    container class to store all the entity's stats. NPCs need this comp or they
+    won't have hp (this translates to them being immortal).
+    If a Player doesn't have it, the system adds it with hp = 1, gold = 0
+]]--
 Stats = Object:extend()
 function Stats:new(stats_table)
     self.stats = {}
@@ -556,8 +551,8 @@ end
 
 --[[
     Simple component that stores a key and removes 'locked' component from an Entity
-    with corresponding name, i.e. if name = door_a45, remove 'locked' from Entity with
-    name = door_a45. Can also used to activate golems, unlock quests, etc.
+    with corresponding name, i.e. if name = door_a45, remove 'locked' from Entity
+    with name = door_a45. Can also used to activate golems, unlock quests, etc.
 ]]--
 Key = Object:extend()
 function Key:new()
@@ -635,9 +630,9 @@ end
 
 --[[
     For all Entities that can be equipped (i.e. rings, amulets, crowns...),
-    need to know in which slot they're supposed to fit (i.e. head, hand, tentacle...)
-    and multiple suitable slots are accepted (i.e. right hand, left hand...).
-    Also note that once equipped, objects will trigger/apply effects.
+    that need to know in which slot they can fit (i.e. head, hand, tentacle...).
+    Multiple suitable slots can be accepted (i.e. right hand, left hand...).
+    Also note that once equipped, objects will trigger and/or apply effects.
     The last simply artificially changes Player's characteristics.
 ]]
 Equipable = Object:extend()
@@ -672,6 +667,7 @@ function Equipable:equip(owner, target)
 end
 
 function Equipable:unequip(owner, target)
+    -- check if owner is cursed and cannot be removed. If so, reveal item
     if owner.comps["equipable"].cursed then
         console_event("Thy item is cursed and may not be removed!", {0.6, 0.2, 1})
 
@@ -690,79 +686,6 @@ function Equipable:unequip(owner, target)
 
     owner.powers["unequip"]:activate(target)
     return true
-end
-
--- this component allows entities to be subjected through a variety of effects give by the Power comp
--- these effects are validated by EFFECTS_TABLE and executed by apply_effect() function
-Effect = Object:extend()
-function Effect:new(input_effects)
-    self.active_effects = {}
-
-    -- immediately add optional effects and effect immunities on comp creation
-    self:add(input_effects)
-end
-
-function Effect:add(input_effects)
-    for i, effect in ipairs(input_effects) do
-        local assigned_effect = str_slicer(effect, "=", 1)
-        -- checking that first arg is a valid effect
-        if not EFFECTS_TABLE[assigned_effect[1]] then
-            error_handler('In component "Effect" tried to input invalid effect, ignored')
-            goto continue
-        end
-        -- checking if entity is assigned as immune to an effect
-        if assigned_effect[2] == "immune" then
-            self.active_effects[assigned_effect[1]] = assigned_effect[2]
-        end
-        -- checking if entity is immune to effect (will skip rest of loop after new immune assignment)
-        if self.active_effects[assigned_effect[1]] == "immune" then
-            print("Entity is immune to "..assigned_effect[1])
-            goto continue
-        end
-        -- checking if an effect is assigned permanent
-        if assigned_effect[2] == "permanent" then
-            -- some effects can be given as permanent effects
-            self.active_effects[assigned_effect[1]] = assigned_effect[2]
-        end
-        -- check if permanent and therefore cannot be modified (will skip rest of loop after new permanent assignment)
-        if assigned_effect[1] == "permanent" then
-            print("Effect is permanent and therefore its duration cannot be modified normally")
-            goto continue
-        end
-        -- checking if second arg is a valid number and assigning it
-        if assigned_effect[2]:match("%d") then
-            assigned_effect[2] = tonumber(assigned_effect[2])
-            -- transforming possibly nil values to arithmetic values
-            if self.active_effects[assigned_effect[1]] == nil then self.active_effects[assigned_effect[1]] = 0 end
-            -- code below translates as "self.active_effects[effect_name] = existing_value + new_value"
-            -- please note that this can be given a negative value, reducing effect duration
-            self.active_effects[assigned_effect[1]] = self.active_effects[assigned_effect[1]] + assigned_effect[2]
-        else
-            error_handler('In component "Effect" tried to assign invalid value to effect, ignored')
-        end
-
-        ::continue::
-    end
-end
-
--- this is called each turn when the effect component is present, and kills the comp if nothing is active anymore
-function Effect:activate(owner)
-    for i,effect in ipairs(self.active_effects) do
-        if effect == "immune" then
-            goto continue
-        end
-
-        -- apply effect, since validity is already checked on Effect:add()
-        apply_effect(owner, i)
-
-        -- if the effect is not permanent, reduce duration by 1 and eventually cancel effect
-        if effect ~= "permanent" then
-            self.active_effects[i] = self.active_effects[i] - 1
-            if self.active_effects[i] <= 0 then self.active_effects[i] = nil end
-        end
-
-        ::continue::
-    end
 end
 
 -- same as 'locked', but requires 'say' interaction to unlock

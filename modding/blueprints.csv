@@ -1,5 +1,5 @@
 @player|:72|player|stats,hp=10,gold=0|movable,walk|slots,head,chest,cape|*slash,str=Slashing,slash=1d4|inventory,26
-@lemure|:108|stats,hp=10|npc,group=self,enemies=none,nature=neutral,sight=15,hearing=5|movable,walk,climb|profile,bleeding=immune
+@lemure|:108|stats,hp=10|npc,group=lemure,enemies=none,nature=neutral,sight=15,hearing=5|movable,walk,climb|profile,bleeding=immune
 @crab|:110|stats,hp=15,en=10|npc,group=crabs,enemies=none,nature=aggressive,sight=3,hearing=1|movable,walk,swim,ruck|*grab,str=Clamping,slash=1d2|profile,slash=-2
 @gold|:88|pickup|trigger,true,false,collects th' gold|*trigger,statgold=1d5+5,sfx=sfx_gold
 @locket|:101|locked|trigger,true,false,doth open the locket|description,golden locket

@@ -9,12 +9,12 @@ g = {
     grid = {}, -- grid system main data
     grid_x = 0, -- this is established by the CSV files containing the map
     grid_y = 0, -- this is established by the CSV files containing the map
-    camera = {["entity"] = nil, ["x"] = 0, ["y"] = 0}, -- the entity to center to the screen
-    render_group = {}, -- contains all the entities to be drawn
-    hidden_group = {}, -- contains all the invisible entities
-    party_group = {}, -- contains both the entities reacting to input and their Player component
-    npcs_group = {}, -- contains all NPCs
-    entities_group = {}, -- contains all the other entities, ref needed to apply effects on
+    camera = {["entity"] = nil, ["x"] = 0, ["y"] = 0}, -- screen 'pivot' Entity
+    render_group = {}, -- contains: all the Entities to be drawn
+    hidden_group = {}, -- contains: all the invisible Entities
+    party_group = {}, -- contains: Entities reacting to input, their Player comp
+    npcs_group = {}, -- contains: all NPCs
+    entities_group = {}, -- contains: all the other Entities, for effects applying
     current_inv = {}, -- current player's inventory
     view_inv = false, -- view inventory or not
     cemetery = {}, -- a table containing deaths data (player, killer, gold...)
@@ -26,9 +26,9 @@ g = {
         ["event1"] = nil,
         ["event2"] = nil,
         ["event3"] = nil,
-        ["color1"] = {[1] = 0.28, [2] = 0.46, [3] = 0.73},
-        ["color2"] = {[1] = 0.28, [2] = 0.46, [3] = 0.73},
-        ["color3"] = {[1] = 0.28, [2] = 0.46, [3] = 0.73}
+        ["rgb1"] = {[1] = 0.28, [2] = 0.46, [3] = 0.73},
+        ["rgb2"] = {[1] = 0.28, [2] = 0.46, [3] = 0.73},
+        ["rgb3"] = {[1] = 0.28, [2] = 0.46, [3] = 0.73}
     }, -- console's content
     keys_pressed = {} -- variable for storing and clearing keys pressed each update
 }

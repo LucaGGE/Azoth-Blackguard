@@ -1,12 +1,11 @@
--- cell definition
+-- cells are the grid's nodes and store all types of Entities and physics
 cell = {
     x = 0,
     y = 0,
-    -- tiles are only drawn once. Note that doors and other 'interactives' are entities.
-    tile = nil, -- represented by a quad on the tileset. 
-    index = nil, -- tile index. Most entities are unable to traverse solid tiles, but some can climb trees.
-    pawn = nil, -- a player/npc or an entity with a 'Obstacle' component, occupying the cell
-    entity = nil -- any entity that is not a 'pawn'. Limited to one per cell
+    tile = nil, -- represented by a quad on the tileset
+    index = nil, -- num translating to a quad position on tileset
+    pawn = nil, -- single Player/NPC occupying the cell
+    entity = nil -- single Entity that is not a 'pawn'
 }
 
 -- entity definition. Entities are very simple containers for components!
@@ -17,21 +16,22 @@ function Entity:new(id, tile, components, powers, name)
     self.pilot = nil
     -- checked everytime an entity gets drawn, to see if it need to be eliminated
     self.alive = true
-    -- an entity can only live inside cells. They also give x and y coords for drawing
+    -- Entities live inside cells. They also give x and y coords for drawing
     self.cell = {["cell"] = nil, ["grid_col"] = nil, ["grid_row"] = nil}
-    -- obligatory, first CSV arg. Necessary to give a player context, since entities are universal containers
+    -- first CSV arg. Essential to identify Entity, since they are just containers
     self.id = id
-    -- obligatory, second CSV arg. Necessary to draw entities to screen, even invisible ones (see design docs)
+    -- second CSV arg. All visibile and invisible Entities are drawn on screen
     self.tile = tile
-    -- completely optional. This is where all entity components are defined, in an Object Aggregation fashion
+    -- optional. In an OOPBA fashion, this is how Entities are defined
     self.comps = components or {}
-    -- effects applied on Entity by other Entities powers. Activated before Entity turn
+    -- effects applied on Entity by others powers. Activated before Entity turn
     self.effects = {} 
-    -- completely optional. This is where all entity powers (abilities) are defined
+    -- optional. This is where all entity powers (abilities) are defined
     self.powers = powers or false
-    -- completely optional. Used for Players names and special NPCs/objects
+    -- optional. Useful for Players names and special NPCs/objects
+    -- NOTE: if left blank, name will be equal to id
     self.name = name or id
-    -- original tile. Storing it makes much easier and faster to change Entities appearence
+    -- original tile. Storing it makes it easier to restore Entity appearence
     self.og_tile = tile
 end
 
@@ -47,12 +47,12 @@ Spawner = Object:extend()
 function Spawner:new(input)
 end
 
--- Powers are built with Effects, and can be applied on self/target by Entities
--- they can be simple or complex and they range from damage to teleport and hallucination
+-- Powers are groups of Effects, and can be applied on self/target by Entities
+-- they can be simple or complex and they range from damage to hallucination
 Power = Object:extend()
 
 function Power:new(input)
-    -- power's name is already store in player's Entity.powers[power_name] = Power(input)
+    -- power's name is stored as Entity.powers[power_name] = Power(input)
     -- self.effects is a table = {['effect_name'] = proper_input_table, ...}
     self.effects = {}
 
@@ -79,7 +79,7 @@ function Power:activate(target)
     end
 end
 
--- this stores lasting effects and their duration. Called by owner Entity just before turn
+-- stores lasting effects & their duration. Called by owner Entity just before turn
 EffectTag = Object:extend()
 
 function EffectTag:new(target, input, duration, func)
@@ -103,7 +103,7 @@ function BaseState:new()
     function BaseState:refresh() end -- all the NON real-time graphics go here
 	function BaseState:draw() end -- all the real-time graphics go here
 	function BaseState:exit() end
-    function BaseState:manage_input() end -- some states manage input in different ways
+    function BaseState:manage_input() end -- states manage input in different ways
 end
 
 

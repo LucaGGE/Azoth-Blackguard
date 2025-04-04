@@ -64,8 +64,8 @@ function target_entity(owner, npc_comp)
     local targets = {}
     local new_target = false
 
-    -- searching for enemy entities in a square. This algorithm is temporary and badly designed.
     -- TO DO TO DO TO DOTO DO TO DO TO DOTO DO TO DO TO DOTO DO TO DO TO DO: need to choose target & ignore ones hidden behind obstacles
+    -- searching for enemy entities in a square. This algorithm is temporary and badly designed.
     for i = 0, npc_comp.sight * 2 do
         search_col = owner.cell["grid_col"] - npc_comp.sight
         for j = 0, npc_comp.sight * 2 do

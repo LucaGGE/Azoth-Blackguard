@@ -28,7 +28,7 @@ love.graphics.setDefaultFilter("nearest", "nearest")
 g.game_state = StateMenu()
 
 function love.keypressed(key)
-    -- all inputs with few system-related exceptions are handled inside Game States    
+    -- all inputs with few system-related exceptions are handled inside Game States 
     if key == "f11" then
         fullscreen = not fullscreen
         love.window.setFullscreen(fullscreen)

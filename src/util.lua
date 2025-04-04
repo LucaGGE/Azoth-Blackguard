@@ -1,7 +1,7 @@
--- useful variables that get used often
+-- useful variables that get used often in the scope of util.lua
 local TILESET_WIDTH = TILESET:getWidth()
 local TILESET_HEIGHT = TILESET:getHeight()
-local sprites_groups = {}
+local sprites_groups = {} -- for blueprints with random/semi-random sprites
 
 -- simple, user-friendly error message handler
 function error_handler(error_input_1, error_input_2)
@@ -27,10 +27,10 @@ function component_tags(tags)
 end
 
 --[[
-    Components interface. Used to link components and their optional args to the actual components.
-    These are the the strings you feed inside the 'blueprints.csv' to explain to the engine what an
-    entity is composed of. The function below needs to be updated with each added component!
-]]
+    components_interface() links input comps and their args to actual components.
+    Input components are found inside 'blueprints.csv'.
+    Components are make Entities functional and active/reactive.
+]]--
 function components_interface(tags)
     -- tags[1] = component id, others (if present) are their arguments
     if not COMPONENTS_TABLE[tags[1]] then return nil end
@@ -69,9 +69,10 @@ function str_slicer(line, separator, pos)
 end
 
 --[[
-    csv_reader() returns a 3D table like 'table[line number] = {line value 1, line value 2, ...}'
-    Note that the error_handler is never called in csv_reader, since it is called various times
-    and if we call it in main.lua we can output some more info about the error.
+    csv_reader() returns a 3D table in this fashion:
+    'table[line number] = {line value 1, line value 2, ...}'
+    Note that the error_handler is never called in csv_reader since if we call it in
+    main.lua we can output some more info about the error.
 ]]
 function csv_reader(input_csv, separator)
     -- this final table will contain all lines from the CSV
@@ -110,20 +111,24 @@ function csv_reader(input_csv, separator)
     return new_table
 end
 
--- stores the borders as unchanging images, can only store for pre-established states,
--- aka the main menu, gameover screen and inventory
+-- stores borders as unchanging images. Only stores for these UIs:
+-- main menu, gameover and inventory.
 function borders_manager()
     local new_border
 
     for i = 1, 3 do
-        -- for each line in the csv, store its data in constants.lua BORDERS as images
+        -- for each line in the csv, insert data in BORDERS = {} as images
         for j = 1, 2 do
-            new_border = love.graphics.newQuad(TILE_SIZE * 2 * (j - 1) + (TILE_SIZE * 4 * (i - 1)), 0, TILE_SIZE * 2, TILE_SIZE * 2, 240, 80)
+            new_border = love.graphics.newQuad(
+                TILE_SIZE * 2 * (j - 1) + (TILE_SIZE * 4 * (i - 1)), 0, TILE_SIZE * 2, TILE_SIZE * 2, 240, 80
+            )
             table.insert(BORDERS[i], new_border)
         end
 
         for k = 1, 2 do
-            new_border = love.graphics.newQuad(TILE_SIZE * 2 * (k - 1) + (TILE_SIZE * 4 * (i - 1)), TILE_SIZE * 2, TILE_SIZE * 2, TILE_SIZE * 2, 240, 80)
+            new_border = love.graphics.newQuad(
+                TILE_SIZE * 2 * (k - 1) + (TILE_SIZE * 4 * (i - 1)), TILE_SIZE * 2, TILE_SIZE * 2, TILE_SIZE * 2, 240, 80
+            )
             table.insert(BORDERS[i], new_border)
         end
     end
@@ -137,7 +142,9 @@ function sprites_groups_manager()
 
     -- check if operation went right; if not, activate error_handler
     if type(sprites_groups_csv) == "string" then
-        error_handler("The above error was triggered while trying to read sprites_groups.csv")
+        error_handler(
+            "The above error was triggered while trying to read sprites_groups.csv"
+        )
         g.game_state:exit()
         g.game_state = StateFatalError()
         g.game_state:init()
@@ -147,18 +154,18 @@ function sprites_groups_manager()
 
     for i, line in ipairs(sprites_groups_csv) do
         local current_group = {}
-        local group_name = ""
+        local name = "" -- group name
         -- for each line in the csv, store its data in util.lua local sprites_groups
         current_group = str_slicer(line[1], ",", 1)
         for i2, value in ipairs(current_group) do
             -- first value is the group's name
             if i2 == 1 then
-                group_name = value
-                sprites_groups[group_name] = {}
-                sprites_groups[group_name .. "_length"] = 0
+                name = value
+                sprites_groups[name] = {}
+                sprites_groups[name .. "_size"] = 0
             else
-                table.insert(sprites_groups[group_name], tonumber(value))
-                sprites_groups[group_name .. "_length"] = sprites_groups[group_name .. "_length"] + 1
+                table.insert(sprites_groups[name], tonumber(value))
+                sprites_groups[name.."_size"] = sprites_groups[name.."_size"] + 1
             end
         end
     end
@@ -166,9 +173,12 @@ function sprites_groups_manager()
     return true
 end
 
--- spawns all Entities in map. NOTE: players get spawned on spawn points and get generated only once
--- at game's start, to avoid erasing their data; both cases are found in map_generator() func
-function entities_spawner(blueprint, loc_row, loc_col, name)
+--[[
+    Spawns all the Entities in a map.
+    NOTE: players get spawned on spawn points and get *generated* only once, at game
+    start, to avoid erasing their data. Both cases are found in map_generator() func
+]]--
+function entities_spawner(bp, loc_row, loc_col, name)
     local player_num = 1
     local is_pawn = false
     local is_npc = false
@@ -178,15 +188,15 @@ function entities_spawner(blueprint, loc_row, loc_col, name)
     }
 
     -- now create component instances to feed to new entity
-    local instanced_components = {}
+    local instanced_comps = {}
     local instanced_entity = nil
 
-    for i, comp_tags in ipairs(blueprint.comps) do
-        -- translating components tags into actual components thanks to components_interface
+    for i, comp_tags in ipairs(bp.comps) do
+        -- translating components tags into actual components
         local new_component = components_interface(comp_tags)
-        instanced_components[comp_tags[1]] = new_component
+        instanced_comps[comp_tags[1]] = new_component
 
-        -- checking for components that need to be stored in special groups for easier, faster calling
+        -- checking/storing special components
         if comp_tags[1] == "npc" then
             is_npc = true
             is_pawn = true
@@ -196,7 +206,7 @@ function entities_spawner(blueprint, loc_row, loc_col, name)
         end
     end
 
-    instanced_entity = Entity(blueprint.id, blueprint.tile, instanced_components, blueprint.powers, name)
+    instanced_entity = Entity(bp.id, bp.tile, instanced_comps, bp.powers, name)
 
     -- once special components are stored, finish entityt identity 
     if is_npc then
@@ -206,8 +216,10 @@ function entities_spawner(blueprint, loc_row, loc_col, name)
     -- if one uses a 'Npc' comp with a player, it just becomes a Npc!
     elseif instanced_entity.id == "player" and not is_npc then
         if not loc_row and not loc_col then
-            -- as soon as missing player spawn locations are called, call FatalError State
-            error_handler("Insufficient player spawning locations in current map. Each player needs one.")
+            -- if player spawn locations are missing, call FatalError State
+            error_handler(
+                "Insufficient player spawning locations in current map. Each player needs one."
+            )
             g.game_state:exit()
             g.game_state = StateFatalError()
             g.game_state:init()
@@ -217,7 +229,7 @@ function entities_spawner(blueprint, loc_row, loc_col, name)
 
         -- save Player pilot in entity.pilot
         instanced_entity.pilot = instanced_entity.comps["player"]
-        -- immediately check if player has Stats() component with "hp". If not, add it/them
+        -- check if player has Stats() component with "hp". If not, add stat/comp
         if not instanced_entity.comps["stats"] then
             local stat_component = components_interface({"stats", "hp:1"})
             instanced_entity.comps["stats"] = stat_component
@@ -244,7 +256,7 @@ function entities_spawner(blueprint, loc_row, loc_col, name)
     end
     -- adding the entity to the g.render_group IF it is not invisible by default
     if not instanced_entity.comps["invisible"] then
-        -- adding entity in front or back depending if it is an pawn or a simple entity
+        -- insert entity to be drawn front/back depending if is pawn or not
         if is_pawn then
             -- insert to front in drawing order (last in group)
             table.insert(g.render_group, instanced_entity)
@@ -258,20 +270,20 @@ function entities_spawner(blueprint, loc_row, loc_col, name)
 end
 
 --[[
-    During g.grid generation, tiles (if present) are assigned to cells. After this process,
-    tiles are drawn once and stored for next drawing passes, so they get drawn only once and 
-    function as a base canvas where dynamic entities will be drawn each loop.
+    During g.grid generation, tiles (if present) are assigned to cells.
+    Tiles are then drawn once, being static, and then stored as a base canvas for
+    dynamic Entities that need to be drawn each loop.
 ]]
 function map_generator(map_values, generate_players)
     local cell_x = 0
     local cell_y = 0
     local entity_name -- optional entity name, tanken from third cell arg
-    local player_spawn_loc = {}
+    local player_spawn = {}
     -- function dedicated to finalize cell generation with tile/entity
     local finalize_cell = function(tile_index, blueprint, i, j)
         -- extracting the quad for graphics
         g.grid[i][j].tile = tile_to_quad(tile_index)
-        -- check if the map is 'empty' there (no tile, index == 0 or < 0), and mark it as 'empty'
+        -- if no tile, index == 0 or index == < 0, mark cell index as 'empty'
         if tonumber(tile_index) > 0 then
             -- 'g.grid' reads STRINGS and NOT numbers! 
             g.grid[i][j].index = tile_index
@@ -298,17 +310,21 @@ function map_generator(map_values, generate_players)
                     -- checking if a special name for the entity was fed in the map
                     entity_name = tile_value_3
                 else
-                    error_handler("Map: illegal entity at row "..i.." column "..j..". Ignored.")
+                    error_handler(
+                        "Map: illegal entity at row "..i.." column "..j..". Ignored."
+                    )
                 end
 
                 finalize_cell(tile_index, blueprint, i, j)
             elseif tile_index == "x" and tile_value_2:match("%d") then
-                -- if that's a spawn point, save locations for players to be spawned later
-                player_spawn_loc[tonumber(tile_value_2)] = {["row"] = i, ["col"] = j, ["cell"] = g.grid[i][j]}
-                -- no need for the finalize_cell() function, just set cell to 'empty'
+                -- if a spawn point, save locations for players to be spawned later
+                player_spawn[tonumber(tile_value_2)] = {["row"] = i, ["col"] = j, ["cell"] = g.grid[i][j]}
+                -- avoid finalize_cell() func, instead set cell to 'empty'
                 g.grid[i][j].index = "empty"
             else
-                error_handler("Map: illegal cell value at row "..i.." column "..j..". Replaced with empty cell.")
+                error_handler(
+                    "Map: illegal cell value at row "..i.." column "..j..". Replaced with empty cell."
+                )
                 g.grid[i][j].index = "empty"
             end
         end,
@@ -316,15 +332,21 @@ function map_generator(map_values, generate_players)
             -- reset entity_name value
             entity_name = nil
             local tile_index = tile_value_1
-            -- if tile_index == nil then there must be a blank line or the value is unreadable
-            -- if tile index doesn't match a number ("%d") then there is an illegal value
+            --[[
+                If tile_index == nil there must be a blank line/unreadable value.
+                If tile index is not a number then there is an illegal value!
+            ]]--
             if not tile_index or not tile_index:match("%d") then
                 -- not-numeric value for a tile
-                error_handler("Map: illegal cell value at row "..i.." column "..j..". Replaced with empty cell.")
+                error_handler(
+                    "Map: illegal cell value at row "..i.." column "..j..". Replaced with empty cell."
+                )
                 g.grid[i][j].index = "empty"
             elseif tile_index == "x" then
                 -- spawn location lacking an order number
-                error_handler("Map: spawn point at row "..i.." column "..j.." lacking second arg. Replaced with empty cell.")
+                error_handler(
+                    "Map: spawn point at row "..i.." column "..j.." lacking second arg. Replaced with empty cell."
+                )
                 g.grid[i][j].index = "empty"
             else
                 -- cell simply has no entities inside!
@@ -334,7 +356,7 @@ function map_generator(map_values, generate_players)
         end
     }
 
-    -- for every g.grid row, assign number of columns cells; each one with x and y values
+    -- for every g.grid row, assign number of columns cells with x and y values
     for i = 1, g.grid_y do
         g.grid[i] = {}
         for j = 1, g.grid_x do
@@ -362,7 +384,8 @@ function map_generator(map_values, generate_players)
 
     -- not spawning the players again if we just changed level
     if generate_players then
-        -- spawning players: in the menu we have inserted players entities but not their input_comp!
+        -- finalizing player spawn: in the menu we have inserted players entities,
+        -- but not their input components!
         local party_group_copy = g.party_group
         g.party_group = {}
 
@@ -370,22 +393,25 @@ function map_generator(map_values, generate_players)
             local bp = bpandname["bp"]
             local name = bpandname["name"]
             -- check that all 4 spawn locations for players were set
-            if not player_spawn_loc[i] then
-                error_handler("Map has insufficient Player Spawn Points. All maps should have four.")
+            if not player_spawn[i] then
+                error_handler(
+                    "Map has insufficient Player Spawn Points. All maps should have four."
+                )
                 g.game_state:exit()
                 g.game_state = StateFatalError()
                 g.game_state:init()
                 break
             end
-            entities_spawner(bp, player_spawn_loc[i]["row"], player_spawn_loc[i]["col"], name)
+            entities_spawner(bp, player_spawn[i]["row"], player_spawn[i]["col"], name)
         end
     else
-        -- if players already got generated once, just position them on their ordered spawn points
+        -- players get generated at game start, and map generation happens each map.
+        -- If players already exist, position them on their ordered spawn points
         for i, player in ipairs(g.party_group)  do
-            player["entity"].cell["cell"] = player_spawn_loc[i]["cell"]
+            player["entity"].cell["cell"] = player_spawn[i]["cell"]
             player["entity"].cell["cell"].pawn = player["entity"]
-            player["entity"].cell["grid_row"] = player_spawn_loc[i]["row"]
-            player["entity"].cell["grid_col"] = player_spawn_loc[i]["col"]
+            player["entity"].cell["grid_row"] = player_spawn[i]["row"]
+            player["entity"].cell["grid_col"] = player_spawn[i]["col"]
             table.insert(g.render_group, player["entity"])
         end
     end
@@ -409,7 +435,8 @@ function map_reader(map, generate_players)
         end
     end
 
-    -- initializing game canvases (g.cnv_static  with tiles, g.cnv_dynamic adds entities)
+    -- initializing game canvases
+    -- g.cnv_static for static tiles, g.cnv_dynamic for dynamic Entities
     g.cnv_static  = love.graphics.newCanvas(g.grid_x * TILE_SIZE, g.grid_y * TILE_SIZE)
     g.cnv_dynamic = love.graphics.newCanvas(g.grid_x * TILE_SIZE, g.grid_y * TILE_SIZE)
 
@@ -418,7 +445,9 @@ function map_reader(map, generate_players)
 
     -- check if operation went right; if not, activate error_handler and return
     if type(tiles_features_csv) == "string" then
-        error_handler("The above error was triggered while trying to read tiles_features.csv")
+        error_handler(
+            "The above error was triggered while trying to read tiles_features.csv"
+        )
         return false
     end
 
@@ -485,10 +514,10 @@ function love.resize(w, h)
     g.game_state:refresh()
 end
 
-function blueprints_generator(input_table)
+function blueprint_generator(bp_data)
     local id -- blueprint's id
     local tile -- blueprint's tile
-    -- components not implemented in components_interface will be ignored and flagged with a warning
+    -- comps not implemented in components_interface will be ignored
     local all_components = {}
     -- this table stores which powers have been saved to avoid duplicates
     local blueprint_powers = {}
@@ -497,15 +526,16 @@ function blueprints_generator(input_table)
     -- this will be the list of actual components to input as argument to new entity
     local blueprint_components = {}
 
-    for i, element in ipairs(input_table) do
+    -- for each element in bp_data, identify type (id, tile, component or power)
+    for _, element in ipairs(bp_data) do
         -- useful copy of element, used for element type check
         local element_output
         -- only used for components, not for id, tile or power values
-        -- pos is set to 1 by default and keeps track of the separator position inside the string
+        -- pos is 1 by default and tracks the separator position inside the string
         local pos = 1
-        -- only used for components. Note that components ids and their arguments are separated
-        -- with commas. This variable stores every input of the component
-        local component_tags = {}
+        -- only used for components. Components id and their arguments are separated
+        -- with commas. This variable stores every input for the component
+        local comp_args = {}
 
         -- checking if the element is the Blueprint's id
         element_output = str_slicer(element, "@", 1)
@@ -515,7 +545,9 @@ function blueprints_generator(input_table)
 
             -- checking to ensure Blueprint id uniqueness
             if BP_LIST[id] then
-                error_handler('Blueprint "'..id..'" is not unique, duplicates ignored.')
+                error_handler(
+                    'Blueprint "'..id..'" is not unique, duplicates ignored.'
+                )
                 return false
             end
 
@@ -524,9 +556,12 @@ function blueprints_generator(input_table)
 
         -- checking if the element is the Blueprint's tile/tile_group
         element_output = str_slicer(element, ":", 1)
-        -- an entity can have a fixed tile, or a random tile from a group in sprites_groups.
-        -- In the latter case, the selected tile will be removed from the pool once used.
-        -- Now it is being checked if the Entity has a fixed tile or a random one from a group.
+        --[[
+            Entities can have a fixed tile or a random one from their group, stored
+            in sprites_groups. In the latter case, the selected tile will be removed
+            from the group.
+        ]]--
+        -- check if the Entity has a fixed tile or a random one from a group
         if element_output[2] then
             -- number of values in the group, counted later
             local num_of_values = 0
@@ -541,9 +576,11 @@ function blueprints_generator(input_table)
                 goto continue
             end
 
-            -- check if group is valid or not (char ':' may have been manually misused)
+            -- check if group is valid or not (char ':' can be manually misused)
             if not sprites_groups[element_output[2]] then
-                error_handler("Trying to assign sprite to an Entity from a non-existing sprites_group")
+                error_handler(
+                    "Trying to assign sprite to an Entity from a non-existing sprites_group"
+                )
                 g.game_state:exit()
                 g.game_state = StateFatalError()
                 g.game_state:init()
@@ -551,12 +588,14 @@ function blueprints_generator(input_table)
                 return false
             end
 
-            -- checking the group length, stored beforehand in sprites_groups_manager()
-            group_length = sprites_groups[element_output[2] .. "_length"]
+            -- check group length (previously stored in sprites_groups_manager())
+            group_length = sprites_groups[element_output[2] .. "_size"]
 
             -- check if there are still sprites available in selected group
             if group_length <= 0 then
-                error_handler("Trying to assign sprite to an Entity from a depleted sprites_group (more entities than available sprites)")
+                error_handler(
+                    "Trying to assign sprite to an Entity from a depleted sprites_group (more entities than available sprites)"
+                )
                 g.game_state:exit()
                 g.game_state = StateFatalError()
                 g.game_state:init()
@@ -564,7 +603,7 @@ function blueprints_generator(input_table)
                 return false
             end
 
-            -- saving the random index, otherwise different results will be output when setting/removing
+            -- store the random index to constant number with loop
             for j = 1, math.random(group_length) do
                 selected_index = selected_index + 1
             end            
@@ -574,7 +613,7 @@ function blueprints_generator(input_table)
             -- removing randomly chosen sprite from its group
             table.remove(sprites_groups[element_output[2]], selected_index)
             -- length of the group was reduced by one
-            sprites_groups[element_output[2] .. "_length"] = group_length - 1
+            sprites_groups[element_output[2] .. "_size"] = group_length - 1
 
             goto continue
         end
@@ -583,12 +622,15 @@ function blueprints_generator(input_table)
         element_output = str_slicer(element, "*", 1)
 
         if element_output[2] then
-            -- only used for powers. Structure is like components, but effects are functions
+            -- only used for powers.
+            -- Structure for components is the same, but effects are functions!
             local power_effects = str_slicer(element_output[2], ",", pos)
             
             -- check power name uniqueness
             if blueprint_powers[power_effects[1]] then
-                error_handler('Power"'..power_effects[1]..'" for blueprint "'..id..'" is not unique, duplicates ignored.')
+                error_handler(
+                    'Power"'..power_effects[1]..'" for blueprint "'..id..'" is not unique, duplicates ignored.'
+                )
                 goto continue
             end
             
@@ -601,26 +643,28 @@ function blueprints_generator(input_table)
         end    
 
         -- if nothing of the above is true, then element must be a component
-
-        component_tags = str_slicer(element, ",", pos)
-        -- all_components contains tables with a element tag and its optional arguments tags
-        table.insert(all_components, component_tags)
+        comp_args = str_slicer(element, ",", pos)
+        -- all_components contains tables of all data for all components
+        table.insert(all_components, comp_args)
 
         ::continue::
     end 
 
-    for i, comp_tags in ipairs(all_components) do
-        -- translating components tags into actual components thanks to components_interface
+    for _, comp_tags in ipairs(all_components) do
+        -- translating comps data into actual comps with components_interface
         local new_component = components_interface(comp_tags)
         -- check for duplicate components (comp_tags[1] = component's name)
         if stored_components[comp_tags[1]] then
-            error_handler('Component "'..comp_tags[1]..'" for blueprint "'..id..'" is not unique, duplicates ignored.')
+            error_handler(
+                'Component "'..comp_tags[1]..'" for blueprint "'..id..'" is not unique, duplicates ignored.'
+            )
+
             goto continue
         end
 
         -- check for component validity and in case insert it
         if new_component then
-            -- at this stage, we don't store any component, only its data for later use
+            -- here we don't store any component, only its data for later use
             table.insert(blueprint_components, comp_tags)
             stored_components[comp_tags[1]] = true
         else
@@ -642,7 +686,9 @@ function blueprints_manager()
 
     -- check if operation went right; if not, activate error_handler
     if type(entities_csv) == "string" then
-        error_handler("The above error was triggered while trying to read blueprints.csv")
+        error_handler(
+            "The above error was triggered while trying to read blueprints.csv"
+        )
         return false
     end
 
@@ -662,7 +708,7 @@ function blueprints_manager()
             j = j + 1
         end
         -- passing the new entity with the data extracted from the CSV file
-        blueprints_generator(entity_components)
+        blueprint_generator(entity_components)
     end
 
     return true
@@ -771,7 +817,7 @@ function turns_manager(current_player, npc_turn)
                     end
                 end
             end
-            -- double check if NPC is still alive after the receiving lasting effects
+            -- check again if NPC is still alive after the receiving lasting effects
             if npc.alive then
                 g.npcs_group[i].comps["npc"]:activate(g.npcs_group[i])
             end
@@ -785,6 +831,8 @@ function turns_manager(current_player, npc_turn)
 end
 
 function ui_manager_play()
+    local color_1, color_2, color_3
+    local event_1, event_2, event_3
     -- generating and setting a canvas of the proper size
     local new_canvas  = love.graphics.newCanvas(g.w_width, g.w_height)
     love.graphics.setCanvas(new_canvas)
@@ -802,21 +850,28 @@ function ui_manager_play()
         g.w_height - (PADDING * 1.5), g.w_width, "center")
     end
 
+    -- storing colors for better legibility
+    color_3 = {g.console["rgb3"][1], g.console["rgb3"][2], g.console["rgb3"][3], 1}
+    color_2 = {g.console["rgb2"][1], g.console["rgb2"][2], g.console["rgb2"][3], 1}
+    color_1 = {g.console["rgb1"][1], g.console["rgb1"][2], g.console["rgb1"][3], 1}
+
+    -- storing event strings for better legibility
+    event_3 = g.console["event3"] or "Error: fed nothing to console_event() func"
+    event_2 = g.console["event2"] or "Error: fed nothing to console_event() func"
+    event_1 = g.console["event1"] or "Error: fed nothing to console_event() func"
+
     -- print console events
-    love.graphics.setColor(g.console["color3"][1], g.console["color3"][2], g.console["color3"][3], 1)
-    love.graphics.print(
-        g.console["event3"] or "Error: fed nothing to console_event() func", PADDING, g.w_height - (PADDING * 3.5)
-    )
-    love.graphics.setColor(g.console["color2"][1], g.console["color2"][2], g.console["color2"][3], 1)
-    love.graphics.print(
-        g.console["event2"] or "Error: fed nothing to console_event() func", PADDING, g.w_height - (PADDING * 2.5)
-    )
-    love.graphics.setColor(g.console["color1"][1], g.console["color1"][2], g.console["color1"][3], 1)
-    love.graphics.print(
-        g.console["event1"] or "Error: fed nothing to console_event() func", PADDING, g.w_height - (PADDING * 1.5)
-    )
+    love.graphics.setColor(color_3)
+    love.graphics.print(event_3, PADDING, g.w_height - (PADDING * 3.5))
+
+    love.graphics.setColor(color_2)
+    love.graphics.print(event_2, PADDING, g.w_height - (PADDING * 2.5))
+
+    love.graphics.setColor(color_1)
+    love.graphics.print(event_1, PADDING, g.w_height - (PADDING * 1.5))
 
     if not g.view_inv then
+        local player_stats = g.camera["entity"].comps["stats"].stats
         -- set proper font
         love.graphics.setFont(FONTS["tag"])
 
@@ -832,14 +887,8 @@ function ui_manager_play()
         -- setting font color for player data
         love.graphics.setColor(0.28, 0.46, 0.73, 1)
 
-        love.graphics.print(
-            "Life "..g.camera["entity"].comps["stats"].stats["hp"],
-            PADDING, PADDING * 2.5
-        )
-        love.graphics.print(
-            "Gold "..g.camera["entity"].comps["stats"].stats["gold"],
-            PADDING, PADDING * 3.5
-        )
+        love.graphics.print("Life "..player_stats["hp"], PADDING, PADDING * 2.5)
+        love.graphics.print("Gold "..player_stats["gold"], PADDING, PADDING * 3.5)
     end
     
     -- restoring default RGBA, since this function influences ALL graphics
@@ -851,33 +900,80 @@ function ui_manager_play()
     return new_canvas
 end
 
+function draw_borders(group)
+    local size = SIZE_MULT * 2
+    local t_size = TILE_SIZE * 2
+    -- frame borders coordinates, for better legibility and management
+    local x1, x2, x3, x4
+    local y1, y2, y3, y4
+
+    -- PLEASE NOTE: frames positioning follow standard quadrant anti-clockwise order
+    x1 = 0
+    x2 = 0
+    x3 = g.w_width - (t_size) * size, g.w_height - (t_size) * size
+    x4 = g.w_width - (t_size) * size
+
+    y1 = 0
+    y2 = g.w_height - (t_size) * size
+    y3 = g.w_height - (t_size) * size
+    y4 = 0
+
+    -- draw borders
+    love.graphics.draw(FRAMESET, BORDERS[group][1], x1, y1, 0, size, size)
+    love.graphics.draw(FRAMESET, BORDERS[group][3], x2, y2, 0, size, size)
+    love.graphics.draw(FRAMESET, BORDERS[group][4], x3, y3, 0, size, size)
+    love.graphics.draw(FRAMESET, BORDERS[group][2], x4, y4, 0, size, size)
+end
+
 -- main menu UI manager
-function ui_manager_menu(text, input_phase, n_of_players, current_player, input_name)
+function ui_manager_menu(text_in, input_phase, n_of_players, current_player, name)
     -- generating a canvas of the proper size
     local new_canvas  = love.graphics.newCanvas(g.w_width, g.w_height)
     local size = SIZE_MULT * 2
     local t_size = TILE_SIZE * 2
+    -- text coordinates for better readibility
+    local logo_x, logo_y
+    local title_x, title_y
+    local text_x, text_y
+    local input_x, input_y
+    -- text and text_in str, stored for better legibility
+    local text, str
     
     love.graphics.setCanvas(new_canvas)
 
-    -- draw borders
-    love.graphics.draw(FRAMESET, BORDERS[1][1], 0, 0, 0, size, size)
-    love.graphics.draw(FRAMESET, BORDERS[1][3], 0, g.w_height - (t_size) * size, 0, size, size)
-    love.graphics.draw(FRAMESET, BORDERS[1][4], g.w_width - (t_size) * size, g.w_height - (t_size) * size, 0, size, size)
-    love.graphics.draw(FRAMESET, BORDERS[1][2], g.w_width - (t_size) * size, 0, 0, size, size)
+    -- draw borders from group 1
+    draw_borders(1)
+
+    -- logo coordinates setting
+    logo_x = 0
+    logo_y = (g.w_height / 5) - SIZE_MAX
 
     love.graphics.setColor(0.78, 0.96, 0.94, 1) 
     love.graphics.setFont(FONTS["logo"])
-    love.graphics.printf(GAME_LOGO, 0, (g.w_height / 5) - SIZE_MAX , g.w_width, "center")   
+    love.graphics.printf(GAME_LOGO, logo_x, logo_y, g.w_width, "center")
+
+    -- title coordinates setting
+    title_x = 0
+    title_y = g.w_height / 5
+
     love.graphics.setFont(FONTS["title"])
-    love.graphics.printf(GAME_TITLE, 0, g.w_height / 5, g.w_width, "center")
+    love.graphics.printf(GAME_TITLE, title_x, title_y, g.w_width, "center")
+
+    -- setting proper text for input_phase
+    text = text_in[input_phase]
+    str = text_in[current_player + 2]
+
+    -- text and text input coordinates setting
+    text_x = 0
+    text_y = g.w_height / 5 + (PADDING * 4)
+    input_x = 0
+    input_y = g.w_height / 5 + (PADDING * 4)
 
     love.graphics.setFont(FONTS["subtitle"])
     if input_phase == 1 then
-        love.graphics.printf(text[input_phase] .. n_of_players, 0, g.w_height / 5 + (PADDING * 4), g.w_width, "center")
+        love.graphics.printf(text .. n_of_players, text_x, text_y, g.w_width, "center")
     else
-        love.graphics.printf(text[input_phase] .. text[current_player + 2] .. "rogue:\n" .. input_name,
-        0, g.w_height / 5 + (PADDING * 4), g.w_width, "center")
+        love.graphics.printf(text .. str .. "rogue:\n" .. name, input_x, input_y, g.w_width, "center")
     end
 
     love.graphics.setColor(1, 1, 1, 1)
@@ -890,28 +986,45 @@ function ui_manager_gameover()
     local new_canvas  = love.graphics.newCanvas(g.w_width, g.w_height)
     local size = SIZE_MULT * 2
     local t_size = TILE_SIZE * 2
+    -- text coords for better readibility
+    local title_x, title_y
+    local text_x, text_y
+    local list_x, list_y
+    -- text content, for better readibility
+    local cemetery_text
+    
 
     love.graphics.setCanvas(new_canvas)
 
-    -- draw borders
-    love.graphics.draw(FRAMESET, BORDERS[3][1], 0, 0, 0, size, size)
-    love.graphics.draw(FRAMESET, BORDERS[3][3], 0, g.w_height - (t_size) * size, 0, size, size)
-    love.graphics.draw(FRAMESET, BORDERS[3][4], g.w_width - (t_size) * size, g.w_height - (t_size) * size, 0, size, size)
-    love.graphics.draw(FRAMESET, BORDERS[3][2], g.w_width - (t_size) * size, 0, 0, size, size)
+    -- draw borders from group 3
+    draw_borders(3)
+
+    -- set text coordinates
+    title_x = 0
+    title_y = g.w_height / 4 - PADDING
+
+    text_x = 0
+    text_y = g.w_height / 4 + PADDING
+
+    list_x = 0
 
     love.graphics.setColor(0.93, 0.18, 0.27, 1)
     love.graphics.setFont(FONTS["title"])
-    love.graphics.printf("Game Over", 0, g.w_height / 4 - PADDING, g.w_width, "center")
+    love.graphics.printf("Game Over", title_x, title_y, g.w_width, "center")
+
+    -- setting text
+    cemetery_text = "These souls have left us forever:"
 
     love.graphics.setColor(0.78, 0.96, 0.94, 1)
     love.graphics.setFont(FONTS["subtitle"])
-    love.graphics.printf("These souls have left us forever:", 0, g.w_height / 4 + PADDING, g.w_width, "center")
+    love.graphics.printf(cemetery_text, text_x, text_y, g.w_width, "center")
 
     -- printing all deceased players and info about their death
-    for i, death in ipairs(g.cemetery) do 
+    for i, death in ipairs(g.cemetery) do
+        list_y = g.w_height / 3.5 + (PADDING * (i * 3))
         love.graphics.printf(death["player"]..", killed by "..death["killer"].." for "..death["loot"].." gold,\n"..
         "has found a final resting place in "..death["place"]..".",
-        0, g.w_height / 3.5 + (PADDING * (i * 3)), g.w_width, "center")
+        list_x, list_y, g.w_width, "center")
     end
 
     love.graphics.setColor(1, 1, 1, 1)
@@ -923,18 +1036,18 @@ function ui_manager_credits(credits_image)
     -- generating a canvas of the proper size
     local new_canvas  = love.graphics.newCanvas(g.w_width, g.w_height)
     love.graphics.setCanvas(new_canvas)
-
-    -- this is simply an optimal proportion between the image size and the screen size
+    -- this is the optimal proportion between the image size and the screen size
     local scale = g.w_height / 1300
     local credits_width = credits_image:getWidth()
     local credits_height = credits_image:getHeight()
+    -- coordinates for better legibility
+    local image_x, image_y
 
-    -- always keeping the image with its original proportions and in the screen center
-    love.graphics.draw(
-        credits_image,
-        g.w_width / 2 - (credits_width / 2 * scale), g.w_height / 2 - (credits_height / 2 * scale),
-        0, scale, scale
-    )
+    image_x = g.w_width / 2 - (credits_width / 2 * scale)
+    image_y = g.w_height / 2 - (credits_height / 2 * scale)
+
+    -- always keep the image with its original proportions and in the screen center
+    love.graphics.draw(credits_image, image_x, image_y, 0, scale, scale)
     return new_canvas
 end
 
@@ -979,16 +1092,18 @@ end
 
 -- this func registers game events and chronologially displays them
 function console_event(event, font_color)
+    local base_color = {[1] = 0.28, [2] = 0.46, [3] = 0.73}
     local events_table = {}
-    -- extracting values from g.console. In Lua, tables are passed as ref, not as value!
+    -- extracting values from g.console
+    -- PLEASE NOTE: in Lua, tables are passed as *ref*, *not* as value!
     for i, v in pairs(g.console) do
         events_table[i] = v
     end
 
     -- assigning new values to global colors
-    g.console["color3"] = events_table["color2"]
-    g.console["color2"] = events_table["color1"]
-    g.console["color1"] = font_color or {[1] = 0.28, [2] = 0.46, [3] = 0.73}
+    g.console["rgb3"] = events_table["rgb2"]
+    g.console["rgb2"] = events_table["rgb1"]
+    g.console["rgb1"] = font_color or base_color
     -- assigning new values to global strings
     g.console["event3"] = events_table["event2"]
     g.console["event2"] = events_table["event1"]
@@ -1007,40 +1122,45 @@ function death_check(target, damage_dice, type, message)
         [false] = {[1] = 1, [2] = 0.97, [3] = 0.44},
         [true] = {[1] = 0.93, [2] = 0.18, [3] = 0.27}
     }
+    -- store target.comps for better readibility
+    local comps = target.comps
     -- reference eventual 'stats' component or set variable to false
-    local target_stats = target.comps["stats"] and target.comps["stats"].stats or false
+    local stats = comps["stats"] and comps["stats"].stats or false
     -- reference eventual 'profile' component or set variable to false
-    local target_modifier = target.comps["profile"] and target.comps["profile"].profile[type] or false
+    local modifier = comps["profile"] and comps["profile"].profile[type] or false
     -- choose color depending on player (red) or npc (yellow)
-    local target_family = target.comps["player"] or false
+    local target_family = comps["player"] or false
     -- stores final damage score to subtract from target's HP
     local damage_score = 0
 
     -- cannot damage an Entity without hp
-    if not target_stats and not target_stats["hp"] then print("Target has no HP stat") return false end
+    if not stats and not stats["hp"] then
+        print("Target has no HP stat")
+        return false
+    end
 
     -- cannot damage an Entity immune to that effect
-    if target_modifier and target_modifier == "immune" then
+    if modifier and modifier == "immune" then
         console_event(target.name .. " doth seem immune to " .. type)
         return false
     end
     
-    damage_score = dice_roll(damage_dice) + tonumber(target_modifier or 0)
+    damage_score = dice_roll(damage_dice) + tonumber(modifier or 0)
 
-    -- this is done to avoid adding HP when target_modifier is so high to output a zero/negative number
+    -- this is done to avoid adding HP when modifier is so impactful to output <= 0
     if damage_score <= 0 then
         console_event(target.name .. " doth not appear troubled by " .. type)
         return false
     end
 
-    target_stats["hp"] = target_stats["hp"] - damage_score
+    stats["hp"] = stats["hp"] - damage_score
 
-    if target_stats["hp"] <= 0 then
+    if stats["hp"] <= 0 then
         target.alive = false
         console_event(target.name .. " " .. message, event_color[target_family])
     end
 
-    -- returning success and damage inflicted. The second is useful when used to influence EffectTags,
+    -- returning success and damage inflicted, useful to influence EffectTags:
     -- i.e. the harder you slash someone, the longer he will bleed
     return true, damage_score
 end
@@ -1064,69 +1184,76 @@ function inventory_update(player)
     local size = SIZE_MULT * 2
     local t_size = TILE_SIZE * 2
     local inv_str = "abcdefghijklmnopqrstuvwxyz"
-    local inv_ref = player.comps["inventory"]
+    -- referencing eventual player's 'inventory' component
+    local inventory = player.comps["inventory"]
     local available_items = {}
     local equipped = false
-    local color = {
+    local title_color = {0.49, 0.82, 0.90, 1}
+    local text_color = {
         [true] = {0.93, 0.18, 0.27, 1},
         [false] = {0.28, 0.46, 0.73, 1}    
     }
 
     -- immediately check if player is missing inventory component
-    if not inv_ref then
-        error_handler("In 'inventory_update()', found player with missing inventory")
+    if not inventory then
+        error_handler(
+            "In 'inventory_update()', found player with missing inventory"
+        )
         return false
     end
 
     -- setting a canvas of the proper size
     love.graphics.setCanvas(new_canvas)
-    -- clear to transparent black, set proper font and color
+    -- clear to transparent black, set proper font and text_color
     love.graphics.clear(0, 0, 0, 0)
 
     -- draw borders
-    love.graphics.draw(FRAMESET, BORDERS[2][1], 0, 0, 0, size, size)
-    love.graphics.draw(FRAMESET, BORDERS[2][3], 0, g.w_height - (t_size) * size, 0, size, size)
-    love.graphics.draw(FRAMESET, BORDERS[2][4], g.w_width - (t_size) * size, g.w_height - (t_size) * size, 0, size, size)
-    love.graphics.draw(FRAMESET, BORDERS[2][2], g.w_width - (t_size) * size, 0, 0, size, size)
+    draw_borders(2)
 
     -- setting font for inventory's title
     love.graphics.setFont(FONTS["tag"])
-    -- setting font color for inventory's title
-    love.graphics.setColor(0.49, 0.82, 0.90, 1)
+    -- setting font text_color for inventory's title
+    love.graphics.setColor(title_color)
 
     -- printing owner's name
     love.graphics.printf(player.name .. "'s bag", 0, SIZE_DEF, g.w_width, "center")
 
-    inv_ref = inv_ref.items -- player inventory table
+    -- at this point, reference 'inventory' comp table of items
+    inventory = inventory.items
 
     -- setting font for inventory's items
     love.graphics.setFont(FONTS["ui"])
 
     -- print all item in player inventory and couple them with a letter
     for i = 1, string.len(inv_str) do
+        -- reference item's 'equipable' comp for each item in inventory
+        local equipable_ref
         local item_str
         -- if no more items are available, break loop
-        if not inv_ref[i] then
+        if not inventory[i] then
             break
         end
 
-        -- choosing printf color to discriminate equipped/unequipped items
-        if inv_ref[i].comps["equipable"] and inv_ref[i].comps["equipable"].slot_reference then
+        -- item exists, proceed referencing it
+        equipable_ref = inventory[i].comps["equipable"]
+
+        -- choosing printf text_color to discriminate equipped/unequipped items
+        if equipable_ref and equipable_ref.slot_reference then
             equipped = true
         else
             equipped = false
         end
 
-        -- chosen color setting
-        love.graphics.setColor(color[equipped])
+        -- chosen text_color setting
+        love.graphics.setColor(text_color[equipped])
 
         -- print all items on canvas
-        item_str = string_selector(inv_ref[i])
+        item_str = string_selector(inventory[i])
 
         love.graphics.printf(string.sub(inv_str, i, i) .. ": " .. item_str,
         0, (SIZE_DEF + SIZE_DEF / 3) * (i + 2), g.w_width, "center"
         )
-        available_items[string.sub(inv_str, i, i)] = inv_ref[i]
+        available_items[string.sub(inv_str, i, i)] = inventory[i]
     end
 
     -- storing available_items to be used with action_modes
@@ -1142,15 +1269,19 @@ function inventory_update(player)
     return true
 end
 
--- action_modes related function that selects a tile OR an inventory item to perform action on
+-- related to action_modes, selects a tile OR an inventory item to perform action on
+-- which one is selcted depends on inventory being opened or closed
 function target_selector(player_comp, performer, key)
     local target_cell
+    local target_x, target_y
     local pawn_ref, entity_ref -- Entities references
+
+    target_x = performer.cell["grid_row"] + player_comp.movement_inputs[key][1]
+    target_y = performer.cell["grid_col"] + player_comp.movement_inputs[key][2]
 
     if not g.view_inv then
         if player_comp.movement_inputs[key] then
-            target_cell = g.grid[performer.cell["grid_row"] + player_comp.movement_inputs[key][1]]
-            [performer.cell["grid_col"] + player_comp.movement_inputs[key][2]]
+            target_cell = g.grid[target_x][target_y]
         else
             -- if input is not a valid direction, turn is not valid
             return false

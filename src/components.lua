@@ -770,3 +770,42 @@ function Linked:activate(owner)
 
     return row, column
 end
+
+-- shooter Entities will consume ammo and use their properties to establish effects
+-- and type of damage. Actual damage is established by shooter Entity.
+Shooter = Object:extend()
+function Shooter:new(args)
+    -- amount of ammo consumed per use
+    self.consume = tonumber(args[1])
+    -- types of compatible ammo
+    self.compatible = {}
+
+    -- remove first arg, as it is now useless
+    table.remove(args, 1)
+
+    -- TO DO TO DO TO DO TO DO TO DO TO DO TO DO TO DO TO DO TO DO TO DO TO DO TO DO TO DO TO DO TO DO TO DO TO DO TO DO TO DO TO DO TO DO 
+    -- this check needs to be done when going to shoot, or it will require ordered blueprints (unacceptable)
+    for _, ammo_type in ipairs(args) do
+        --[[
+        -- checking if ammo_type is a valid Entity BP id or not
+        if not BP_LIST[ammo_type] then
+            error_handler(
+                "Assigning to shooter Entity invalid ammo_type with id " .. ammo_type
+            )
+
+            return false
+        end
+        ]]--
+        print(ammo_type)
+
+        -- adding all compatible ammo types
+        table.insert(self.compatible, ammo_type)
+    end
+end
+
+-- stack Entities will look for same id Entities each time they are moved in cell or
+-- picked up (even if equipped). Stack number corresponds to stat = hp.
+Stack = Object:extend()
+function Stack:new(args)
+
+end

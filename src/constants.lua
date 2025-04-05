@@ -123,7 +123,9 @@ COMPONENTS_TABLE = {
     ["description"] = Description,
     ["linked"] = Linked,
     ["key"] = Key,
-    ["locked"] = Locked
+    ["locked"] = Locked,
+    ["shooter"] = Shooter,
+    ["stack"] = Stack
 }
 
 -- valid effects for the that can be applied to Entities

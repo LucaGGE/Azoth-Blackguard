@@ -74,13 +74,6 @@ function StatePlay:init(map, generate_players)
 end
 
 function StatePlay:update()
-
-    --[[
-         TO DO TO DO TO DO TO DO TO DO-------------------- WIP, TO INSERT IN StatePlay:update() --------------------TO DO TO DO TO DO TO DO TO DO
-        Note that to this date, only Players and NPCs will be able to have effects
-        applied, since it's a turn-based activation.
-    ]]
-
     local valid_action 
     -- checking for input to resolve turns
     if g.keys_pressed[1] and not g.tweening then
@@ -120,7 +113,7 @@ function StatePlay:update()
             g.tweening = true
             -- if g.party_group[1] is false, all players died/we are changing level
             if g.party_group[current_turn] then
-                -- reset current_turn number and move NPCs
+                -- reset current_turn number, move NPCs and apply their effects
                 turns_manager(g.party_group[current_turn], true)
                 inventory_update(g.party_group[current_turn]["entity"])
             elseif g.game_state:is(StatePlay) then
@@ -131,6 +124,8 @@ function StatePlay:update()
         else
             g.tweening = true
             
+            -- Move NPCs and apply their effects
+            -- Player/NPCs is established by second arg, true/false!
             turns_manager(g.party_group[current_turn], false)
         end
         -- pre-tween refresh
@@ -140,7 +135,7 @@ function StatePlay:update()
 end
 
 function StatePlay:refresh()
-    -- setting canvas to g.cnv_dynamic, to give effects and offset before
+    -- setting canvas to g.cnv_dynamic, clearing it and drawing cnv_static as base
     love.graphics.setCanvas(g.cnv_dynamic)
     -- erase canvas with BKG color and draw g.cnv_static as a base to draw upon
     love.graphics.clear(

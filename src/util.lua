@@ -782,6 +782,7 @@ function dice_roll(die_set_input, success_input)
 end
 
 -- manages turns and applies effects before Entity activation
+-- NOTE: current player is always fed to coordinate camera position!
 function turns_manager(current_player, npc_turn)
     -- setting current_player coords for camera tweening
     local x_for_tweening = current_player["entity"].cell["cell"].x
@@ -792,7 +793,7 @@ function turns_manager(current_player, npc_turn)
     Timer.tween(TWEENING_TIME, {
         [g.camera] =  {x = x_for_tweening, y = y_for_tweening}
     }):finish(function ()
-        -- if it's not the NPCs turn, skip single NPC activation
+        -- if it's not the NPCs turn, apply player pawn effects and enable them 
         if not npc_turn then
             for i, effect_tag in ipairs(current_player["entity"].effects) do
                 -- activate lasting effects for current_player
@@ -802,9 +803,12 @@ function turns_manager(current_player, npc_turn)
                     table.remove(current_player["entity"].effects, i)
                 end
             end
+
+            -- ignore NPCs activation and skip to end of code
             goto continue
         end
 
+        -- activate NPCs and apply their effects
         for i, npc in ipairs(g.npcs_group) do
             -- check if the NPC is alive or is waiting to be removed from game
             if npc.alive then
@@ -817,6 +821,7 @@ function turns_manager(current_player, npc_turn)
                     end
                 end
             end
+
             -- check again if NPC is still alive after the receiving lasting effects
             if npc.alive then
                 g.npcs_group[i].comps["npc"]:activate(g.npcs_group[i])

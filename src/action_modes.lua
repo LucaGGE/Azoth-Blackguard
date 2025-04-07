@@ -306,7 +306,10 @@ IO_DTABLE = {
                 -- save occupied slot in equipped object for easier referencing
                 equipable_comp.slot_reference = slot
                 -- store item inside slots component
-                player_slots[slot] = g.current_inv[key]
+                player_slots[slot] = {
+                    ["tag"] = key,
+                    ["item"] = g.current_inv[key]
+                }
                 print("Equipped object!")
                 -- activate equip() func in 'equipable' component
                 -- this can trigger dedicated effects thanks to 'equip' tagged power
@@ -353,6 +356,7 @@ IO_DTABLE = {
             -- and also equipable component slot_reference
             if success then
                 player_slots[item.comp["equipable"].slot_reference] = "empty"
+
                 item.comp["equipable"].slot_reference = false
             end
         else
@@ -481,10 +485,109 @@ IO_DTABLE = {
         return false
     end,
     ["loose"] = function(player_comp, player_entity, key)
-        -- TO DO TO DO TO DO TO DO TO DO TO DO TO DO TO DO TO DO TO DO TO DO TO DO TO DO TO DO TO DO TO DO TO DO TO DO TO DO TO DO 
-        console_event("Check if ammo available, list of all in-weapon-range targets...")
+        -- select behavior between launching item or shooting ranged weapon,
+        -- depending on inventory open/close
+        if not g.view_inv then
+            local weapon_ref = player_entity.comp["slots"]
+            local quiver_ref = player_entity.comp["slots"]
 
-        return true
+            -- trying to store player's 'weapon' slot
+            weapon_ref = weapon_ref and weapon_ref.slots["weapon"] or false
+            -- trying to store player's 'quiver' slot
+            quiver_ref = quiver_ref and quiver_ref.slots["quiver"] or false
+            
+            -- checking if player is missing 'weapon' slot or 'slots' component
+            if not weapon_ref or not quiver_ref then
+                error_handler("Player has no slots component or weapon/quiver slot")
+                
+                return false
+            end
+
+            -- checking if player has an equipped weapon, and it is a ranged one            
+            if weapon_ref == "empty" or not weapon_ref["item"].comp["shooter"] then
+                console_event("Thou hast no missile armament at thy side")
+                
+                return false
+            end
+
+            if quiver_ref == "empty" then
+                console_event("Thine quiver is void of projectiles")
+
+                return false
+            end
+
+            -- search expected 'quiver' slot for proper ammunition
+            for _, ammo_type in ipairs(weapon_ref["item"].comp["shooter"].munitions) do
+                if not BP_LIST[ammo_type] then
+                    error_handler(
+                        "Assigned to shooter entity invalid ammo_type with id " .. ammo_type
+                    )
+        
+                    return false
+                end
+
+                if quiver_ref["item"].id == ammo_type then
+                    -- check if ammo are stackable or not...
+                    local stack_ammo = quiver_ref["item"].comp["stack"] or false
+                    -- ...if it is stackable, reference its stats comp...
+                    stack_ammo = stack_ammo and quiver_ref["item"].comp["stats"]
+                    -- ...and then its stat table, or leave it false
+                    stack_ammo = stack_ammo and stack_ammo.stat
+
+                    -- kill non-stack ammo, remove from slots and inventory
+                    if not stack_ammo then
+                        local slots_ref = player_entity.comp["slots"].slots
+                        local tag = slots_ref["quiver"]["tag"]
+
+                        --quiver_ref["item"].alive = false
+                        player_entity.comp["inventory"]:remove(tag)
+                        slots_ref["quiver"] = "empty"
+                        
+                        console_event(
+                            "Thou hast emptied thy quiver",
+                            {[1] = 1, [2] = 0.97, [3] = 0.44}
+                        )
+                    end
+
+                    -- reduce hp by number of ammo used by shooter Entity
+                    if stack_ammo and stack_ammo["hp"] then
+                        local hp = stack_ammo["hp"]
+
+                        hp = hp - weapon_ref["item"].comp["shooter"].shots
+
+                        stack_ammo["hp"] = hp
+                    end
+
+                    -- kill consumed stack ammo, remove from inventory and slots
+                    if stack_ammo and stack_ammo["hp"] <= 0 then
+                        local slots_ref = player_entity.comp["slots"].slots
+                        local tag = slots_ref["quiver"]["tag"]
+
+                        --quiver_ref["item"].alive = false
+                        player_entity.comp["inventory"]:remove(tag)
+                        slots_ref["quiver"] = "empty"
+                        
+                        console_event(
+                            "Thou hast emptied thy quiver",
+                            {[1] = 1, [2] = 0.97, [3] = 0.44}
+                        )
+                    end
+
+                    print("Succefully shot your weapon. Implement aiming code")
+
+                    return true                    
+                end
+            end
+
+            -- ammunitions in quiver are not compatible with equipped ranged weapon
+            console_event("Thy weapon is ill-suited for these projectiles")
+
+            return false
+        end
+
+        console_event("Select equipped/unequipped object from inventory. Implement aiming code")
+
+        return false
     end,
     ["console"] = function(player_comp, entity, key)
         local return_value

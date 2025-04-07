@@ -1161,7 +1161,9 @@ function death_check(target, damage_dice, type, message)
 
     if stats["hp"] <= 0 then
         target.alive = false
-        console_event(target.name .. " " .. message, event_color[target_family])
+        if message then
+            console_event(target.name .. " " .. message, event_color[target_family])
+        end
     end
 
     -- returning success and damage inflicted, useful to influence EffectTags:

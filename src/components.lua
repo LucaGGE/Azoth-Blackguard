@@ -231,10 +231,6 @@ function Movable:move_entity(owner, dir)
                 ["place"] = "Black Swamps"
                 }
                 table.insert(g.cemetery, deceased)
-                -- send a 'game over' string to console in red color
-                console_event(
-                    deceased["player"] .. " got slain by " .. deceased["killer"], {[1] = 0.93, [2] = 0.18, [3] = 0.27}
-                )
             end
         end
 
@@ -516,29 +512,18 @@ end
 ]]--
 Stats = Object:extend()
 function Stats:new(stats_table)
+    self.stat = {}
+
     local funcs = {
         ["die_set"] = function(input)
-            print("Stat is a die set: " .. input)
-
             return input
         end,
         ["random_k"] = function (input)
-            local result = 0
-
-            -- store the random number as a constant number thanks to loop
-            for i = 1, math.random(dice_roll(input)) do
-                result = result + 1
-            end
-        
-            print("Stat is a die set to const: " .. result)
-
-            return result
+            return dice_roll(input)
         end
     }
 
-    self.stat = {}
-
-    self.STAT_DTABLE = {
+    local STAT_DTABLE = {
         ["hp"] = funcs["random_k"],
         ["dmg"] = funcs["die_set"],
         ["mana"] = funcs["random_k"],
@@ -550,17 +535,16 @@ function Stats:new(stats_table)
         local stat_name = stat_input[1]
         
         -- check if stat is a valid stat
-        if self.STAT_DTABLE[stat_name] then
+        if STAT_DTABLE[stat_name] then
             local stat_value
 
             -- convert and store constant numerical stats to numbers
             if stat_input[2]:match("%d") then
-                print("Stat is a costant: " .. stat_name)
                 stat_value = tonumber(stat_input[2])
             end
 
             -- store as constant or dice depending if value was already assigned
-            stat_value = stat_value or self.STAT_DTABLE[stat_name](stat_input[2])
+            stat_value = stat_value or STAT_DTABLE[stat_name](stat_input[2])
             self.stat[stat_name] = stat_value
         else
             error_handler("WARNING: trying to assign invalid stat: " .. stat_name)
@@ -678,7 +662,6 @@ function Inventory:remove(item_key)
     for i = 1, string.len(inv_str) do
         if string.sub(inv_str, i, i) == item_key then
             table.remove(self.items, i)
-            print("Removing object from inventory...")
 
             return true
         end

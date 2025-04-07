@@ -288,11 +288,17 @@ IO_DTABLE = {
         -- check if the selected item is equipable
         if not g.current_inv[key].comp["equipable"] then
             console_event("Thee can't equip this")
-            return true
+            return false
         end
 
         -- item 'equipable' comp
         equipable_comp = g.current_inv[key].comp["equipable"]
+
+        if equipable_comp.slot_reference then
+            console_event("This gear is already donned")
+
+            return false
+        end
 
         -- check if proper slot for the item is available in 'slots' component
         for _, slot in ipairs(equipable_comp.suitable_slots) do

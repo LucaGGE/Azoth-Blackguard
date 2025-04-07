@@ -633,8 +633,6 @@ function blueprint_generator(bp_data)
                 )
                 goto continue
             end
-            
-            print("Power: " .. power_effects[1])
 
             -- store newly added power in blueprint_powers, to add to final Entity
             blueprint_powers[power_effects[1]] = Power(power_effects)
@@ -1087,7 +1085,7 @@ end
 function entity_kill(entity, index, group)
     table.remove(group, index)
     if entity.comp["obstacle"] or entity.comp["player"] or entity.comp["npc"] then
-        print("pawn entity destroyed")
+        print("Pawn entity or obstacle entity destroyed")
 
         entity.cell["cell"].pawn = nil
     else
@@ -1124,7 +1122,7 @@ end
 function death_check(target, damage_dice, type, message)
     -- this is needed to output messages on screen in yellow or red
     local event_color = {
-        [false] = {[1] = 1, [2] = 0.97, [3] = 0.44},
+        [false] = {[1] = 0.87, [2] = 0.26, [3] = 0.43},
         [true] = {[1] = 0.93, [2] = 0.18, [3] = 0.27}
     }
     -- store target.comp for better readibility
@@ -1134,9 +1132,11 @@ function death_check(target, damage_dice, type, message)
     -- reference eventual 'profile' component or set variable to false
     local modifier = comps["profile"] and comps["profile"].profile[type] or false
     -- choose color depending on player (red) or npc (yellow)
-    local target_family = comps["player"] or false
+    local target_family = comps["player"] and true or false
     -- stores final damage score to subtract from target's HP
     local damage_score = 0
+    -- target.name, with first letter in uppercase
+    local target_name = target.name:gsub("^%l", string.upper)
 
     -- cannot damage an Entity without hp
     if not stats and not stats["hp"] then
@@ -1146,7 +1146,7 @@ function death_check(target, damage_dice, type, message)
 
     -- cannot damage an Entity immune to that effect
     if modifier and modifier == "immune" then
-        console_event(target.name .. " doth seem immune to " .. type)
+        console_event(target_name .. " doth seem immune to " .. type)
         return false
     end
     
@@ -1154,7 +1154,7 @@ function death_check(target, damage_dice, type, message)
 
     -- this is done to avoid adding HP when modifier is so impactful to output <= 0
     if damage_score <= 0 then
-        console_event(target.name .. " doth not appear troubled by " .. type)
+        console_event(target_name .. " doth not appear troubled by " .. type)
         return false
     end
 
@@ -1162,7 +1162,7 @@ function death_check(target, damage_dice, type, message)
 
     if stats["hp"] <= 0 then
         target.alive = false
-        console_event(target.name .. " " .. message, event_color[target_family])
+        console_event(target_name .. " " .. message, event_color[target_family])
     end
 
     -- returning success and damage inflicted, useful to influence EffectTags:

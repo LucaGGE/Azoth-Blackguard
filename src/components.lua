@@ -168,7 +168,19 @@ function Movable:move_entity(owner, dir)
     if destination.pawn then
         local pilot = owner.pilot
         local pawn = destination.pawn
-        local pawn_slots = owner.comp["slots"].slots
+        local pawn_slots = owner.comp["slots"] and owner.comp["slots"].slots or false
+
+        -- trying to establish attack mode: armed or unarmed. Checking weapon slot
+        local attack_mode = pawn_slots and pawn_slots["weapon"] or false
+
+        -- checking if slot is available but empty
+        if attack_mode and attack_mode == "empty" then
+            attack_mode = false
+        end
+
+        -- if weapon is available, select its 'hit' power (always expected)
+        attack_mode =  attack_mode and attack_mode.powers["hit"] or false
+
         -- moving against an Entity = interaction. If part of different groups
         -- or of special 'self' group, the interaction results in an attack
         if pilot.group ~= "self" and pilot.group == pawn.pilot.group then
@@ -188,8 +200,11 @@ function Movable:move_entity(owner, dir)
             return true
         end
 
+        -- selecting between weapon, if available, or unarmed attack
+        attack_mode = attack_mode or owner.powers["unarmed"]
+
         -- an enemy was found, but owner has no weapon equipped or 'unarmed' power
-        if pawn_slots["weapon"] == "empty" and not owner.powers["unarmed"] then
+        if not attack_mode then
             print('Trying to attack other entity without weapon, but no "unarmed" power was assigned')
 
             return false
@@ -221,11 +236,7 @@ function Movable:move_entity(owner, dir)
             love.audio.play(SOUNDS["hit_blow"])
 
             -- NOTE: both "unarmed" and "hit" are expected powers previously checked
-            if pawn_slots["weapon"] == "empty" then
-                owner.powers["unarmed"]:activate(pawn)
-            else
-                pawn_slots["weapon"].powers["hit"]:activate(pawn)
-            end
+            attack_mode:activate(pawn)
         else
             love.audio.play(SOUNDS["hit_miss"])
         end

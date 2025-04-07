@@ -1157,6 +1157,7 @@ function death_check(target, damage_dice, type, message)
     end
 
     stats["hp"] = stats["hp"] - damage_score
+    print(target.name .. " receives damage: " .. damage_score)
 
     if stats["hp"] <= 0 then
         target.alive = false

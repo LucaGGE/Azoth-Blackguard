@@ -1,6 +1,6 @@
 --[[
     This file contains all of the game's Effects, the modules that build powers.
-    Scroll to bottom to find the EFFECT_TABLE that links to all the valid effects.
+    EFFECT_TABLES links to all the valid effects.
     Because of how Power is structured, all these funcs need (target, input) even
     when (target) is useless.
     NOTE WELL: *effects* are just functions that can apply EffectTags.
@@ -117,6 +117,18 @@ function slash(target, input)
         -- the higher the slash damage, the longer the target will bleed
         table.insert(target.effects, EffectTag(target, input, dice_roll("3d3+"..damage), bleed))
     end
+end
+
+function bludgeon(target, input)
+    local success, damage
+
+    success, damage = death_check(target, input, "bludgeon", "was pulverized")
+end
+
+function pierce(target, input)
+    local success, damage
+
+    success, damage = death_check(target, input, "pierce", "was massacred")
 end
 
 function bleed(effect_tag, target, input)

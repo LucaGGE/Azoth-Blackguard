@@ -168,6 +168,7 @@ function Movable:move_entity(owner, dir)
     if destination.pawn then
         local pilot = owner.pilot
         local pawn = destination.pawn
+        local pawn_slots = owner.comp["slots"].slots
         -- moving against an Entity = interaction. If part of different groups
         -- or of special 'self' group, the interaction results in an attack
         if pilot.group ~= "self" and pilot.group == pawn.pilot.group then
@@ -185,6 +186,13 @@ function Movable:move_entity(owner, dir)
             print("Player dialogues with civilized creature")
             -- this will actually lead to a dialogue func() that will return true/false
             return true
+        end
+
+        -- an enemy was found, but owner has no weapon equipped or 'unarmed' power
+        if pawn_slots["weapon"] == "empty" and not owner.powers["unarmed"] then
+            print('Trying to attack other entity without weapon, but no "unarmed" power was assigned')
+
+            return false
         end
 
         -- an enemy was found. Check if it has stats and can take damage
@@ -208,11 +216,15 @@ function Movable:move_entity(owner, dir)
         -- dices get rolled to identify successful hit and eventual damage
         succ_atk = dice_roll("1d12+1", succ_score)
         
-        if succ_atk then 
+        if succ_atk then
             love.audio.stop(SOUNDS["hit_blow"])
             love.audio.play(SOUNDS["hit_blow"])
-            for power_tag, power_class in pairs(owner.powers) do
-                power_class:activate(pawn)
+
+            -- NOTE: both "unarmed" and "hit" are expected powers previously checked
+            if pawn_slots["weapon"] == "empty" then
+                owner.powers["unarmed"]:activate(pawn)
+            else
+                pawn_slots["weapon"].powers["hit"]:activate(pawn)
             end
         else
             love.audio.play(SOUNDS["hit_miss"])

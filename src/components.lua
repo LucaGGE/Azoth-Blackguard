@@ -71,13 +71,13 @@ function Player:manage_input(entity, key)
 
         -- 'Movable' component can be modified/added/removed during gameplay,
         -- so it is imperative to check for it each time
-        if not entity.comps["movable"] then
+        if not entity.comp["movable"] then
             print("INFO: The entity does not contain a movement component")
             return false
         end
 
         -- if no guard statements were activated, player is legally trying to move
-        return entity.comps["movable"]:move_entity(entity, mov_input)
+        return entity.comp["movable"]:move_entity(entity, mov_input)
     end
 
     -- managing self.action_state mode of input  
@@ -159,7 +159,7 @@ function Movable:move_entity(owner, dir)
     end
 
     -- check if owner movement is impeded by an obstacle Entity
-    if entity and entity.comps["obstacle"] then
+    if entity and entity.comp["obstacle"] then
         print("Cell is blocked by obstacle: " .. entity.id)
         return false
     end
@@ -188,19 +188,19 @@ function Movable:move_entity(owner, dir)
         end
 
         -- an enemy was found. Check if it has stats and can take damage
-        if not pawn.comps["stats"] then
+        if not pawn.comp["stats"] then
             print("Target entity has no Stats component")
             return false
         end
 
-        local target_stats = pawn.comps["stats"].stats
+        local target_stats = pawn.comp["stats"].stat
         if not target_stats["hp"] then
             print("Target entity has no HP and cannot die")
             return false
         end
 
         -- if target is invisible, you need to roll a lower number
-        if pawn.comps["invisible"] then
+        if pawn.comp["invisible"] then
             print("Trying to hit invisible entity, success when: roll <= 4")
             succ_score = 4
         end
@@ -224,10 +224,10 @@ function Movable:move_entity(owner, dir)
             pawn.alive = false
             -- if a player just died, save all deceased's relevant info in cemetery
             -- variable for recap in Game Over screen
-            if pawn.comps["player"] then
+            if pawn.comp["player"] then
                 local deceased = {["player"] = pawn.name,
                 ["killer"] = owner.name,
-                ["loot"] = pawn.comps["stats"].stats["gold"],
+                ["loot"] = pawn.comp["stats"].stat["gold"],
                 ["place"] = "Black Swamps"
                 }
                 table.insert(g.cemetery, deceased)
@@ -261,15 +261,15 @@ function Movable:move_entity(owner, dir)
         return true
     end
     -- see if the Entity is an exit
-    if entity.comps["exit"] then
-        entity.comps["exit"]:activate(entity, owner)
+    if entity.comp["exit"] then
+        entity.comp["exit"]:activate(entity, owner)
         return true
     end
 
     -- see if Entity is has trigger component
-    if entity.comps["trigger"] and entity.comps["trigger"].trig_on_coll then
+    if entity.comp["trigger"] and entity.comp["trigger"].trig_on_coll then
         -- trigger may work or not, but Entity still moved, so return true
-        entity.comps["trigger"]:activate(entity, owner)
+        entity.comp["trigger"]:activate(entity, owner)
         return true
     end
 
@@ -328,7 +328,7 @@ end
 
 function Npc:activate(owner)
     -- if NPC cannot move, skip turn
-    if not owner.comps["movable"] then
+    if not owner.comp["movable"] then
         return false
     end
 
@@ -418,8 +418,8 @@ function Usable:activate(target, input_entity, input_key)
     local entity = input_entity
 
     -- trigger always hits activating Entity, even if linked comp is present
-    if target.comps["trigger"] then
-        target.comps["trigger"]:activate(target, entity)
+    if target.comp["trigger"] then
+        target.comp["trigger"]:activate(target, entity)
     end
 
     -- if Entity is destroyontrigger, don't bother with rest of code
@@ -453,9 +453,9 @@ function Usable:activate(target, input_entity, input_key)
     end
     
     -- search for linked comp and store eventual linked Entity
-    if target.comps["linked"] then
+    if target.comp["linked"] then
         print("Linked component was found")
-        local row, col = target.comps["linked"]:activate(target)
+        local row, col = target.comp["linked"]:activate(target)
         row = tonumber(row)
         col = tonumber(col)
         -- check immediately for NPC/Player
@@ -495,7 +495,7 @@ end
 
 function Exit:activate(owner, entity)
     console_event(self.event_string)
-    if entity.comps["player"] then
+    if entity.comp["player"] then
         -- the entity's name indicates the level to load
         if owner.name ~= "menu" then
             g.game_state:exit()
@@ -516,15 +516,15 @@ end
 ]]--
 Stats = Object:extend()
 function Stats:new(stats_table)
-    self.stats = {}
+    self.stat = {}
     for i, stat in ipairs(stats_table) do
         local new_stat = str_slicer(stat, "=", 1)
         -- automatically convert numerical stats to numbers
         if new_stat[2]:match("%d") then
             new_stat[2] = tonumber(new_stat[2])
         end
-        -- code below translates as "self.stats[stat_name] = stat_value"
-        self.stats[new_stat[1]] = new_stat[2]
+        -- code below translates as "self.stat[stat_name] = stat_value"
+        self.stat[new_stat[1]] = new_stat[2]
     end
 end
 
@@ -589,12 +589,12 @@ function Inventory:add(item)
     item_ref = string_selector(item)
 
     -- if not stackable, simply add to inventory
-    if not item.comps["stack"] then
+    if not item.comp["stack"] then
         goto addtoinv
     end
 
     -- return error if stackable Entity is missins essential 'hp' stat
-    if not item.comps["stats"] and not item.comps["stats"].stats["hp"] then
+    if not item.comp["stats"] and not item.comp["stats"].stat["hp"] then
         error_handler(
             "Trying to stack Stackable Entity without HP stat, which defines stack amount.",
             "Pickup action canceled!"
@@ -605,12 +605,12 @@ function Inventory:add(item)
     -- if everything is in check, stack Entity in inventory, even if equipped
     for _, obj in ipairs(self.items) do
         if obj.id == item.id then
-            local supplement =  item.comps["stats"].stats["hp"]
-            local stack = obj.comps["stats"]
+            local supplement =  item.comp["stats"].stat["hp"]
+            local stack = obj.comp["stats"]
 
-            stack.stats["hp"] = stack.stats["hp"] + supplement
+            stack.stat["hp"] = stack.stat["hp"] + supplement
 
-            print("Entity succesfully stacked: ".. stack.stats["hp"])
+            print("Entity succesfully stacked: ".. stack.stat["hp"])
 
             console_event("Thee pick up " .. item_ref)
             item.alive = false
@@ -695,20 +695,20 @@ end
 
 function Equipable:unequip(owner, target)
     -- check if owner is cursed and cannot be removed. If so, reveal item
-    if owner.comps["equipable"].cursed then
+    if owner.comp["equipable"].cursed then
         console_event("Thy item is cursed and may not be removed!", {0.6, 0.2, 1})
 
         -- reveal Entity real description
-        if owner.comps["secret"] then
-            owner.comps["secret"] = nil
+        if owner.comp["secret"] then
+            owner.comp["secret"] = nil
         end
 
         return false
     end
 
     if not owner.powers["unequip"] then
-        print("Warning: trying to activate unequip power, but none is found")
-        return false
+        print("Warning: trying to activate unequip power, but none is found. Object unequipped anyway.")
+        return true
     end
 
     owner.powers["unequip"]:activate(target)
@@ -724,12 +724,12 @@ end
 function Sealed:activate(target, entity, player_comp)
     if target.name == player_comp.string then
         console_event("Thou dost unseal it!")
-        if target.comps["trigger"] then
-            target.comps["trigger"]:activate(target, entity)
+        if target.comp["trigger"] then
+            target.comp["trigger"]:activate(target, entity)
         end
 
         -- if Entity gets successfully unsealed, remove 'seled' comp
-        target.comps["sealed"] = nil
+        target.comp["sealed"] = nil
         player_comp.string = ""
         return true
     end
@@ -748,16 +748,16 @@ function Locked:new(input)
 end
 
 function Locked:activate(target, entity)
-    if entity.comps["inventory"] then
-        for _, item in ipairs(entity.comps["inventory"].items) do
-            if item.comps["key"] and item.name == target.name then
+    if entity.comp["inventory"] then
+        for _, item in ipairs(entity.comp["inventory"].items) do
+            if item.comp["key"] and item.name == target.name then
                 console_event("Thou dost unlock it!")
-                if target.comps["trigger"] then
-                    target.comps["trigger"]:activate(target, entity)
+                if target.comp["trigger"] then
+                    target.comp["trigger"]:activate(target, entity)
                 end
 
                 -- if Entity was successfully unlocked, remove 'Locked' comp
-                target.comps["locked"] = nil
+                target.comp["locked"] = nil
                 return true
             end
         end
@@ -803,9 +803,9 @@ end
 Shooter = Object:extend()
 function Shooter:new(args)
     -- amount of ammo consumed per use
-    self.consume = tonumber(args[1])
+    self.shots = tonumber(args[1])
     -- types of compatible ammo
-    self.compatible = {}
+    self.munitions = {}
 
     -- remove first arg, as it is now useless
     table.remove(args, 1)
@@ -826,7 +826,7 @@ function Shooter:new(args)
         print(ammo_type)
 
         -- adding all compatible ammo types
-        table.insert(self.compatible, ammo_type)
+        table.insert(self.munitions, ammo_type)
     end
 end
 

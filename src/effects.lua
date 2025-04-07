@@ -132,12 +132,12 @@ function str_effect(target, input)
     local target_str = target.name
             
     -- as usual, favor Entity description (or secret) to Entity name
-    if target.comps["description"] then
-        target_str = target.comps["description"].string
+    if target.comp["description"] then
+        target_str = target.comp["description"].string
     end
 
-    if target.comps["secret"] then
-        target_str = target.comps["secret"].string
+    if target.comp["secret"] then
+        target_str = target.comp["secret"].string
     end
 
     console_event(
@@ -158,7 +158,7 @@ function sfx_play(target, input)
 end
 
 function stat_gold(target, input)
-    local target_stats = target.comps["stats"].stats
+    local target_stats = target.comp["stats"].stat
 
     -- give feedback to eventual trigger that Entity has no stats or 'gold' stat
     if not target_stats or not target_stats["gold"] then
@@ -200,10 +200,10 @@ end
 ]]--
 function phys_change(target, property)
     if property == "obstacle" then
-        if target.comps["obstacle"] then
-            target.comps["obstacle"] = nil
+        if target.comp["obstacle"] then
+            target.comp["obstacle"] = nil
         else
-            target.comps["obstacle"] = Obstacle()
+            target.comp["obstacle"] = Obstacle()
         end
     end
 end

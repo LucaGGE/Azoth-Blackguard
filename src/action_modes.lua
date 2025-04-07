@@ -138,8 +138,8 @@ IO_DTABLE = {
         end
 
         -- if the target has a trigger comp, trigger immediately
-        if entity.comps["sealed"] then
-            return entity.comps["sealed"]:activate(entity, player_entity, player_comp)
+        if entity.comp["sealed"] then
+            return entity.comp["sealed"]:activate(entity, player_entity, player_comp)
         end
 
         console_event("Nothing doth seem to happen")
@@ -154,7 +154,7 @@ IO_DTABLE = {
         
         if not valid_key then return false end
 
-        if not player_entity.comps["inventory"] then
+        if not player_entity.comp["inventory"] then
             error_handler("Entity without inventory is trying to pickup")
             return false
         end
@@ -169,8 +169,8 @@ IO_DTABLE = {
         if not entity_available(entity) then return true end
 
         -- if the target has a trigger comp, trigger immediately
-        if entity.comps["trigger"] then
-            entity.comps["trigger"]:activate(entity, player_entity)
+        if entity.comp["trigger"] then
+            entity.comp["trigger"]:activate(entity, player_entity)
         end
 
         -- if target is has destroyontrigger, don't bother picking up
@@ -179,8 +179,8 @@ IO_DTABLE = {
         end
 
         -- if target has no pickup comp then warn player
-        if entity.comps["pickup"] then
-            return player_entity.comps["inventory"]:add(entity)
+        if entity.comp["pickup"] then
+            return player_entity.comp["inventory"]:add(entity)
         else
             console_event("Thee art unable to pick hider up")
             return false
@@ -222,12 +222,12 @@ IO_DTABLE = {
         if not entity_available(entity) then return true end
 
         -- if the target has a trigger 'trig_on_coll' comp, trigger immediately
-        if entity.comps["trigger"] and entity.comps["trigger"].trig_on_coll then
-            entity.comps["trigger"]:activate(entity, player_entity)
+        if entity.comp["trigger"] and entity.comp["trigger"].trig_on_coll then
+            entity.comp["trigger"]:activate(entity, player_entity)
         end
 
         -- if usable target is found activate, else warn player
-        if entity.comps["usable"] then
+        if entity.comp["usable"] then
             local console_string
             local entity_str = string_selector(entity)
 
@@ -237,7 +237,7 @@ IO_DTABLE = {
             console_string = player_comp.string or "usae "
 
             console_event("Thee " .. console_string .. " " .. entity_str)
-            entity.comps["usable"]:activate(entity, player_entity, player_comp.string)
+            entity.comp["usable"]:activate(entity, player_entity, player_comp.string)
         else
             console_event("Nothing doth happen")
         end
@@ -259,8 +259,8 @@ IO_DTABLE = {
         end
 
         -- if no unlockable target is found then warn player
-        if entity.comps["locked"] then
-            entity.comps["locked"]:activate(entity, player_entity)
+        if entity.comp["locked"] then
+            entity.comp["locked"]:activate(entity, player_entity)
         else
             console_event("Thee can't unlock this")
         end
@@ -268,7 +268,7 @@ IO_DTABLE = {
         return true
     end,
     ["equip"] = function(player_comp, player_entity, key)
-        local player_slots = player_entity.comps["slots"]
+        local player_slots = player_entity.comp["slots"]
         local target_item
         local equipable_comp
 
@@ -286,13 +286,13 @@ IO_DTABLE = {
         end
 
         -- check if the selected item is equipable
-        if not g.current_inv[key].comps["equipable"] then
+        if not g.current_inv[key].comp["equipable"] then
             console_event("Thee can't equip this")
             return true
         end
 
         -- item 'equipable' comp
-        equipable_comp = g.current_inv[key].comps["equipable"]
+        equipable_comp = g.current_inv[key].comp["equipable"]
 
         -- check if proper slot for the item is available in 'slots' component
         for _, slot in ipairs(equipable_comp.suitable_slots) do
@@ -316,13 +316,13 @@ IO_DTABLE = {
     ["unequip"] = function(player_comp, player_entity, key)
         local player_slots
 
-        if not player_entity.comps["slots"] then
+        if not player_entity.comp["slots"] then
             print("WARNING: Entity without slots is trying to unequip")
             return false
         end
         -- if an item player_entity was equipped and still is,
         -- we can assume its data is predictable
-        player_slots = player_entity.comps["slots"].slots
+        player_slots = player_entity.comp["slots"].slots
 
         if g.current_inv[key] then
             local item
@@ -330,24 +330,24 @@ IO_DTABLE = {
 
             item = g.current_inv[key]
 
-            if not item.comps["equipable"] then
+            if not item.comp["equipable"] then
                 print("Trying to unequip an unequippable object!")
                 return false
             end
 
             -- if this variable == false, then the item wasn't equipped
-            if not item.comps["equipable"].slot_reference then
+            if not item.comp["equipable"].slot_reference then
                 print("Trying to unequip a non-equipped, equippable object")
                 return false
             end
 
-            success = item.comps["equipable"]:unequip(item, player_entity)
+            success = item.comp["equipable"]:unequip(item, player_entity)
 
             -- if item isn't cursed, empty player_slots component reference
             -- and also equipable component slot_reference
             if success then
-                player_slots[item.comps["equipable"].slot_reference] = "empty"
-                item.comps["equipable"].slot_reference = false
+                player_slots[item.comp["equipable"].slot_reference] = "empty"
+                item.comp["equipable"].slot_reference = false
             end
         else
             print("No item at this key address")
@@ -357,7 +357,7 @@ IO_DTABLE = {
         return true
     end,
     ["bestow"] = function(player_comp, player_entity, key)
-        local player_slots = player_entity.comps["slots"]
+        local player_slots = player_entity.comp["slots"]
         local item
 
         if not player_slots then
@@ -373,7 +373,7 @@ IO_DTABLE = {
         end
 
         -- if this variable == false, then the item is currently equipped
-        if item.comps["equipable"] and item.comps["equipable"].slot_reference then
+        if item.comp["equipable"] and item.comp["equipable"].slot_reference then
             console_event("Thee need to unequip this first")
             return false
         end
@@ -429,7 +429,7 @@ IO_DTABLE = {
         item_str = string_selector(item)
 
         -- then remove item from inventory using item_key position in alphabet
-        player_entity.comps["inventory"]:remove(item_key)
+        player_entity.comp["inventory"]:remove(item_key)
         inventory_update(player_entity)
         player_comp.string = false
 
@@ -442,7 +442,7 @@ IO_DTABLE = {
         table.insert(g.entities_group, item)
 
         -- insert item in visible or invisible group
-        if not item.comps["invisible"] then
+        if not item.comp["invisible"] then
             -- adding entity in proper drawing order (back/front) based on their
             -- belonging to Players/NPCs or simple Entities
             table.insert(g.render_group, 1, item)

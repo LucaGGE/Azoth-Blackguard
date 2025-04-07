@@ -191,7 +191,7 @@ function entities_spawner(bp, loc_row, loc_col, name)
     local instanced_comps = {}
     local instanced_entity = nil
 
-    for i, comp_tags in ipairs(bp.comps) do
+    for i, comp_tags in ipairs(bp.comp) do
         -- translating components tags into actual components
         local new_component = components_interface(comp_tags)
         instanced_comps[comp_tags[1]] = new_component
@@ -211,7 +211,7 @@ function entities_spawner(bp, loc_row, loc_col, name)
     -- once special components are stored, finish entityt identity 
     if is_npc then
         -- save NPC pilot in entity.pilot
-        instanced_entity.pilot = instanced_entity.comps["npc"]
+        instanced_entity.pilot = instanced_entity.comp["npc"]
         table.insert(g.npcs_group, instanced_entity)
     -- if one uses a 'Npc' comp with a player, it just becomes a Npc!
     elseif instanced_entity.id == "player" and not is_npc then
@@ -228,15 +228,15 @@ function entities_spawner(bp, loc_row, loc_col, name)
         end
 
         -- save Player pilot in entity.pilot
-        instanced_entity.pilot = instanced_entity.comps["player"]
+        instanced_entity.pilot = instanced_entity.comp["player"]
         -- check if player has Stats() component with "hp". If not, add stat/comp
-        if not instanced_entity.comps["stats"] then
+        if not instanced_entity.comp["stats"] then
             local stat_component = components_interface({"stats", "hp:1"})
-            instanced_entity.comps["stats"] = stat_component
+            instanced_entity.comp["stats"] = stat_component
         end
 
-        if not instanced_entity.comps["stats"].stats["hp"] then
-            instanced_entity.comps["stats"].stats["hp"] = 1
+        if not instanced_entity.comp["stats"].stat["hp"] then
+            instanced_entity.comp["stats"].stat["hp"] = 1
         end
 
         new_player["entity"] = instanced_entity
@@ -255,7 +255,7 @@ function entities_spawner(bp, loc_row, loc_col, name)
         g.grid[loc_row][loc_col].entity = instanced_entity
     end
     -- adding the entity to the g.render_group IF it is not invisible by default
-    if not instanced_entity.comps["invisible"] then
+    if not instanced_entity.comp["invisible"] then
         -- insert entity to be drawn front/back depending if is pawn or not
         if is_pawn then
             -- insert to front in drawing order (last in group)
@@ -824,7 +824,7 @@ function turns_manager(current_player, npc_turn)
 
             -- check again if NPC is still alive after the receiving lasting effects
             if npc.alive then
-                g.npcs_group[i].comps["npc"]:activate(g.npcs_group[i])
+                g.npcs_group[i].comp["npc"]:activate(g.npcs_group[i])
             end
         end
 
@@ -876,7 +876,7 @@ function ui_manager_play()
     love.graphics.print(event_1, PADDING, g.w_height - (PADDING * 1.5))
 
     if not g.view_inv then
-        local player_stats = g.camera["entity"].comps["stats"].stats
+        local player_stats = g.camera["entity"].comp["stats"].stat
         -- set proper font
         love.graphics.setFont(FONTS["tag"])
 
@@ -1086,7 +1086,7 @@ end
 
 function entity_kill(entity, index, group)
     table.remove(group, index)
-    if entity.comps["obstacle"] or entity.comps["player"] or entity.comps["npc"] then
+    if entity.comp["obstacle"] or entity.comp["player"] or entity.comp["npc"] then
         print("pawn entity destroyed")
 
         entity.cell["cell"].pawn = nil
@@ -1127,10 +1127,10 @@ function death_check(target, damage_dice, type, message)
         [false] = {[1] = 1, [2] = 0.97, [3] = 0.44},
         [true] = {[1] = 0.93, [2] = 0.18, [3] = 0.27}
     }
-    -- store target.comps for better readibility
-    local comps = target.comps
+    -- store target.comp for better readibility
+    local comps = target.comp
     -- reference eventual 'stats' component or set variable to false
-    local stats = comps["stats"] and comps["stats"].stats or false
+    local stats = comps["stats"] and comps["stats"].stat or false
     -- reference eventual 'profile' component or set variable to false
     local modifier = comps["profile"] and comps["profile"].profile[type] or false
     -- choose color depending on player (red) or npc (yellow)
@@ -1172,10 +1172,10 @@ end
 
 -- check if Entity can be interacted with actions such as pickup, use, etc
 function entity_available(target)
-    if target.comps["locked"] or target.comps["sealed"] then
+    if target.comp["locked"] or target.comp["sealed"] then
         console_event(
-            target.comps["locked"] and "You require a key"
-            or target.comps["sealed"] and "It is sealed by magic"
+            target.comp["locked"] and "You require a key"
+            or target.comp["sealed"] and "It is sealed by magic"
         )
         
         return false
@@ -1191,7 +1191,7 @@ function inventory_update(player)
     local inv_str = "abcdefghijklmnopqrstuvwxyz"
     local tag_str
     -- referencing eventual player's 'inventory' component
-    local inventory = player.comps["inventory"]
+    local inventory = player.comp["inventory"]
     local available_items = {}
     local equipped = false
     local title_color = {0.49, 0.82, 0.90, 1}
@@ -1244,7 +1244,7 @@ function inventory_update(player)
         end
 
         -- item exists, proceed referencing it
-        equipable_ref = inventory[i].comps["equipable"]
+        equipable_ref = inventory[i].comp["equipable"]
 
         -- choosing printf text_color to discriminate equipped/unequipped items
         if equipable_ref and equipable_ref.slot_reference then
@@ -1254,10 +1254,10 @@ function inventory_update(player)
             equipped = false
         end
 
-        equipable_ref = inventory[i].comps["stack"]
+        equipable_ref = inventory[i].comp["stack"]
 
-        if inventory[i] then
-            local stack_qty = inventory[i].comps["stats"].stats["hp"]
+        if equipable_ref then
+            local stack_qty = inventory[i].comp["stats"].stat["hp"]
             stack_str = " [" .. stack_qty .. "]"
         end
 
@@ -1330,12 +1330,12 @@ function string_selector(entity)
 
     proper_string = entity.name
 
-    if entity.comps["description"] then
-        proper_string = entity.comps["description"].string
+    if entity.comp["description"] then
+        proper_string = entity.comp["description"].string
     end
 
-    if entity.comps["secret"] then
-        proper_string = entity.comps["secret"].string
+    if entity.comp["secret"] then
+        proper_string = entity.comp["secret"].string
     end
 
     return proper_string

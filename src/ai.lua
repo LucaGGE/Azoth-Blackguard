@@ -9,7 +9,7 @@ local AI_DTABLE = {
             return false
         end
 
-        other_pilot = other_pawn.comps["npc"] or other_pawn.comps["player"]
+        other_pilot = other_pawn.comp["npc"] or other_pawn.comp["player"]
 
         if other_pilot.group ~= npc_comp.group then
             -- reset other_pawn to its initial value
@@ -36,7 +36,7 @@ local AI_DTABLE = {
 
             direction = {out_row, out_col}
 
-            owner.comps["movable"]:move_entity(owner, direction)
+            owner.comp["movable"]:move_entity(owner, direction)
 
             return true
         end
@@ -87,7 +87,7 @@ function target_entity(owner, npc_comp)
             end
 
             -- evaluate target only if it is not an obstacle
-            if target.comps["npc"] or target.comps["player"] then
+            if target.comp["npc"] or target.comp["player"] then
                 print("Found potential target: " .. target.name)
                 table.insert(targets, target)                
             end

@@ -23,7 +23,7 @@ function Entity:new(id, tile, components, powers, name)
     -- second CSV arg. All visibile and invisible Entities are drawn on screen
     self.tile = tile
     -- optional. In an OOPBA fashion, this is how Entities are defined
-    self.comps = components or {}
+    self.comp = components or {}
     -- effects applied on Entity by others powers. Activated before Entity turn
     self.effects = {} 
     -- optional. This is where all entity powers (abilities) are defined

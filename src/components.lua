@@ -374,8 +374,9 @@ function Trigger:new(args)
         ["true"] = true
     }
     self.destroyontrigger = string_to_bool[args[1]]
-    self.trig_on_coll = string_to_bool[args[2]]
-    self.event_string = args[3]
+    self.fire_once = string_to_bool[args[2]]
+    self.trig_on_coll = string_to_bool[args[3]]
+    self.event_string = args[4]
 end
 
 function Trigger:activate(owner, entity)  
@@ -395,6 +396,13 @@ function Trigger:activate(owner, entity)
     if self.destroyontrigger then
         -- will be removed from render_group and cell during refresh()
         owner.alive = false
+
+        return
+    end
+
+    -- if component is set to fire_once, destroy component
+    if self.fire_once then
+        owner.comp["trigger"] = nil
     end
 end
 

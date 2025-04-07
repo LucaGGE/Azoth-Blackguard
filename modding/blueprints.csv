@@ -1,7 +1,7 @@
-@player|:72|player|stats,hp=10,gold=0|movable,walk|slots,head,chest,cape,quiver,weapon|*unarmed,str=hitting,slash=1d4|inventory,26
+@player|:72|player|stats,hp=10,gold=0|movable,walk|slots,head,chest,cape,quiver,weapon|*unarmed,str=hitting,bludgeon=1d2|inventory,26
 @lemure|:108|stats,hp=10|npc,group=lemure,enemies=none,nature=neutral,sight=15,hearing=5|movable,walk,climb|profile,bleeding=immune
-@crab|:110|stats,hp=15,mana=10|npc,group=crabs,enemies=none,nature=aggressive,sight=3,hearing=1|movable,walk,swim,ruck|*grab,str=clamping,slash=1d2|profile,slash=-2
-@gold|:88|pickup|trigger,true,false,collects th' gold|*trigger,statgold=1d5+5,sfx=sfx_gold
+@crab|:110|stats,hp=15,mana=10|npc,group=crabs,enemies=none,nature=aggressive,sight=3,hearing=1|movable,walk,swim,ruck|*unarmed,str=clamping,slash=1d2|profile,slash=-2
+@gold|:88|pickup|trigger,true,false,false,collects th' gold|*trigger,statgold=1d5+5,sfx=sfx_gold
 @locket|:101|locked|trigger,true,false,doth open the locket|description,golden locket
 @key|:64|key|pickup|description,key
 @door|:9|obstacle|usable,false,use=linked|*linked,tileswitch=10,physchange=obstacle
@@ -17,6 +17,7 @@
 @potion4|:potions|secret,potion|description,poison vial
 @potion5|:potions|secret,potion|description,phasing juice
 @potion6|:potions|secret,potion|description,blindness ointment
-@crossbow|:82|pickup|equipable,true,weapon|shooter,1,dartpierce,dartflat|stats,dmg=3d3|description,small crossbow
+@crossbowlight|:82|pickup|equipable,true,weapon|shooter,1,dartpierce,dartflat|stats,dmg=3d3|description,light crossbow|*hit,str=hit,bludgeon=1d3
+@crossbowheavy|:81|pickup|equipable,true,weapon|shooter,1,dartpierce,dartflat|stats,dmg=4d3+10|description,heavy crossbow|*hit,str=hit,bludgeon=1d3+2
 @dartpierce|:84|pickup|stack|stats,hp=4|equipable,false,quiver|*shot,slash=1d2|description,piercing bolts
 @dartflat|:85|pickup|stack|stats,hp=4|equipable,false,quiver|*shot,slash=1d2|description,flat bolts

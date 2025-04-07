@@ -1,4 +1,4 @@
-@player|:72|player|stats,hp=10,gold=0|movable,walk|slots,head,chest,cape,quiver,weapon|*unarmed,str=hitting,bludgeon=1d2|inventory,26
+@player|:72|player|stats,hp=10,gold=0|movable,walk|slots,head,chest,cape,quiver,weapon|*unarmed,sfx=hit_blow,str=hitting,bludgeon=1d2|inventory,26
 @lemure|:108|stats,hp=10|npc,group=lemure,enemies=none,nature=neutral,sight=15,hearing=5|movable,walk,climb|profile,bleeding=immune
 @crab|:110|stats,hp=15,mana=10|npc,group=crabs,enemies=none,nature=aggressive,sight=3,hearing=1|movable,walk,swim,ruck|*unarmed,str=clamping,slash=1d2|profile,slash=-2
 @gold|:88|pickup|trigger,true,false,false,collects th' gold|*trigger,statgold=1d5+5,sfx=sfx_gold

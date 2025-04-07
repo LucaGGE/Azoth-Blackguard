@@ -179,7 +179,7 @@ function Movable:move_entity(owner, dir)
         end
 
         -- if weapon is available, select its 'hit' power (always expected)
-        attack_mode =  attack_mode and attack_mode.powers["hit"] or false
+        attack_mode =  attack_mode and attack_mode["item"].powers["hit"] or false
 
         -- moving against an Entity = interaction. If part of different groups
         -- or of special 'self' group, the interaction results in an attack
@@ -232,9 +232,6 @@ function Movable:move_entity(owner, dir)
         succ_atk = dice_roll("1d12+1", succ_score)
         
         if succ_atk then
-            love.audio.stop(SOUNDS["hit_blow"])
-            love.audio.play(SOUNDS["hit_blow"])
-
             -- NOTE: both "unarmed" and "hit" are expected powers previously checked
             attack_mode:activate(pawn)
         else

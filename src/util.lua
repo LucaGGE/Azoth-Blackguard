@@ -1110,7 +1110,7 @@ function console_event(event, font_color)
     -- assigning new values to global strings
     g.console["event3"] = events_table["event2"]
     g.console["event2"] = events_table["event1"]
-    g.console["event1"] = event
+    g.console["event1"] = event:gsub("^%l", string.upper)
     g.cnv_ui = ui_manager_play()
 end
 
@@ -1135,8 +1135,6 @@ function death_check(target, damage_dice, type, message)
     local target_family = comps["player"] and true or false
     -- stores final damage score to subtract from target's HP
     local damage_score = 0
-    -- target.name, with first letter in uppercase
-    local target_name = target.name:gsub("^%l", string.upper)
 
     -- cannot damage an Entity without hp
     if not stats and not stats["hp"] then
@@ -1146,7 +1144,7 @@ function death_check(target, damage_dice, type, message)
 
     -- cannot damage an Entity immune to that effect
     if modifier and modifier == "immune" then
-        console_event(target_name .. " doth seem immune to " .. type)
+        console_event(target.name .. " doth seem immune to " .. type)
         return false
     end
     
@@ -1154,7 +1152,7 @@ function death_check(target, damage_dice, type, message)
 
     -- this is done to avoid adding HP when modifier is so impactful to output <= 0
     if damage_score <= 0 then
-        console_event(target_name .. " doth not appear troubled by " .. type)
+        console_event(target.name .. " doth not appear troubled by " .. type)
         return false
     end
 
@@ -1162,7 +1160,7 @@ function death_check(target, damage_dice, type, message)
 
     if stats["hp"] <= 0 then
         target.alive = false
-        console_event(target_name .. " " .. message, event_color[target_family])
+        console_event(target.name .. " " .. message, event_color[target_family])
     end
 
     -- returning success and damage inflicted, useful to influence EffectTags:
@@ -1295,14 +1293,16 @@ end
 -- which one is selcted depends on inventory being opened or closed
 function target_selector(player_comp, performer, key)
     local target_cell
-    local target_x, target_y
     local pawn_ref, entity_ref -- Entities references
-
-    target_x = performer.cell["grid_row"] + player_comp.movement_inputs[key][1]
-    target_y = performer.cell["grid_col"] + player_comp.movement_inputs[key][2]
-
+    
+    
     if not g.view_inv then
         if player_comp.movement_inputs[key] then
+            local target_x, target_y
+
+            target_y = performer.cell["grid_col"] + player_comp.movement_inputs[key][2]
+            target_x = performer.cell["grid_row"] + player_comp.movement_inputs[key][1]
+
             target_cell = g.grid[target_x][target_y]
         else
             -- if input is not a valid direction, turn is not valid

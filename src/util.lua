@@ -1189,11 +1189,13 @@ function inventory_update(player)
     local size = SIZE_MULT * 2
     local t_size = TILE_SIZE * 2
     local inv_str = "abcdefghijklmnopqrstuvwxyz"
+    local tag_str
     -- referencing eventual player's 'inventory' component
     local inventory = player.comps["inventory"]
     local available_items = {}
     local equipped = false
     local title_color = {0.49, 0.82, 0.90, 1}
+    local text_y
     local text_color = {
         [true] = {0.93, 0.18, 0.27, 1},
         [false] = {0.28, 0.46, 0.73, 1}    
@@ -1233,6 +1235,8 @@ function inventory_update(player)
     for i = 1, string.len(inv_str) do
         -- reference item's 'equipable' comp for each item in inventory
         local equipable_ref
+        local stack_str = ""
+        local slot_str = ""
         local item_str
         -- if no more items are available, break loop
         if not inventory[i] then
@@ -1245,8 +1249,16 @@ function inventory_update(player)
         -- choosing printf text_color to discriminate equipped/unequipped items
         if equipable_ref and equipable_ref.slot_reference then
             equipped = true
+            slot_str = " (" .. equipable_ref.slot_reference .. ")"
         else
             equipped = false
+        end
+
+        equipable_ref = inventory[i].comps["stack"]
+
+        if inventory[i] then
+            local stack_qty = inventory[i].comps["stats"].stats["hp"]
+            stack_str = " [" .. stack_qty .. "]"
         end
 
         -- chosen text_color setting
@@ -1255,8 +1267,13 @@ function inventory_update(player)
         -- print all items on canvas
         item_str = string_selector(inventory[i])
 
-        love.graphics.printf(string.sub(inv_str, i, i) .. ": " .. item_str,
-        0, (SIZE_DEF + SIZE_DEF / 3) * (i + 2), g.w_width, "center"
+        -- establish and set tag_str and text_y
+        tag_str = string.sub(inv_str, i, i) .. ": "
+        text_y = (SIZE_DEF + SIZE_DEF / 3) * (i + 2)
+
+        -- print string canvas
+        love.graphics.printf(tag_str .. item_str .. stack_str .. slot_str,
+        0, text_y, g.w_width, "center"
         )
         available_items[string.sub(inv_str, i, i)] = inventory[i]
     end

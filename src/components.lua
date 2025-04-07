@@ -510,7 +510,7 @@ function Exit:activate(owner, entity)
 end
 
 --[[
-    container class to store all the entity's stats. NPCs need this comp or they
+    Container class to store all the entity's stats. NPCs need this comp or they
     won't have hp (this translates to them being immortal).
     If a Player doesn't have it, the system adds it with hp = 1, gold = 0
 ]]--
@@ -577,28 +577,57 @@ function Inventory:new(arg)
 end
 
 function Inventory:add(item)
-    if self.spaces > 0 then
-        local item_ref = item.name
+    local item_ref
 
-        if item.comps["description"] then
-            item_ref = item.comps["description"].string
-        end
-
-        if item.comps["secret"] then
-            item_ref = item.comps["secret"].string
-        end
-
-        self.spaces = self.spaces - 1
-        table.insert(self.items, item)
-        console_event("Thee pick up " .. item_ref)
-        item.alive = false
-
-        return true
-    else
+    -- immediately check if space is available
+    if not (self.spaces > 0) then
         console_event("Thy inventory is full")
 
         return false
     end
+
+    item_ref = string_selector(item)
+
+    -- if not stackable, simply add to inventory
+    if not item.comps["stack"] then
+        goto addtoinv
+    end
+
+    -- return error if stackable Entity is missins essential 'hp' stat
+    if not item.comps["stats"] and not item.comps["stats"].stats["hp"] then
+        error_handler(
+            "Trying to stack Stackable Entity without HP stat, which defines stack amount.",
+            "Pickup action canceled!"
+        )
+        return false
+    end
+
+    -- if everything is in check, stack Entity in inventory, even if equipped
+    for _, obj in ipairs(self.items) do
+        if obj.id == item.id then
+            local supplement =  item.comps["stats"].stats["hp"]
+            local stack = obj.comps["stats"]
+
+            stack.stats["hp"] = stack.stats["hp"] + supplement
+
+            print("Entity succesfully stacked: ".. stack.stats["hp"])
+
+            console_event("Thee pick up " .. item_ref)
+            item.alive = false
+
+            return true
+        end
+    end
+
+    -- pickup is non-stackable or stackable but not yet collected, add
+    ::addtoinv::
+
+    self.spaces = self.spaces - 1
+    table.insert(self.items, item)
+    console_event("Thee pick up " .. item_ref)
+    item.alive = false
+
+    return true
 end
 
 -- removes item from inventory by coupling item_key letter with
@@ -655,8 +684,6 @@ function Equipable:new(args)
 end
 
 function Equipable:equip(owner, target)
-    target.tile = self.appearance
-
     if not owner.powers["equip"] then
         print("Warning: trying to activate equip power, but none is found")
         return false

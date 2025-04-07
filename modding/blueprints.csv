@@ -17,6 +17,6 @@
 @potion4|:potions|secret,potion|description,poison vial
 @potion5|:potions|secret,potion|description,phasing juice
 @potion6|:potions|secret,potion|description,blindness ointment
-@crossbow|:82|shooter,1,dart1,dart2|stats,dmg=3d3|description,small crossbow
-@dart1|:84|stack|stats,hp=2d4|equipable,false,quiver|*shot,slash=1d2|description,piercing bolts
-@dart2|:84|stack|stats,hp=2d4|equipable,false,quiver|*shot,slash=1d2|description,piercing bolts
+@crossbow|:82|pickup|equipable,true,weapon|shooter,1,dartpierce,dartflat|stats,dmg=3d3|description,small crossbow
+@dartpierce|:84|pickup|stack|stats,hp=4|equipable,false,quiver|*shot,slash=1d2|description,piercing bolts
+@dartflat|:85|pickup|stack|stats,hp=4|equipable,false,quiver|*shot,slash=1d2|description,flat bolts

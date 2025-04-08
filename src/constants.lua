@@ -76,9 +76,22 @@ SOUNDS = {
     ["type_nil"] = love.audio.newSource("sfx/type_nil.wav", "static"),
     ["puzzle_success"] = love.audio.newSource("sfx/puzzle_success.wav", "static"),
     ["puzzle_fail"] = love.audio.newSource("sfx/puzzle_fail.wav", "static"),
-    ["hit_blow"] = love.audio.newSource("sfx/hit_blow.ogg", "static"),
-    ["hit_miss"] = love.audio.newSource("sfx/hit_miss.wav", "static"),
+    ["sfx_pickup"] = love.audio.newSource("sfx/sfx_pickup.ogg", "static"),
+    ["sfx_equip"] = love.audio.newSource("sfx/sfx_equip.ogg", "static"),
+    ["sfx_unequip"] = love.audio.newSource("sfx/sfx_unequip.ogg", "static"),
+    ["sfx_cursed"] = love.audio.newSource("sfx/sfx_cursed.ogg", "static"),
+    ["sfx_mace_light"] = love.audio.newSource("sfx/sfx_mace_light.ogg", "static"),
+    ["sfx_mace_heavy"] = love.audio.newSource("sfx/sfx_mace_heavy.ogg", "static"),
+    ["sfx_miss"] = love.audio.newSource("sfx/sfx_miss.ogg", "static"),
     ["sfx_gold"] = love.audio.newSource("sfx/sfx_gold.wav", "static"),
+    ["sfx_lever"] = love.audio.newSource("sfx/sfx_lever.ogg", "static"),
+    ["sfx_door"] = love.audio.newSource("sfx/sfx_door.ogg", "static"),
+    ["sfx_unlock"] = love.audio.newSource("sfx/sfx_unlock.ogg", "static"),
+    ["sfx_sword"] = love.audio.newSource("sfx/sfx_sword.ogg", "static"),
+    ["sfx_crab"] = love.audio.newSource("sfx/sfx_crab.ogg", "static"),
+    ["sfx_death_blu"] = love.audio.newSource("sfx/sfx_death_blu.ogg", "static"),
+    ["sfx_death_sla"] = love.audio.newSource("sfx/sfx_death_sla.ogg", "static"),
+    ["sfx_death_pie"] = love.audio.newSource("sfx/sfx_death_pie.ogg", "static")
 }
 
 FONTS = {

@@ -1056,8 +1056,7 @@ end
 
 function text_backspace(input_string)
     input_string = string.sub(input_string, 1, -2)
-    love.audio.stop(SOUNDS["type_backspace"])
-    love.audio.play(SOUNDS["type_backspace"])
+    play_sound(SOUNDS["type_backspace"])
 
     return input_string
 end
@@ -1072,11 +1071,9 @@ function text_input(valid_input, key, input_string, max_length)
         else
             input_string = input_string .. key
         end
-        love.audio.stop(SOUNDS["type_input"])
-        love.audio.play(SOUNDS["type_input"])
+        play_sound(SOUNDS["type_input"])
     elseif #input_string >= max_length then
-        love.audio.stop(SOUNDS["type_nil"])
-        love.audio.play(SOUNDS["type_nil"])
+        play_sound(SOUNDS["type_nil"])
     end
 
     return input_string
@@ -1119,7 +1116,7 @@ function console_cmd(cmd)
     g.cnv_ui = ui_manager_play()
 end
 
-function death_check(target, damage_dice, type, message)
+function death_check(target, damage_dice, type, message, sound)
     -- this is needed to output messages on screen in yellow or red
     local event_color = {
         [false] = {[1] = 0.87, [2] = 0.26, [3] = 0.43},
@@ -1161,6 +1158,10 @@ function death_check(target, damage_dice, type, message)
 
     if stats["hp"] <= 0 then
         target.alive = false
+        -- play dedicated death message and sound depending on damage
+        if sound then
+            play_sound(SOUNDS[sound])
+        end
         if message then
             console_event(target.name .. " " .. message, event_color[target_family])
         end
@@ -1342,4 +1343,10 @@ function string_selector(entity)
     end
 
     return proper_string
+end
+
+-- simple sound player function
+function play_sound(sfx_input)
+    love.audio.stop(sfx_input)
+    love.audio.play(sfx_input)
 end

@@ -38,26 +38,21 @@ local INPUT_DTABLE1 = {
     ["right"] = function()
         if n_of_players < 4 then
             n_of_players = n_of_players + 1
-            love.audio.stop(SOUNDS["button_switch"])
-            love.audio.play(SOUNDS["button_switch"])
+            play_sound(SOUNDS["button_switch"])
         else
-            love.audio.stop(SOUNDS["type_nil"])
-            love.audio.play(SOUNDS["type_nil"])
+            play_sound(SOUNDS["type_nil"])
         end
     end,
     ["left"] = function()
         if n_of_players > 1 then
             n_of_players = n_of_players - 1
-            love.audio.stop(SOUNDS["button_switch"])
-            love.audio.play(SOUNDS["button_switch"])
+            play_sound(SOUNDS["button_switch"])
         else
-            love.audio.stop(SOUNDS["type_nil"])
-            love.audio.play(SOUNDS["type_nil"])
+            play_sound(SOUNDS["type_nil"])
         end
     end,
     ["enter"] = function()
-        love.audio.stop(SOUNDS["button_select"])
-        love.audio.play(SOUNDS["button_select"])
+        play_sound(SOUNDS["button_select"])
         in_phase = 2
     end,
     ["'"] = function()
@@ -69,8 +64,7 @@ local INPUT_DTABLE1 = {
 local INPUT_DTABLE2 = {
     ["escape"] = INPUT_DTABLE1["escape"],
     ["enter"] = function()
-        love.audio.stop(SOUNDS["button_select"])
-        love.audio.play(SOUNDS["button_select"])
+        play_sound(SOUNDS["button_select"])
         -- set a name if player skipped name insertion
         if in_name == "" then in_name = "Nameless Wanderer" end
 
@@ -181,8 +175,7 @@ function StateMenu:update()
     for i,key in ipairs(g.keys_pressed) do
         if in_phase == 1 then
             key_output = INPUT_DTABLE1[key] or function()
-                love.audio.stop(SOUNDS["type_nil"])
-                love.audio.play(SOUNDS["type_nil"])
+                play_sound(SOUNDS["type_nil"])
             end
         else
             key_output = INPUT_DTABLE2[key] or function()

@@ -13,8 +13,7 @@ local INPUT_DTABLE = {
         console_cmd(nil)
         player_comp.action_state = nil
         
-        love.audio.stop(SOUNDS["button_select"])
-        love.audio.play(SOUNDS["button_select"])
+        play_sound(SOUNDS["button_select"])
 
         -- check action command, note that 'console' action is forbidden
         if player_comp.string == "space" then
@@ -180,6 +179,7 @@ IO_DTABLE = {
 
         -- if target has no pickup comp then warn player
         if entity.comp["pickup"] then
+            play_sound(SOUNDS["sfx_pickup"])
             return player_entity.comp["inventory"]:add(entity)
         else
             console_event("Thee art unable to pick hider up")
@@ -310,10 +310,12 @@ IO_DTABLE = {
                     ["tag"] = key,
                     ["item"] = g.current_inv[key]
                 }
-                print("Equipped object!")
+
+                play_sound(SOUNDS["sfx_equip"])
                 -- activate equip() func in 'equipable' component
                 -- this can trigger dedicated effects thanks to 'equip' tagged power
                 equipable_comp:equip(g.current_inv[key], player_entity)
+
                 return true
             end
         end
@@ -355,9 +357,12 @@ IO_DTABLE = {
             -- if item isn't cursed, empty player_slots component reference
             -- and also equipable component slot_reference
             if success then
+                play_sound(SOUNDS["sfx_unequip"])
                 player_slots[item.comp["equipable"].slot_reference] = "empty"
 
                 item.comp["equipable"].slot_reference = false
+            else
+                play_sound(SOUNDS["sfx_cursed"])
             end
         else
             print("No item at this key address")
@@ -459,6 +464,9 @@ IO_DTABLE = {
         else
             table.insert(g.hidden_group, item)
         end
+
+        -- play a 'touching the ground' sound (same as stepping)
+        play_sound(SOUNDS[TILES_PHYSICS[target_cell.index]])
 
         console_event("Thee bestow " .. item_str)
 

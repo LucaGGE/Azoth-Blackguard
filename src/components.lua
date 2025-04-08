@@ -64,8 +64,7 @@ function Player:manage_input(entity, key)
     
         -- check if player is skipping turn (possible even without a mov comp)
         if mov_input[1] == 0 and mov_input[2] == 0 then
-            love.audio.stop(SOUNDS["wait"])
-            love.audio.play(SOUNDS["wait"])
+            play_sound(SOUNDS["wait"])
             return true
         end
 
@@ -235,7 +234,7 @@ function Movable:move_entity(owner, dir)
             -- NOTE: both "unarmed" and "hit" are expected powers previously checked
             attack_mode:activate(pawn)
         else
-            love.audio.play(SOUNDS["hit_miss"])
+            love.audio.play(SOUNDS["sfx_miss"])
         end
 
         if target_stats["hp"] <= 0 then
@@ -266,8 +265,7 @@ function Movable:move_entity(owner, dir)
     
     -- playing sound based on tile type, check if valid to avoid crashes
     if SOUNDS[TILES_PHYSICS[destination.index]] then
-        love.audio.stop(SOUNDS[TILES_PHYSICS[destination.index]])
-        love.audio.play(SOUNDS[TILES_PHYSICS[destination.index]])
+        play_sound(SOUNDS[TILES_PHYSICS[destination.index]])
     else
         print("WARNING: destination has no related sound")
     end
@@ -798,17 +796,17 @@ function Locked:new(input)
 
 end
 
-function Locked:activate(target, entity)
+function Locked:activate(owner, entity)
     if entity.comp["inventory"] then
         for _, item in ipairs(entity.comp["inventory"].items) do
-            if item.comp["key"] and item.name == target.name then
+            if item.comp["key"] and item.name == owner.name then
                 console_event("Thou dost unlock it!")
-                if target.comp["trigger"] then
-                    target.comp["trigger"]:activate(target, entity)
+                if owner.comp["trigger"] then
+                    owner.comp["trigger"]:activate(owner, entity)
                 end
 
                 -- if Entity was successfully unlocked, remove 'Locked' comp
-                target.comp["locked"] = nil
+                owner.comp["locked"] = nil
                 return true
             end
         end

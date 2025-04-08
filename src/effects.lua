@@ -111,7 +111,7 @@ end
 function slash(target, input)
     local success, damage
 
-    success, damage = death_check(target, input, "slash", "was slaughtered")
+    success, damage = death_check(target, input, "slash", "was slaughtered","sfx_death_sla")
 
     if success then
         -- the higher the slash damage, the longer the target will bleed
@@ -122,13 +122,13 @@ end
 function bludgeon(target, input)
     local success, damage
 
-    success, damage = death_check(target, input, "bludgeon", "was pulverized")
+    success, damage = death_check(target, input, "bludgeon", "was pulverized","sfx_death_blu")
 end
 
 function pierce(target, input)
     local success, damage
 
-    success, damage = death_check(target, input, "pierce", "was massacred")
+    success, damage = death_check(target, input, "pierce", "was massacred","sfx_death_pie")
 end
 
 function bleed(effect_tag, target, input)
@@ -162,8 +162,7 @@ function sfx_play(target, input)
 
     -- if valid, play eventual sound
     if SOUNDS[input] then
-        love.audio.stop(SOUNDS[input])
-        love.audio.play(SOUNDS[input])
+        play_sound(SOUNDS[input])
     else
         error_handler("Trying to play invalid sound effect: " .. input)
     end

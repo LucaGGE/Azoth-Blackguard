@@ -139,6 +139,8 @@ function StateMenu:init()
     g.cnv_dynamic = nil
     g.cemetery = {}
     g.tweening = false
+    g.console["event5"] = ""
+    g.console["event4"] = ""
     g.console["event3"] = ""
     g.console["event2"] = ""
     g.console["event1"] = ""

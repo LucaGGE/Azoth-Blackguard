@@ -371,7 +371,6 @@ function Trigger:new(args)
     self.destroyontrigger = string_to_bool[args[1]]
     self.fire_once = string_to_bool[args[2]]
     self.trig_on_coll = string_to_bool[args[3]]
-    self.event_string = args[4]
 end
 
 function Trigger:activate(owner, entity)  
@@ -379,12 +378,7 @@ function Trigger:activate(owner, entity)
     if owner.powers["trigger"] then
         owner.powers["trigger"]:activate(entity)
     else
-        print("Blank trigger: a destroyontrigger Entity has no 'trigger' power to activate")
-    end
-
-    -- print trigger event string (i.e. 'A trap activates!')
-    if self.event_string then
-        console_event(entity.name .. " " .. self.event_string)
+        print("Blank trigger: a trigger Entity has no 'trigger' power to activate")
     end
     
     -- if owner is to 'destroyontrigger', destroy it
@@ -434,7 +428,7 @@ function Usable:new(args)
     end
 end
 
--- to have simple 'use' working, have a power named 'use'
+-- to have a simple 'use' input working, have a power named 'use'
 function Usable:activate(target, input_entity, input_key)
     local key = input_key or "use"
     local entity = input_entity
@@ -463,6 +457,7 @@ function Usable:activate(target, input_entity, input_key)
 
     -- activate target power
     target.powers[self.uses[key]]:activate(target, entity)
+    
     -- if destroyonuse, destroy used object (useful for consumables)
     if self.destroyonuse then
         target.alive = false
@@ -474,9 +469,10 @@ function Usable:activate(target, input_entity, input_key)
         return true
     end
     
-    -- search for linked comp and store eventual linked Entity
+    -- search for linked comp and store eventual linked Entity coords
     if target.comp["linked"] then
         print("Linked component was found")
+        -- 'linked' comp activation returns name-store coordinates
         local row, col = target.comp["linked"]:activate(target)
         row = tonumber(row)
         col = tonumber(col)
@@ -838,7 +834,8 @@ function Linked:new(input)
 
 end
 
--- note how changing the Entity's name will change its cell of interest
+-- note how changing the Entity's name will change its cell of interest,
+-- since the Entity's name correspond to row, col coordinates
 function Linked:activate(owner)
     local row_column = str_slicer(owner.name, "-", 1)
     local row = row_column[1]

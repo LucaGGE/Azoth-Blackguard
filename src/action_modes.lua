@@ -138,7 +138,12 @@ IO_DTABLE = {
 
         -- if the target has a trigger comp, trigger immediately
         if entity.comp["sealed"] then
-            return entity.comp["sealed"]:activate(entity, player_entity, player_comp)
+            entity.comp["sealed"]:activate(entity, player_entity, player_comp)
+
+            -- activating optional unseal-related power
+            key_to_power(entity, player_entity, "unseal")
+
+            return true
         end
 
         console_event("Nothing doth seem to happen")
@@ -170,6 +175,9 @@ IO_DTABLE = {
         -- if the target has a trigger comp, trigger immediately
         if entity.comp["trigger"] then
             entity.comp["trigger"]:activate(entity, player_entity)
+
+            -- activating optional pickup-related power
+            key_to_power(entity, player_entity, "pickup")
         end
 
         -- if target is has destroyontrigger, don't bother picking up
@@ -261,6 +269,9 @@ IO_DTABLE = {
         -- if no unlockable target is found then warn player
         if entity.comp["locked"] then
             entity.comp["locked"]:activate(entity, player_entity)
+
+            -- activating optional unlock-related power
+            key_to_power(entity, player_entity, "unlock")
         else
             console_event("Thee can't unlock this")
         end

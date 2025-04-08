@@ -75,6 +75,7 @@ end
 
 function StatePlay:update()
     local valid_action 
+
     -- checking for input to resolve turns
     if g.keys_pressed[1] and not g.tweening then
         local player = g.party_group[current_turn]
@@ -131,6 +132,26 @@ function StatePlay:update()
         -- pre-tween refresh
         g.game_state:refresh()
         ::continue_statechange::
+    end
+
+    -- flashing last console event, if any new events received in console_event
+    if g.new_event then
+        g.new_event = false
+        g.tweening = true
+        
+        local final_color = g.console["rgb1"]
+        local flash_color = {1, 1, 1, 1}
+
+        -- flashing last event in white, if just printed
+        g.console["rgb1"] = flash_color
+        g.cnv_ui = ui_manager_play()
+
+        -- flash white last console message
+        Timer.tween(TWEENING_TIME, {}):finish(function ()
+            g.console["rgb1"] = final_color
+            g.cnv_ui = ui_manager_play()
+            g.tweening = false
+        end)
     end
 end
 

@@ -21,14 +21,19 @@ g = {
     tweening = false, -- suspends player input during animations
     game_state, -- the current game state
     error_messages = {}, -- holds all error messages to print on screen
+    new_event = false,
     console = {
         ["string"] = nil,
         ["event1"] = nil,
         ["event2"] = nil,
         ["event3"] = nil,
+        ["event4"] = nil,
+        ["event5"] = nil,
         ["rgb1"] = {[1] = 0.28, [2] = 0.46, [3] = 0.73},
         ["rgb2"] = {[1] = 0.28, [2] = 0.46, [3] = 0.73},
-        ["rgb3"] = {[1] = 0.28, [2] = 0.46, [3] = 0.73}
+        ["rgb3"] = {[1] = 0.28, [2] = 0.46, [3] = 0.73},
+        ["rgb4"] = {[1] = 0.28, [2] = 0.46, [3] = 0.73},
+        ["rgb5"] = {[1] = 0.28, [2] = 0.46, [3] = 0.73}
     }, -- console's content
     keys_pressed = {} -- variable for storing and clearing keys pressed each update
 }

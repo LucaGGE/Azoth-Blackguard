@@ -785,11 +785,13 @@ function turns_manager(current_player, npc_turn)
     -- setting current_player coords for camera tweening
     local x_for_tweening = current_player["entity"].cell["cell"].x
     local y_for_tweening = current_player["entity"].cell["cell"].y
+
     -- set this next (or first) player as the g.camera entity
     g.camera["entity"] = current_player["entity"]
+
     -- tween camera between previous and current active player
     Timer.tween(TWEENING_TIME, {
-        [g.camera] =  {x = x_for_tweening, y = y_for_tweening}
+        [g.camera] =  {x = x_for_tweening, y = y_for_tweening}        
     }):finish(function ()
         -- if it's not the NPCs turn, apply player pawn effects and enable them 
         if not npc_turn then
@@ -827,6 +829,7 @@ function turns_manager(current_player, npc_turn)
         end
 
         ::continue::
+
         g.tweening = false
         console_cmd(nil)
         g.game_state:refresh()        
@@ -834,8 +837,8 @@ function turns_manager(current_player, npc_turn)
 end
 
 function ui_manager_play()
-    local color_1, color_2, color_3
-    local event_1, event_2, event_3
+    local color_1, color_2, color_3, color_4, color_5, color_0
+    local event_1, event_2, event_3, event_4, event_5
     -- generating and setting a canvas of the proper size
     local new_canvas  = love.graphics.newCanvas(g.w_width, g.w_height)
     love.graphics.setCanvas(new_canvas)
@@ -854,16 +857,26 @@ function ui_manager_play()
     end
 
     -- storing colors for better legibility
+    color_5 = {g.console["rgb5"][1], g.console["rgb5"][2], g.console["rgb5"][3], 1}
+    color_4 = {g.console["rgb4"][1], g.console["rgb4"][2], g.console["rgb4"][3], 1}
     color_3 = {g.console["rgb3"][1], g.console["rgb3"][2], g.console["rgb3"][3], 1}
     color_2 = {g.console["rgb2"][1], g.console["rgb2"][2], g.console["rgb2"][3], 1}
     color_1 = {g.console["rgb1"][1], g.console["rgb1"][2], g.console["rgb1"][3], 1}
 
     -- storing event strings for better legibility
-    event_3 = g.console["event3"] or "Error: fed nothing to console_event() func"
-    event_2 = g.console["event2"] or "Error: fed nothing to console_event() func"
-    event_1 = g.console["event1"] or "Error: fed nothing to console_event() func"
+    event_5 = g.console["event5"] or "Error: fed nothing to console_event() or forgot to reset its value in main.lua"
+    event_4 = g.console["event4"] or "Error: fed nothing to console_event() or forgot to reset its value in main.lua"
+    event_3 = g.console["event3"] or "Error: fed nothing to console_event() or forgot to reset its value in main.lua"
+    event_2 = g.console["event2"] or "Error: fed nothing to console_event() or forgot to reset its value in main.lua"
+    event_1 = g.console["event1"] or "Error: fed nothing to console_event() or forgot to reset its value in main.lua"
 
     -- print console events
+    love.graphics.setColor(color_5)
+    love.graphics.print(event_5, PADDING, g.w_height - (PADDING * 5.5))
+
+    love.graphics.setColor(color_4)
+    love.graphics.print(event_4, PADDING, g.w_height - (PADDING * 4.5))
+
     love.graphics.setColor(color_3)
     love.graphics.print(event_3, PADDING, g.w_height - (PADDING * 3.5))
 
@@ -1092,23 +1105,32 @@ end
 
 -- this func registers game events and chronologially displays them
 function console_event(event, font_color)
+    g.tweening = true
+    g.new_event = false
     local base_color = {[1] = 0.28, [2] = 0.46, [3] = 0.73}
     local events_table = {}
+
     -- extracting values from g.console
     -- PLEASE NOTE: in Lua, tables are passed as *ref*, *not* as value!
-    for i, v in pairs(g.console) do
-        events_table[i] = v
+    for i, msg in pairs(g.console) do
+        events_table[i] = msg
     end
 
     -- assigning new values to global colors
+    g.console["rgb5"] = events_table["rgb4"]
+    g.console["rgb4"] = events_table["rgb3"]
     g.console["rgb3"] = events_table["rgb2"]
     g.console["rgb2"] = events_table["rgb1"]
     g.console["rgb1"] = font_color or base_color
+
     -- assigning new values to global strings
+    g.console["event5"] = events_table["event4"]
+    g.console["event4"] = events_table["event3"]
     g.console["event3"] = events_table["event2"]
     g.console["event2"] = events_table["event1"]
     g.console["event1"] = event:gsub("^%l", string.upper)
     g.cnv_ui = ui_manager_play()
+    g.new_event = true
 end
 
 function console_cmd(cmd)
@@ -1349,4 +1371,15 @@ end
 function play_sound(sfx_input)
     love.audio.stop(sfx_input)
     love.audio.play(sfx_input)
+end
+
+function key_to_power(owner, target, key)
+    if not owner.powers[key] then
+        print("No power associated with action performed on entity")
+
+        return false
+    end
+
+    -- activate target power
+    owner.powers[key]:activate(target, owner)
 end

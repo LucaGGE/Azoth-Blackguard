@@ -153,7 +153,7 @@ function str_effect(target, input)
     end
 
     console_event(
-        input .. " " .. target_str .. "!", {[1] = 1, [2] = 0.97, [3] = 0.44}
+         target_str .. " " .. input .. "!", {[1] = 1, [2] = 0.97, [3] = 0.44}
     )
 end
 

@@ -1,11 +1,11 @@
 @player|:72|player|stats,hp=10,gold=0|movable,walk|slots,head,chest,cape,quiver,weapon|*unarmed,sfx=sfx_mace_light,str=hitting,bludgeon=1d2|inventory,26
 @lemure|:108|stats,hp=10|npc,group=lemure,enemies=none,nature=neutral,sight=15,hearing=5|movable,walk,climb|profile,bleeding=immune
 @crab|:110|stats,hp=15,mana=10|npc,group=crabs,enemies=none,nature=aggressive,sight=3,hearing=1|movable,walk,swim,ruck|*unarmed,sfx=sfx_crab,str=clamping,pierce=1d2|profile,slash=-2
-@gold|:88|pickup|trigger,true,false,false,collects th' gold|*trigger,statgold=1d5+5,sfx=sfx_gold
-@locket|:101|pickup|locked|trigger,false,true,false|description,golden locket|*trigger,sfx=sfx_unlock,str=open the locket
+@gold|:88|trigger,true,false,false,collects th' gold|*trigger,statgold=1d5+5,sfx=sfx_gold
+@locket|:101|pickup|locked|description,golden locket|*unlock,sfx=sfx_unlock,str=open the locket
 @key|:64|key|pickup|description,key
 @door|:9|obstacle|usable,false,use=linked|*linked,sfx=sfx_door,tileswitch=10,physchange=obstacle
-@tome|:121|pickup|sealed|description,old tome|trigger,false,true,false|*trigger,sfx=puzzle_success,str=reads "broke the incantatio"
+@tome|:121|pickup|sealed|description,old tome|*unseal,sfx=puzzle_success,str=reads "broke the incantatio"
 @lever|:75|description,old lever|linked|usable,false,use=linked,turn=hidden|*linked,sfx=sfx_lever,str=activating|*hidden,str=turning
 @cape1|:55|description,fool's cape|secret,fur cape|equipable,true,cape|pickup|*equip,str=donning the fur cape upon,tilechange=65|*unequip,str=unmantling fur cape from,tilerestore=
 @exit|:1|exit,Thee travel to another level

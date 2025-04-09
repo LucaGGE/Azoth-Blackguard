@@ -1,24 +1,24 @@
-@player|:72|player|stats,hp=10,gold=0|movable,walk|slots,head,chest,cape,quiver,weapon|*unarmed,sfx=sfx_mace_light,str=hitting,bludgeon=1d2|inventory,26
+@player|:72|player|stats,hp=10,gold=0|movable,walk|slots,head,chest,cape,quiver,weapon|*unarmed,sfx=sfx_mace_light,str=is punched,bludgeon=1d2|inventory,26
 @lemure|:108|stats,hp=10|npc,group=lemure,enemies=none,nature=neutral,sight=15,hearing=5|movable,walk,climb|profile,bleeding=immune
-@crab|:110|stats,hp=15,mana=10|npc,group=crabs,enemies=none,nature=aggressive,sight=3,hearing=1|movable,walk,swim,ruck|*unarmed,sfx=sfx_crab,str=clamping,pierce=1d2|profile,slash=-2
+@crab|:110|stats,hp=15,mana=10|npc,group=crabs,enemies=none,nature=aggressive,sight=3,hearing=1|movable,walk,swim,ruck|*unarmed,sfx=sfx_crab,str=is clamped,pierce=1d2|profile,slash=-2
 @gold|:88|trigger,true,false,false,collects th' gold|*trigger,statgold=1d5+5,sfx=sfx_gold
-@locket|:101|pickup|locked|description,golden locket|*unlock,sfx=sfx_unlock,str=open the locket
+@locket|:101|pickup|locked|description,golden locket|*unlock,sfx=sfx_unlock,str=is unlocked
 @key|:64|key|pickup|description,key
 @door|:9|obstacle|usable,false,use=linked|*linked,sfx=sfx_door,tileswitch=10,physchange=obstacle
-@tome|:121|pickup|sealed|description,old tome|*unseal,sfx=puzzle_success,str=reads "broke the incantatio"
-@lever|:75|description,old lever|linked|usable,false,use=linked,turn=hidden|*linked,sfx=sfx_lever,str=activating|*hidden,str=turning
-@cape1|:55|description,fool's cape|secret,fur cape|equipable,true,cape|pickup|*equip,str=donning the fur cape upon,tilechange=65|*unequip,str=unmantling fur cape from,tilerestore=
+@tome|:121|pickup|sealed|description,old tome|*unseal,sfx=puzzle_success,str=reads "broke the incantatio"|usable,false,read=text|*text,event="Super cool story written on the book"
+@lever|:75|description,old lever|linked|usable,false,use=linked,turn=hidden|*linked,sfx=sfx_lever,str=is activated|*hidden,str=turning
+@cape1|:55|description,fool's cape|secret,fur cape|equipable,true,cape|pickup|*equip,tilechange=65,str=feels a weird itch|*unequip,tilerestore=
 @exit|:1|exit,Thee travel to another level
 @shroom|:shrooms|obstacle|secret,unknown mushroom|description,deadly cap
-@shroom2|:shrooms|obstacle|description,most peculiar-looking mushroom, verily
+@shroom2|:shrooms|obstacle|description,most peculiar-looking mushroom
 @potion1|:potions|secret,potion|description,mana potion
 @potion2|:potions|secret,potion|description,life potion
 @potion3|:potions|secret,potion|description,elixir of hallucination
 @potion4|:potions|secret,potion|description,poison vial
 @potion5|:potions|secret,potion|description,phasing juice
 @potion6|:potions|secret,potion|description,blindness ointment
-@crossbowlight|:82|pickup|equipable,true,weapon|shooter,1,dartpierce,dartflat|stats,dmg=3d3|description,light crossbow|*hit,sfx=sfx_mace_light,str=hit,bludgeon=1d3
-@crossbowheavy|:81|pickup|equipable,true,weapon|shooter,1,dartpierce,dartflat|stats,dmg=4d3+10|description,heavy crossbow|*hit,sfx=sfx_mace_heavy,str=hit,bludgeon=1d3+2
-@sword|:77|pickup|equipable,false,weapon|description,mighty sword|*hit,sfx=sfx_sword,str=slash,slash=3d4
+@crossbowlight|:82|pickup|equipable,true,weapon|shooter,1,dartpierce,dartflat|stats,dmg=3d3|description,light crossbow|*hit,sfx=sfx_mace_light,str=is hit,bludgeon=1d3
+@crossbowheavy|:81|pickup|equipable,true,weapon|shooter,1,dartpierce,dartflat|stats,dmg=4d3+10|description,heavy crossbow|*hit,sfx=sfx_mace_heavy,str=is hit,bludgeon=1d3+2
+@sword|:77|pickup|equipable,false,weapon|description,mighty sword|*hit,sfx=sfx_sword,str=is slashed,slash=3d4
 @dartpierce|:84|pickup|stack|stats,hp=4|equipable,false,quiver|*shot,slash=1d2|description,piercing bolts
 @dartflat|:85|pickup|stack|stats,hp=4|equipable,false,quiver|*shot,slash=1d2|description,flat bolts

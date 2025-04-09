@@ -148,6 +148,7 @@ EFFECTS_TABLE = {
     ["bludgeon"] = bludgeon,
     ["pierce"] = pierce,
     ["str"] = str_effect,
+    ["event"] = event_effect,
     ["statgold"] = stat_gold,
     ["sfx"] = sfx_play,
     ["tileswitch"] = tile_switch,

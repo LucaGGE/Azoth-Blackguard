@@ -142,6 +142,7 @@ end
 
 function str_effect(target, input)
     local target_str = target.name
+    local color = {[1] = 1, [2] = 0.97, [3] = 0.44}
             
     -- as usual, favor Entity description (or secret) to Entity name
     if target.comp["description"] then
@@ -152,9 +153,13 @@ function str_effect(target, input)
         target_str = target.comp["secret"].string
     end
 
-    console_event(
-         target_str .. " " .. input .. "!", {[1] = 1, [2] = 0.97, [3] = 0.44}
-    )
+    console_event(target_str .. " " .. input .. "!", color)
+end
+
+function event_effect(target, input)
+    local color = {[1] = 0.5, [2] = 0.83, [3] = 0.9}
+
+    console_event(input, color)
 end
 
 function sfx_play(target, input)

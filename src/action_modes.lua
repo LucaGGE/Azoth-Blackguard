@@ -141,7 +141,7 @@ IO_DTABLE = {
             entity.comp["sealed"]:activate(entity, player_entity, player_comp)
 
             -- activating optional unseal-related power
-            key_to_power(entity, player_entity, "unseal")
+            action_to_power(entity, player_entity, "unseal")
 
             return true
         end
@@ -177,7 +177,7 @@ IO_DTABLE = {
             entity.comp["trigger"]:activate(entity, player_entity)
 
             -- activating optional pickup-related power
-            key_to_power(entity, player_entity, "pickup")
+            action_to_power(entity, player_entity, "pickup")
         end
 
         -- if target is has destroyontrigger, don't bother picking up
@@ -271,7 +271,7 @@ IO_DTABLE = {
             entity.comp["locked"]:activate(entity, player_entity)
 
             -- activating optional unlock-related power
-            key_to_power(entity, player_entity, "unlock")
+            action_to_power(entity, player_entity, "unlock")
         else
             console_event("Thee can't unlock this")
         end

@@ -1373,7 +1373,12 @@ function play_sound(sfx_input)
     love.audio.play(sfx_input)
 end
 
-function key_to_power(owner, target, key)
+--[[
+    This simple func links pickup, unlock & unseal to optional same-named powers.
+    NOTE: trigger power would instead target the activator, not its owner, so it
+    is better reserved for adverse effects on activator.
+]]--
+function action_to_power(owner, target, key)
     if not owner.powers[key] then
         print("No power associated with action performed on entity")
 
@@ -1381,5 +1386,5 @@ function key_to_power(owner, target, key)
     end
 
     -- activate target power
-    owner.powers[key]:activate(target, owner)
+    owner.powers[key]:activate(owner)
 end

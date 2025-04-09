@@ -456,7 +456,7 @@ function Usable:activate(target, input_entity, input_key)
     end
 
     -- activate target power
-    target.powers[self.uses[key]]:activate(target, entity)
+    target.powers[self.uses[key]]:activate(target)
     
     -- if destroyonuse, destroy used object (useful for consumables)
     if self.destroyonuse then

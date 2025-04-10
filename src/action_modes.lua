@@ -306,7 +306,7 @@ IO_DTABLE = {
         equipable_comp = g.current_inv[key].comp["equipable"]
 
         if equipable_comp.slot_reference then
-            console_event("This gear is already donned")
+            console_event("This is already beset upon thee")
 
             return false
         end
@@ -314,6 +314,8 @@ IO_DTABLE = {
         -- check if proper slot for the item is available in 'slots' component
         for _, slot in ipairs(equipable_comp.suitable_slots) do
             if player_slots[slot] == "empty" then
+                local item_str = string_selector(g.current_inv[key])
+
                 -- save occupied slot in equipped object for easier referencing
                 equipable_comp.slot_reference = slot
                 -- store item inside slots component
@@ -326,6 +328,8 @@ IO_DTABLE = {
                 -- activate equip() func in 'equipable' component
                 -- this can trigger dedicated effects thanks to 'equip' tagged power
                 equipable_comp:equip(g.current_inv[key], player_entity)
+
+                console_event("Thou dost equip thyself with " .. item_str)
 
                 return true
             end
@@ -368,10 +372,14 @@ IO_DTABLE = {
             -- if item isn't cursed, empty player_slots component reference
             -- and also equipable component slot_reference
             if success then
+                local item_str = string_selector(g.current_inv[key])
+
                 play_sound(SOUNDS["sfx_unequip"])
                 player_slots[item.comp["equipable"].slot_reference] = "empty"
 
                 item.comp["equipable"].slot_reference = false
+
+                console_event("Thou dost relinquish thy " .. item_str)
             else
                 play_sound(SOUNDS["sfx_cursed"])
             end

@@ -352,6 +352,7 @@ end
 
 Trap = Object:extend()
 function Trap:new()
+
 end
 
 -- this is a 'flag' class for all the entities that are not Players but phisically
@@ -448,9 +449,7 @@ function Usable:activate(target, input_entity, input_key)
     end
 
     if not target.powers[self.uses[key]] then
-        error_handler(
-            "Usable comp has valid key-power couple called, but no corresponding power"
-        )
+        print("NOTE: usable comp was called, but has no corresponding power")
 
         return false
     end

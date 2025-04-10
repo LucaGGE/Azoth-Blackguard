@@ -2253,10 +2253,10 @@ function trigger_activate(owner, entity, comp)
 
     -- check if trigger is set to print event
     if comp.event then
-        print("comdsdd")
         local color = {[1] = 1, [2] = 0.97, [3] = 0.44}
+        local owner_str = string_selector(owner)
 
-        console_event(comp.event, color)
+        console_event(owner_str .. " " .. comp.event, color)
     end
     
     -- if owner is to 'destroyontrigger', destroy it

@@ -2248,6 +2248,16 @@ function trigger_activate(owner, entity, comp)
     else
         print("Blank trigger: a trigger Entity has no 'trigger' power to activate")
     end
+
+    print("check1")
+
+    -- check if trigger is set to print event
+    if comp.event then
+        print("comdsdd")
+        local color = {[1] = 1, [2] = 0.97, [3] = 0.44}
+
+        console_event(comp.event, color)
+    end
     
     -- if owner is to 'destroyontrigger', destroy it
     if comp.destroyontrigger then

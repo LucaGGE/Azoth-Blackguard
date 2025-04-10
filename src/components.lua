@@ -135,6 +135,7 @@ function Trigger:new(args)
     self.destroyontrigger = string_to_bool[args[1]]
     self.fire_once = string_to_bool[args[2]]
     self.trig_on_coll = string_to_bool[args[3]]
+    self.event = args[4]
 end
 
 function Trigger:activate(owner, entity)

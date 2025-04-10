@@ -1,7 +1,9 @@
 @player|:72|player|stats,hp=10,gold=0|movable,walk|slots,head,chest,cape,quiver,weapon|*unarmed,sfx=sfx_mace_light,action=is punched,bludgeon=1d2|inventory,26
 @lemure|:108|stats,hp=10|npc,group=lemure,enemies=none,nature=neutral,sight=15,hearing=5|movable,walk,climb
 @crab|:110|stats,hp=15,mana=10|npc,group=crabs,enemies=none,nature=aggressive,sight=3,hearing=1|movable,walk,swim,ruck|*unarmed,sfx=sfx_crab,action=is clamped,pierce=1d2|profile,slash=-2,bleeding=immune
-@gold|:88|trigger,true,false,false,collects th' gold|*trigger,statgold=1d5+5,sfx=sfx_gold
+@gold1|:86|trigger,true,false,false,collects th' gold|*trigger,statgold=1d5+5,sfx=sfx_gold
+@gold2|:87|trigger,true,false,false,collects th' gold|*trigger,statgold=1d6+10,sfx=sfx_gold
+@gold3|:88|trigger,true,false,false,collects th' gold|*trigger,statgold=1d10+30,sfx=sfx_gold
 @locket|:101|pickup|locked|description,golden locket|*unlock,sfx=sfx_unlock,action=is unlocked
 @key|:64|key|pickup|description,key
 @door|:9|obstacle|usable,false,use=linked|*linked,sfx=sfx_door,tileswitch=10,physchange=obstacle

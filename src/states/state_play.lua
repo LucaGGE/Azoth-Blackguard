@@ -11,7 +11,7 @@ local current_turn = 1
 function StatePlay:manage_input(key)
     -- managing input for multiple players
     if #g.party_group > 1 then
-        if #g.keys_pressed == 0 and not g.tweening then
+        if #g.keys_pressed == 0 and next(g.tweening) == nil then
             table.insert(g.keys_pressed, key)
         end
     else
@@ -77,7 +77,7 @@ function StatePlay:update()
     local valid_action 
 
     -- checking for input to resolve turns
-    if g.keys_pressed[1] and not g.tweening then
+    if g.keys_pressed[1] and next(g.tweening) == nil then
         local player = g.party_group[current_turn]
         
         -- sending input to current player input_manager (if alive)
@@ -111,7 +111,7 @@ function StatePlay:update()
             -- reset turn system to 1
             current_turn = 1
             -- block player from doing anything while g.camera and NPCs act
-            g.tweening = true
+            g.tweening["turn"] = true
             -- if g.party_group[1] is false, all players died/we are changing level
             if g.party_group[current_turn] then
                 -- reset current_turn number, move NPCs and apply their effects
@@ -123,7 +123,7 @@ function StatePlay:update()
                 g.game_state:init()
             end
         else
-            g.tweening = true
+            g.tweening["turn"] = true
             
             -- Move NPCs and apply their effects
             -- Player/NPCs is established by second arg, true/false!
@@ -137,7 +137,7 @@ function StatePlay:update()
     -- flashing last console event, if any new events received in console_event
     if g.new_event then
         g.new_event = false
-        g.tweening = true
+        g.tweening["event"] = true
         
         local final_color = g.console["rgb1"]
         local flash_color = {1, 1, 1, 1}
@@ -150,7 +150,8 @@ function StatePlay:update()
         Timer.tween(TWEENING_TIME, {}):finish(function ()
             g.console["rgb1"] = final_color
             g.cnv_ui = ui_manager_play()
-            g.tweening = false
+            -- check if a cutscene is being played
+            g.tweening["event"] = nil
         end)
     end
 end
@@ -192,6 +193,12 @@ function StatePlay:refresh()
             entity.alive = false
         end
 
+        -- check if Entity is not dead, but was moved to inventory
+        if entity.alive == "inventory" then
+            entity_kill(entity, i, g.render_group)
+            entity.alive = true
+        end
+
         if not entity.alive then
             entity_kill(entity, i, g.render_group)
         end
@@ -207,6 +214,12 @@ function StatePlay:refresh()
             )
             table.remove(g.hidden_group, i)
             entity.alive = false
+        end
+
+        -- check if Entity is not dead, but was moved to inventory
+        if entity.alive == "inventory" then
+            entity_kill(entity, i, g.render_group)
+            entity.alive = true
         end
 
         if not entity.alive then

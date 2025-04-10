@@ -18,7 +18,7 @@ g = {
     current_inv = {}, -- current player's inventory
     view_inv = false, -- view inventory or not
     cemetery = {}, -- a table containing deaths data (player, killer, gold...)
-    tweening = false, -- suspends player input during animations
+    tweening = {}, -- suspends player input during animations
     game_state, -- the current game state
     error_messages = {}, -- holds all error messages to print on screen
     new_event = false,

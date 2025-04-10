@@ -89,6 +89,7 @@ SOUNDS = {
     ["sfx_unlock"] = love.audio.newSource("sfx/sfx_unlock.ogg", "static"),
     ["sfx_sword"] = love.audio.newSource("sfx/sfx_sword.ogg", "static"),
     ["sfx_crab"] = love.audio.newSource("sfx/sfx_crab.ogg", "static"),
+    ["sfx_death"] = love.audio.newSource("sfx/sfx_death.ogg", "static"),
     ["sfx_death_blu"] = love.audio.newSource("sfx/sfx_death_blu.ogg", "static"),
     ["sfx_death_sla"] = love.audio.newSource("sfx/sfx_death_sla.ogg", "static"),
     ["sfx_death_pie"] = love.audio.newSource("sfx/sfx_death_pie.ogg", "static")

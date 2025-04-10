@@ -830,7 +830,7 @@ function turns_manager(current_player, npc_turn)
 
         ::continue::
 
-        g.tweening = false
+        g.tweening["turn"] = nil
         console_cmd(nil)
         g.game_state:refresh()        
     end)
@@ -1094,6 +1094,7 @@ end
 
 function entity_kill(entity, index, group)
     table.remove(group, index)
+
     if entity.comp["obstacle"] or entity.comp["player"] or entity.comp["npc"] then
         print("Pawn entity or obstacle entity destroyed")
 
@@ -1101,11 +1102,25 @@ function entity_kill(entity, index, group)
     else
         entity.cell["cell"].entity = nil
     end
+
+    -- pause for few seconds & play sting to emphasize player's death
+    if entity.comp["player"] then
+        g.tweening["cutscene"] = true
+
+        play_sound(SOUNDS["sfx_death"])
+
+        Timer.tween(2.5, {}):finish(function ()
+            -- empty any input given while tweening for character death
+            g.keys_pressed = {}
+
+            g.tweening["cutscene"] = nil
+        end)
+    end
 end
 
 -- this func registers game events and chronologially displays them
 function console_event(event, font_color)
-    g.tweening = true
+    g.tweening["event"] = true
     g.new_event = false
     local base_color = {[1] = 0.28, [2] = 0.46, [3] = 0.73}
     local events_table = {}
@@ -1140,7 +1155,7 @@ end
 
 function death_check(target, damage_dice, type, message, sound)
     -- this is needed to output messages on screen in yellow or red
-    local event_color = {
+    local event_rgb = {
         [false] = {[1] = 0.87, [2] = 0.26, [3] = 0.43},
         [true] = {[1] = 0.93, [2] = 0.18, [3] = 0.27}
     }
@@ -1178,14 +1193,17 @@ function death_check(target, damage_dice, type, message, sound)
     stats["hp"] = stats["hp"] - damage_score
     print(target.name .. " receives damage: " .. damage_score)
 
+    -- target is dead
     if stats["hp"] <= 0 then
         target.alive = false
+
         -- play dedicated death message and sound depending on damage
         if sound then
             play_sound(SOUNDS[sound])
         end
+
         if message then
-            console_event(target.name .. " " .. message, event_color[target_family])
+            console_event(target.name .. " " .. message, event_rgb[target_family])
         end
     end
 
@@ -1540,7 +1558,6 @@ function bestow_place_func(player_comp, player_entity, key)
     player_comp.string = false
 
     -- then position item in target_cell and add to entities_group
-    item.alive = true
     item.cell["cell"] = target_cell
     item.cell["grid_row"] = target_cell.y
     item.cell["grid_col"] = target_cell.x
@@ -2004,6 +2021,7 @@ end
 function movable_move_entity(owner, dir, comp)
     -- destination, the target cell
     local destination
+    local current_cell = g.grid[owner.cell["grid_row"]][owner.cell["grid_col"]]
     -- target entity, the target cell eventual entity
     local entity
     -- necessary to check if adjacent cells are transversable when moving diagonally
@@ -2012,6 +2030,7 @@ function movable_move_entity(owner, dir, comp)
     local col_mov = owner.cell["grid_col"] + dir[2]
     local succ_score = 7 -- score to succeed, throw need to be less or equal
     local succ_atk = false -- by default, not needed and set to false
+    local can_ruck = false
 
     -- making sure that the comp owner isn't trying to move out of g.grid
     if col_mov > g.grid_x or col_mov <= 0 or row_mov > g.grid_y or row_mov <= 0 then
@@ -2021,7 +2040,7 @@ function movable_move_entity(owner, dir, comp)
     end
 
     -- if cell exists and is part of the g.grid, store it as destination
-    destination = g.grid[owner.cell["grid_row"] + dir[1]][owner.cell["grid_col"] + dir[2]]
+    destination = g.grid[row_mov][col_mov]
     -- store its eventual Entity for later reference
     entity = destination.entity
 
@@ -2040,18 +2059,40 @@ function movable_move_entity(owner, dir, comp)
     table.insert(adj_tiles, TILES_PHYSICS[destination.index])
     for i, phys in ipairs(adj_tiles) do
         local can_traverse = false
+
         for i2, mov_type in ipairs(comp.movement_type) do
             local mov = comp.MOV_TO_PHYS[mov_type]
+
+            -- store ability to ruck for later check
+            if mov_type == "ruck" then can_ruck = true end
+
             if mov == phys or mov == "wiggle" then
                 can_traverse = true
-                break
+            end
+
+            -- Entities that can walk, can also traverse 'difficult' terrain
+            if mov_type == "walk" and phys == "difficult" then
+                can_traverse = true
             end
         end
+         
         -- if even one cell isn't compatible with Entity mov, Entity is blocked
         if not can_traverse then
             print("Incompatible tile terrain in path for entity")
             return false
         end 
+    end
+
+    -- if Entity is in 'difficult' terrain, throw dice to confirm movement
+    if TILES_PHYSICS[current_cell.index] == "difficult" and not can_ruck then
+        local succesfully_moves = dice_roll("1d3", 2)
+
+        -- if still cannot traverse, Entity got stuck in difficult terrain
+        if not succesfully_moves then
+            play_sound(SOUNDS[TILES_PHYSICS[current_cell.index]])
+
+            return true
+        end
     end
 
     -- check if owner movement is impeded by an obstacle Entity
@@ -2141,10 +2182,11 @@ function movable_move_entity(owner, dir, comp)
             -- if a player just died, save all deceased's relevant info in cemetery
             -- variable for recap in Game Over screen
             if pawn.comp["player"] then
-                local deceased = {["player"] = pawn.name,
-                ["killer"] = owner.name,
-                ["loot"] = pawn.comp["stats"].stat["gold"],
-                ["place"] = "Black Swamps"
+                local deceased = {
+                    ["player"] = pawn.name,
+                    ["killer"] = owner.name,
+                    ["loot"] = pawn.comp["stats"].stat["gold"],
+                    ["place"] = "Black Swamps"
                 }
                 table.insert(g.cemetery, deceased)
             end
@@ -2230,10 +2272,13 @@ function usable_activate(target, input_entity, input_key, comp)
         target.comp["trigger"]:activate(target, entity)
     end
 
+    print("check 1")
+    print(target.alive)
     -- if Entity is destroyontrigger, don't bother with rest of code
     if not target.alive then
         return false
     end
+    print("check 2")
 
     if not comp.uses[key] then
         console_event("Nothing doth happen")
@@ -2347,7 +2392,7 @@ function inventory_add(item, comp)
             print("Entity succesfully stacked: ".. stack.stat["hp"])
 
             console_event("Thee pick up " .. item_ref)
-            item.alive = false
+            item.alive = "inventory"
 
             return true
         end
@@ -2359,7 +2404,7 @@ function inventory_add(item, comp)
     comp.spaces = comp.spaces - 1
     table.insert(comp.items, item)
     console_event("Thee pick up " .. item_ref)
-    item.alive = false
+    item.alive = "inventory"
 
     return true
 end

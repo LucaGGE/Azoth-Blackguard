@@ -257,6 +257,7 @@ function player_cmd(player_comp, input_key)
     commands["o"] = commands["observe"]
     commands["p"] = commands["pickup"]
     commands["escape"] = commands["quit"]
+    commands["q"] = commands["quit"]
     commands["g"] = commands["equip"]
     commands["gear up"] = commands["equip"]
     commands["l"] = commands["loose"]

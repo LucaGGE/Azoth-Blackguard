@@ -5,16 +5,6 @@
     Player gives input, or the Player position).
 ]]
 
--- this stores all the legal movement-phys MOV_TO_PHYS (see VALID_PHYSICS)
-local MOV_TO_PHYS = {
-    ["ruck"] = "difficult",
-    ["swim"] = "liquid",
-    ["climb"] = "climbable",
-    ["fly"] = "void",
-    ["phase"] = "solid",
-    ["walk"] = "ground"
-}
-
 -- note this is NOT found in BLUEPRINTS_TABLE, as it is restricted to the game menu
 Player = Object:extend()
 function Player:new()
@@ -39,59 +29,21 @@ function Player:new()
 end
 
 function Player:manage_input(entity, key)
-    if key == "escape" then 
-        self.action_state = nil
-        self.string = ""
-        console_cmd(nil)
-
-        return false
-    end
-
-    if not self.action_state then
-        local mov_input = self.movement_inputs[key]
-
-        -- checking if player is trying to use a hotkey
-        if not mov_input and not self.action_state then
-            -- hotkeys allow access only to a few selected states/interactions.
-            -- NOTE: 'self' = this comp, and 'entity' = player entity
-            return player_cmd(self, key)
-        end
-
-        -- check if player has inventory open, to avoid undesired movement input
-        if g.view_inv then
-            return false
-        end
-    
-        -- check if player is skipping turn (possible even without a mov comp)
-        if mov_input[1] == 0 and mov_input[2] == 0 then
-            play_sound(SOUNDS["wait"])
-            return true
-        end
-
-        -- 'Movable' component can be modified/added/removed during gameplay,
-        -- so it is imperative to check for it each time
-        if not entity.comp["movable"] then
-            print("INFO: The entity does not contain a movement component")
-            return false
-        end
-
-        -- if no guard statements were activated, player is legally trying to move
-        return entity.comp["movable"]:move_entity(entity, mov_input)
-    end
-
-    -- managing self.action_state mode of input  
-    if IO_DTABLE[self.action_state] then
-        return IO_DTABLE[self.action_state](self, entity, key)
-    end
-
-    -- if no valid input was received for the mode, return false
-    print("Called IO_DTABLE[self.action_state] where self.action_state is an invalid key!")
-    return false
+    return player_manage_input(entity, key, self)
 end
 
 Movable = Object:extend()
 function Movable:new(optional_args)
     self.movement_type = {}
+    -- this stores all the legal movement-phys MOV_TO_PHYS (see VALID_PHYSICS)
+    self.MOV_TO_PHYS = {
+        ["ruck"] = "difficult",
+        ["swim"] = "liquid",
+        ["climb"] = "climbable",
+        ["fly"] = "void",
+        ["phase"] = "solid",
+        ["walk"] = "ground"
+    }
     for i,v in ipairs(optional_args) do
         -- adding movement abilities
         table.insert(self.movement_type, v)
@@ -106,190 +58,7 @@ end
     branches but that cannot move around!
 ]]
 function Movable:move_entity(owner, dir)
-    -- destination, the target cell
-    local destination
-    -- target entity, the target cell eventual entity
-    local entity
-    -- necessary to check if adjacent cells are transversable when moving diagonally
-    local adj_tiles = {}
-    local row_mov = owner.cell["grid_row"] + dir[1]
-    local col_mov = owner.cell["grid_col"] + dir[2]
-    local succ_score = 7 -- score to succeed, throw need to be less or equal
-    local succ_atk = false -- by default, not needed and set to false
-
-    -- making sure that the comp owner isn't trying to move out of g.grid
-    if col_mov > g.grid_x or col_mov <= 0 or row_mov > g.grid_y or row_mov <= 0 then
-        destination = nil
-        print("Trying to move out of g.grid boundaries")
-        return false
-    end
-
-    -- if cell exists and is part of the g.grid, store it as destination
-    destination = g.grid[owner.cell["grid_row"] + dir[1]][owner.cell["grid_col"] + dir[2]]
-    -- store its eventual Entity for later reference
-    entity = destination.entity
-
-    -- checking for additional tiles to check, since diagonal mov requires entity
-    -- to be able to traverse all of them!
-    if dir[1] ~= 0 and dir[2] ~= 0 then
-        -- since movement is diagonal, add to adj_tiles the adjacent tiles
-        local adj_tile
-        adj_tile = g.grid[owner.cell["grid_row"]][owner.cell["grid_col"] + dir[2]]
-        table.insert(adj_tiles, TILES_PHYSICS[adj_tile.index])
-        adj_tile = g.grid[owner.cell["grid_row"] + dir[1]][owner.cell["grid_col"]]
-        table.insert(adj_tiles, TILES_PHYSICS[adj_tile.index])
-    end
-
-    -- now checking if tile feature is compatible with movement abilities
-    table.insert(adj_tiles, TILES_PHYSICS[destination.index])
-    for i, phys in ipairs(adj_tiles) do
-        local can_traverse = false
-        for i2, mov_type in ipairs(self.movement_type) do
-            if MOV_TO_PHYS[mov_type] == phys or MOV_TO_PHYS[mov_type] == "wiggle" then
-                can_traverse = true
-                break
-            end
-        end
-        -- if even one cell isn't compatible with Entity mov, Entity is blocked
-        if not can_traverse then
-            print("Incompatible tile terrain in path for entity")
-            return false
-        end 
-    end
-
-    -- check if owner movement is impeded by an obstacle Entity
-    if entity and entity.comp["obstacle"] then
-        print("Cell is blocked by obstacle: " .. entity.id)
-        return false
-    end
-
-    -- checking for NPC/Player Entities. These always have precedence of interaction
-    if destination.pawn then
-        local pilot = owner.pilot
-        local pawn = destination.pawn
-        local pawn_slots = owner.comp["slots"] and owner.comp["slots"].slots or false
-
-        -- trying to establish attack mode: armed or unarmed. Checking weapon slot
-        local attack_mode = pawn_slots and pawn_slots["weapon"] or false
-
-        -- checking if slot is available but empty
-        if attack_mode and attack_mode == "empty" then
-            attack_mode = false
-        end
-
-        -- if weapon is available, select its 'hit' power (always expected)
-        attack_mode =  attack_mode and attack_mode["item"].powers["hit"] or false
-
-        -- moving against an Entity = interaction. If part of different groups
-        -- or of special 'self' group, the interaction results in an attack
-        if pilot.group ~= "self" and pilot.group == pawn.pilot.group then
-            print("Entity interacts with another Entity of the same group")
-            return true
-        end
-
-        -- Player/Civilised interaction is always peaceful
-        if pilot.group == "players" and pawn.pilot.nature == "civilized" then
-            print("Player dialogues with civilized creature")
-            -- this will actually lead to a dialogue func() that will return true/false
-            return true
-        end
-        if pilot.group == "civilised" and pawn.pilot.nature == "player" then
-            print("Player dialogues with civilized creature")
-            -- this will actually lead to a dialogue func() that will return true/false
-            return true
-        end
-
-        -- selecting between weapon, if available, or unarmed attack
-        attack_mode = attack_mode or owner.powers["unarmed"]
-
-        -- an enemy was found, but owner has no weapon equipped or 'unarmed' power
-        if not attack_mode then
-            print('Trying to attack other entity without weapon, but no "unarmed" power was assigned')
-
-            return false
-        end
-
-        -- an enemy was found. Check if it has stats and can take damage
-        if not pawn.comp["stats"] then
-            print("Target entity has no Stats component")
-            return false
-        end
-
-        local target_stats = pawn.comp["stats"].stat
-        if not target_stats["hp"] then
-            print("Target entity has no HP and cannot die")
-            return false
-        end
-
-        -- if target is invisible, you need to roll a lower number
-        if pawn.comp["invisible"] then
-            print("Trying to hit invisible entity, success when: roll <= 4")
-            succ_score = 4
-        end
-
-        -- dices get rolled to identify successful hit and eventual damage
-        succ_atk = dice_roll("1d12+1", succ_score)
-        
-        if succ_atk then
-            -- NOTE: both "unarmed" and "hit" are expected powers previously checked
-            attack_mode:activate(pawn)
-        else
-            love.audio.play(SOUNDS["sfx_miss"])
-        end
-
-        if target_stats["hp"] <= 0 then
-            target_stats["hp"] = 0
-            -- Entity will be removed from render_group and cell during refresh()
-            pawn.alive = false
-            -- if a player just died, save all deceased's relevant info in cemetery
-            -- variable for recap in Game Over screen
-            if pawn.comp["player"] then
-                local deceased = {["player"] = pawn.name,
-                ["killer"] = owner.name,
-                ["loot"] = pawn.comp["stats"].stat["gold"],
-                ["place"] = "Black Swamps"
-                }
-                table.insert(g.cemetery, deceased)
-            end
-        end
-
-        return true
-    end
-
-    -- if no pawns are found in target cell, you're good to go
-    owner.cell["cell"].pawn = nil -- freeing old cell
-    owner.cell["grid_row"] = owner.cell["grid_row"] + dir[1]
-    owner.cell["grid_col"] = owner.cell["grid_col"] + dir[2]
-    owner.cell["cell"] = destination -- storing new cell
-    owner.cell["cell"].pawn = owner -- occupying new cell
-    
-    -- playing sound based on tile type, check if valid to avoid crashes
-    if SOUNDS[TILES_PHYSICS[destination.index]] then
-        play_sound(SOUNDS[TILES_PHYSICS[destination.index]])
-    else
-        print("WARNING: destination has no related sound")
-    end
-
-    -- lastly, check if there's an item Entity in the new cell
-    if not entity then
-        return true
-    end
-    -- see if the Entity is an exit
-    if entity.comp["exit"] then
-        entity.comp["exit"]:activate(entity, owner)
-        return true
-    end
-
-    -- see if Entity is has trigger component
-    if entity.comp["trigger"] and entity.comp["trigger"].trig_on_coll then
-        -- trigger may work or not, but Entity still moved, so return true
-        entity.comp["trigger"]:activate(entity, owner)
-        return true
-    end
-
-    -- if a non-reactive, non-NPC, non-Player, non-Obstacle Entity is in target cell
-    -- simply ignore it anad return true for successful movement 
-    return true
+    return movable_move_entity(owner, dir, self)
 end
 
 Npc = Object:extend()
@@ -341,13 +110,7 @@ function Npc:new(args)
 end
 
 function Npc:activate(owner)
-    -- if NPC cannot move, skip turn
-    if not owner.comp["movable"] then
-        return false
-    end
-
-    -- choose path of action depending on nature
-    return ai_behavior(owner, self)
+    return npc_activate(owner, self)
 end
 
 Trap = Object:extend()
@@ -374,32 +137,15 @@ function Trigger:new(args)
     self.trig_on_coll = string_to_bool[args[3]]
 end
 
-function Trigger:activate(owner, entity)  
-    -- check if owner Entity has a dedicated power flagged as 'trigger'
-    if owner.powers["trigger"] then
-        owner.powers["trigger"]:activate(entity)
-    else
-        print("Blank trigger: a trigger Entity has no 'trigger' power to activate")
-    end
-    
-    -- if owner is to 'destroyontrigger', destroy it
-    if self.destroyontrigger then
-        -- will be removed from render_group and cell during refresh()
-        owner.alive = false
-
-        return
-    end
-
-    -- if component is set to fire_once, destroy component
-    if self.fire_once then
-        owner.comp["trigger"] = nil
-    end
+function Trigger:activate(owner, entity)
+    return trigger_activate(owner, entity, self)  
 end
 
 -- Pickup is a 'flag' class, where its only utility is to let other Entities know
 -- that owner Entity can be picked up
 Pickup = Object:extend()
 function Pickup:new()
+
 end
 
 -- Usable is a for all objects that can be somehow used and then trigger an event
@@ -431,76 +177,7 @@ end
 
 -- to have a simple 'use' input working, have a power named 'use'
 function Usable:activate(target, input_entity, input_key)
-    local key = input_key or "use"
-    local entity = input_entity
-
-    -- trigger always hits activating Entity, even if linked comp is present
-    if target.comp["trigger"] then
-        target.comp["trigger"]:activate(target, entity)
-    end
-
-    -- if Entity is destroyontrigger, don't bother with rest of code
-    if not target.alive then
-        return false
-    end
-
-    if not self.uses[key] then
-        console_event("Nothing doth happen")
-    end
-
-    if not target.powers[self.uses[key]] then
-        print("NOTE: usable comp was called, but has no corresponding power")
-
-        return false
-    end
-
-    -- activate target power
-    target.powers[self.uses[key]]:activate(target)
-    
-    -- if destroyonuse, destroy used object (useful for consumables)
-    if self.destroyonuse then
-        target.alive = false
-    end
-
-    -- if self.uses[key] ~= 'linked', no need to proceed
-    if self.uses[key] ~= "linked" then
-        print("Power does not call for linked activation")
-        return true
-    end
-    
-    -- search for linked comp and store eventual linked Entity coords
-    if target.comp["linked"] then
-        print("Linked component was found")
-        -- 'linked' comp activation returns name-store coordinates
-        local row, col = target.comp["linked"]:activate(target)
-        row = tonumber(row)
-        col = tonumber(col)
-        -- check immediately for NPC/Player
-        entity = g.grid[row][col] and g.grid[row][col].pawn or false
-        -- if absent, check for Entity
-        if not entity then entity = g.grid[row][col].entity or false end
-    else
-        -- no linked component, return true
-        return true
-    end
-
-    -- if linked but Entity is missing in cell, nothing happened and return true
-    if not entity then
-        console_event("The target is absent")
-
-        return true
-    end
-
-    if not entity.powers["linked"] then
-        print("WARNING: linked Entity has no dedicated 'linked' power")
-
-        return true
-    end
-
-    -- at this point we know everything is in check, proceed
-    entity.powers["linked"]:activate(entity)
-
-    return true
+    return usable_activate(target, input_entity, input_key, self)
 end
 
 -- simple class used only to jump between levels or from game to menu (game end)
@@ -511,19 +188,7 @@ function Exit:new(args)
 end
 
 function Exit:activate(owner, entity)
-    console_event(self.event_string)
-    if entity.comp["player"] then
-        -- the entity's name indicates the level to load
-        if owner.name ~= "menu" then
-            g.game_state:exit()
-            print("Exit id: "..owner.id)
-            print("Level name: "..owner.name)
-            g.game_state:init(owner.name, false)
-        else
-            g.game_state = StateMenu()
-            g.game_state:init()
-        end
-    end
+    return exit_activate(owner, entity, self)
 end
 
 --[[
@@ -592,6 +257,7 @@ end
 -- simple 'tag' component telling system 'do not draw me by default'
 Invisible = Object:extend()
 function Invisible:new()
+
 end
 
 --[[
@@ -601,6 +267,7 @@ end
 ]]--
 Key = Object:extend()
 function Key:new()
+
 end
 
 -- for all Entities that can store items (i.e. Players, NPCs, chests, libraries...)
@@ -622,71 +289,13 @@ function Inventory:new(arg)
 end
 
 function Inventory:add(item)
-    local item_ref
-
-    -- immediately check if space is available
-    if not (self.spaces > 0) then
-        console_event("Thy inventory is full")
-
-        return false
-    end
-
-    item_ref = string_selector(item)
-
-    -- if not stackable, simply add to inventory
-    if not item.comp["stack"] then
-        goto addtoinv
-    end
-
-    -- return error if stackable Entity is missins essential 'hp' stat
-    if not item.comp["stats"] and not item.comp["stats"].stat["hp"] then
-        error_handler(
-            "Trying to stack Stackable Entity without HP stat, which defines stack amount.",
-            "Pickup action canceled!"
-        )
-        return false
-    end
-
-    -- if everything is in check, stack Entity in inventory, even if equipped
-    for _, obj in ipairs(self.items) do
-        if obj.id == item.id then
-            local supplement =  item.comp["stats"].stat["hp"]
-            local stack = obj.comp["stats"]
-
-            stack.stat["hp"] = stack.stat["hp"] + supplement
-
-            print("Entity succesfully stacked: ".. stack.stat["hp"])
-
-            console_event("Thee pick up " .. item_ref)
-            item.alive = false
-
-            return true
-        end
-    end
-
-    -- pickup is non-stackable or stackable but not yet collected, add
-    ::addtoinv::
-
-    self.spaces = self.spaces - 1
-    table.insert(self.items, item)
-    console_event("Thee pick up " .. item_ref)
-    item.alive = false
-
-    return true
+    return inventory_add(item, self)
 end
 
 -- removes item from inventory by coupling item_key letter with
 -- its indexed position inside self.items
 function Inventory:remove(item_key)
-    local inv_str = "abcdefghijklmnopqrstuvwxyz"
-
-    for i = 1, string.len(inv_str) do
-        if string.sub(inv_str, i, i) == item_key then
-            table.remove(self.items, i)
-
-            return true
-        end
-    end
+    return inventory_remove(item_key, self)
 end
 
 -- for all Entities that can equip Equipable Entities, matches Equipable comp tags
@@ -728,35 +337,11 @@ function Equipable:new(args)
 end
 
 function Equipable:equip(owner, target)
-    if not owner.powers["equip"] then
-        print("Warning: trying to activate equip power, but none is found")
-        return false
-    end
-
-    owner.powers["equip"]:activate(target)
-    return true
+    return equipable_equip(owner, target)
 end
 
 function Equipable:unequip(owner, target)
-    -- check if owner is cursed and cannot be removed. If so, reveal item
-    if owner.comp["equipable"].cursed then
-        console_event("Thy item is cursed and may not be removed!", {0.6, 0.2, 1})
-
-        -- reveal Entity real description
-        if owner.comp["secret"] then
-            owner.comp["secret"] = nil
-        end
-
-        return false
-    end
-
-    if not owner.powers["unequip"] then
-        print("Warning: trying to activate unequip power, but none is found. Object unequipped anyway.")
-        return true
-    end
-
-    owner.powers["unequip"]:activate(target)
-    return true
+    return equipable_unequip(owner, target)
 end
 
 -- same as 'locked', but requires 'say' interaction to unlock
@@ -766,21 +351,7 @@ function Sealed:new(input)
 end
 
 function Sealed:activate(target, entity, player_comp)
-    if target.name == player_comp.string then
-        console_event("Thou dost unseal it!")
-        if target.comp["trigger"] then
-            target.comp["trigger"]:activate(target, entity)
-        end
-
-        -- if Entity gets successfully unsealed, remove 'seled' comp
-        target.comp["sealed"] = nil
-        player_comp.string = ""
-        return true
-    end
-
-    console_event("There is no response")
-
-    return false
+    return sealed_activate(target, entity, player_comp)
 end
 
 -- when is requested to unlock from console, searches in requester inventory for an
@@ -792,25 +363,7 @@ function Locked:new(input)
 end
 
 function Locked:activate(owner, entity)
-    if entity.comp["inventory"] then
-        for _, item in ipairs(entity.comp["inventory"].items) do
-            if item.comp["key"] and item.name == owner.name then
-                console_event("Thou dost unlock it!")
-                if owner.comp["trigger"] then
-                    owner.comp["trigger"]:activate(owner, entity)
-                end
-
-                -- if Entity was successfully unlocked, remove 'Locked' comp
-                owner.comp["locked"] = nil
-                return true
-            end
-        end
-        console_event("Thou dost miss the key")
-        
-        return true
-    end
-    error_handler("Entity without invetory is trying to use key to unlock")
-    return false
+    return locked_activate(owner, entity)
 end
 
 -- simple comp that prevents acces to Entity name, id or description
@@ -836,11 +389,7 @@ end
 -- note how changing the Entity's name will change its cell of interest,
 -- since the Entity's name correspond to row, col coordinates
 function Linked:activate(owner)
-    local row_column = str_slicer(owner.name, "-", 1)
-    local row = row_column[1]
-    local column = row_column[2]
-
-    return row, column
+    return linked_activate(owner)
 end
 
 -- shooter Entities will consume ammo and use their properties to establish effects
@@ -855,22 +404,8 @@ function Shooter:new(args)
     -- remove first arg, as it is now useless
     table.remove(args, 1)
 
-    -- TO DO TO DO TO DO TO DO TO DO TO DO TO DO TO DO TO DO TO DO TO DO TO DO TO DO TO DO TO DO TO DO TO DO TO DO TO DO TO DO TO DO TO DO 
-    -- this check needs to be done when going to shoot, or it will require ordered blueprints (unacceptable)
+    -- adding all compatible ammo types (will check if their id is valid on loose)
     for _, ammo_type in ipairs(args) do
-        --[[
-        -- checking if ammo_type is a valid Entity BP id or not
-        if not BP_LIST[ammo_type] then
-            error_handler(
-                "Assigning to shooter Entity invalid ammo_type with id " .. ammo_type
-            )
-
-            return false
-        end
-        ]]--
-        print(ammo_type)
-
-        -- adding all compatible ammo types
         table.insert(self.munitions, ammo_type)
     end
 end

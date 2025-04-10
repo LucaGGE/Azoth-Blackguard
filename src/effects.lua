@@ -111,7 +111,7 @@ end
 function slash(target, input)
     local success, damage
 
-    success, damage = death_check(target, input, "slash", "was slaughtered","sfx_death_sla")
+    success, damage = death_check(target, input, "slash", "hath been slaughtered","sfx_death_sla")
 
     if success then
         -- the higher the slash damage, the longer the target will bleed
@@ -122,19 +122,19 @@ end
 function bludgeon(target, input)
     local success, damage
 
-    success, damage = death_check(target, input, "bludgeon", "was pulverized","sfx_death_blu")
+    success, damage = death_check(target, input, "bludgeon", "hath been crushed","sfx_death_blu")
 end
 
 function pierce(target, input)
     local success, damage
 
-    success, damage = death_check(target, input, "pierce", "was massacred","sfx_death_pie")
+    success, damage = death_check(target, input, "pierce", "hath been massacred","sfx_death_pie")
 end
 
 function bleed(effect_tag, target, input)
     local success
 
-    success, _ = death_check(target, "1", "bleeding", "bled to death")
+    success, _ = death_check(target, "1", "bleeding", "hath bled to death")
 
     return success
 end

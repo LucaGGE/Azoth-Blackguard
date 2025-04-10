@@ -794,7 +794,7 @@ function turns_manager(current_player, npc_turn)
         [g.camera] =  {x = x_for_tweening, y = y_for_tweening}        
     }):finish(function ()
         -- if it's not the NPCs turn, apply player pawn effects and enable them 
-        if not npc_turn then
+        if not npc_turn and current_player["entity"].alive then
             for i, effect_tag in ipairs(current_player["entity"].effects) do
                 -- activate lasting effects for current_player
                 effect_tag:activate()
@@ -1172,7 +1172,7 @@ function death_check(target, damage_dice, type, message, sound)
     -- this is done to avoid adding HP when modifier is so impactful to output <= 0
     if damage_score <= 0 then
         console_event(target.name .. " doth not appear troubled by " .. type)
-        return false
+        return true
     end
 
     stats["hp"] = stats["hp"] - damage_score

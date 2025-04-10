@@ -89,9 +89,22 @@ function EffectTag:new(target, input, duration, func)
     self.func = func -- dedicated func to call, established by the parent Effect
 end
 
-function EffectTag:activate(target)
+function EffectTag:activate()
+    local success
+
+    -- target may have died from a prior effect on stack, check if alive
+    if not self.target.alive then
+        return false
+    end
+
     self.duration = self.duration - 1
-    self.func(self, self.target, self.input)
+
+    success = self.func(self, self.target, self.input)
+    print("success:")
+    print(success)
+
+    -- if target is immune to EffectTag, then set its duration to 0
+    if not success then self.duration = 0 end
 end
 
 -- base state definition

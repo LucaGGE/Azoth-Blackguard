@@ -136,13 +136,18 @@ function bleed(effect_tag, target, input)
 
     success, _ = death_check(target, "1", "bleeding", "bled to death")
 
-    -- if target is immune to EffectTag, then set its duration to 0
-    if not success then effect_tag.duration = 0 end
+    return success
 end
 
-function str_effect(target, input)
+-- this effect is used to describe on console the action performed by a power
+function action_str(target, input)
     local target_str = target.name
     local color = {[1] = 1, [2] = 0.97, [3] = 0.44}
+
+    -- check if target alive, to avoid printing an action after its death
+    if target.alive == false then
+        return false
+    end
             
     -- as usual, favor Entity description (or secret) to Entity name
     if target.comp["description"] then

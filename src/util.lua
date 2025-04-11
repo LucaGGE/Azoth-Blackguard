@@ -1757,9 +1757,6 @@ function unlock_func(player_comp, player_entity, key)
     -- if no unlockable target is found then warn player
     if entity.comp["locked"] then
         entity.comp["locked"]:activate(entity, player_entity)
-
-        -- activating optional unlock-related power
-        action_to_power(entity, player_entity, "unlock")
     else
         console_event("Thee can't unlock this")
     end
@@ -2550,6 +2547,10 @@ function locked_activate(owner, entity)
 
                 -- if Entity was successfully unlocked, remove 'Locked' comp
                 owner.comp["locked"] = nil
+
+                -- activating optional unlock-related power
+                action_to_power(owner, entity, "unlock")
+
                 return true
             end
         end

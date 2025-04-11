@@ -33,27 +33,19 @@ function Player:manage_input(entity, key)
 end
 
 Movable = Object:extend()
-function Movable:new(optional_args)
-    self.movement_type = {}
-    -- this stores all the legal movement-phys MOV_TO_PHYS (see VALID_PHYSICS)
-    self.MOV_TO_PHYS = {
-        ["ruck"] = "difficult",
-        ["swim"] = "liquid",
-        ["climb"] = "climbable",
-        ["fly"] = "void",
-        ["phase"] = "solid",
-        ["walk"] = "ground"
-    }
-    for i,v in ipairs(optional_args) do
-        -- adding movement abilities
-        table.insert(self.movement_type, v)
+function Movable:new(args)
+    self.mov_type = {}
+
+    for _, mov in pairs(args) do
+        -- adding movement abilities as: mov_ability = true
+        self.mov_type[mov] = true
     end
 end
 
 --[[
     NOTE: if something can move, it can attack.
     Moving against another entity = attacking it (groups prevent this movement).
-    This also means that something can have a movable comp but no movement_type,
+    This also means that something can have a movable comp but no mov_type,
     and it can still attack - think of a living tree that can bash players with its
     branches but that cannot move around!
 ]]

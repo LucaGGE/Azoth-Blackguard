@@ -2031,12 +2031,31 @@ function movable_move_entity(owner, dir, comp)
     local succ_score = 7 -- score to succeed, throw need to be less or equal
     local succ_atk = false -- by default, not needed and set to false
     local can_ruck = false
+    -- this stores all the legal movement-phys MOV_TO_PHYS (see VALID_PHYSICS)
+    local PHYS_TO_MOV = {
+        ["difficult"] = "ruck",
+        ["liquid"] = "swim",
+        ["climbable"] = "climb",
+        ["void"] = "fly",
+        ["solid"] = "phase",
+        ["ground"] ="walk"
+    }
+
+    -- store ability to ruck for later check
+    if comp.mov_type["ruck"] then can_ruck = true end
 
     -- making sure that the comp owner isn't trying to move out of g.grid
     if col_mov > g.grid_x or col_mov <= 0 or row_mov > g.grid_y or row_mov <= 0 then
         destination = nil
         print("Trying to move out of g.grid boundaries")
         return false
+    end
+
+    -- special 'wiggle' movement can reach any adjacent tiles, skip all code
+    if comp.mov_type["wiggle"] then
+        can_traverse = true
+
+        goto continue
     end
 
     -- if cell exists and is part of the g.grid, store it as destination
@@ -2057,33 +2076,31 @@ function movable_move_entity(owner, dir, comp)
 
     -- now checking if tile feature is compatible with movement abilities
     table.insert(adj_tiles, TILES_PHYSICS[destination.index])
-    for i, phys in ipairs(adj_tiles) do
+
+    -- if even one cell isn't compatible with Entity mov, Entity cannot proceed
+    for _, phys in ipairs(adj_tiles) do
         local can_traverse = false
+        local required_mov = PHYS_TO_MOV[phys]
 
-        for i2, mov_type in ipairs(comp.movement_type) do
-            local mov = comp.MOV_TO_PHYS[mov_type]
+        if comp.mov_type[required_mov] then
+            can_traverse = true
+        end
 
-            -- store ability to ruck for later check
-            if mov_type == "ruck" then can_ruck = true end
-
-            if mov == phys or mov == "wiggle" then
-                can_traverse = true
-            end
-
-            -- Entities that can walk, can also traverse 'difficult' terrain
-            if mov_type == "walk" and phys == "difficult" then
-                can_traverse = true
-            end
+        -- Entities that can walk, can also enter 'difficult' terrain
+        if comp.mov_type["walk"] and required_mov == "ruck" then
+            can_traverse = true
         end
          
-        -- if even one cell isn't compatible with Entity mov, Entity is blocked
         if not can_traverse then
             print("Incompatible tile terrain in path for entity")
             return false
         end 
     end
 
+    ::continue::
+
     -- if Entity is in 'difficult' terrain, throw dice to confirm movement
+    -- if and only if they do not have 'ruck' movement ability
     if TILES_PHYSICS[current_cell.index] == "difficult" and not can_ruck then
         local succesfully_moves = dice_roll("1d3", 2)
 
@@ -2249,8 +2266,6 @@ function trigger_activate(owner, entity, comp)
         print("Blank trigger: a trigger Entity has no 'trigger' power to activate")
     end
 
-    print("check1")
-
     -- check if trigger is set to print event
     if comp.event then
         local color = {[1] = 1, [2] = 0.97, [3] = 0.44}
@@ -2282,13 +2297,11 @@ function usable_activate(target, input_entity, input_key, comp)
         target.comp["trigger"]:activate(target, entity)
     end
 
-    print("check 1")
     print(target.alive)
     -- if Entity is destroyontrigger, don't bother with rest of code
     if not target.alive then
         return false
     end
-    print("check 2")
 
     if not comp.uses[key] then
         console_event("Nothing doth happen")

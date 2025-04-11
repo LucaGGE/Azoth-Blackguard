@@ -128,13 +128,13 @@ end
 function pierce(target, input)
     local success, damage
 
-    success, damage = death_check(target, input, "pierce", "hath been massacred","sfx_death_pie")
+    success, damage = death_check(target, input, "pierce", "hath been massacred", "sfx_death_pie")
 end
 
 function bleed(effect_tag, target, input)
     local success
 
-    success, _ = death_check(target, "1", "bleeding", "hath bled to death")
+    success, _ = death_check(target, "1", "bleeding", "hath bled to death", "sfx_death_ble")
 
     return success
 end

@@ -92,7 +92,8 @@ SOUNDS = {
     ["sfx_death"] = love.audio.newSource("sfx/sfx_death.ogg", "static"),
     ["sfx_death_blu"] = love.audio.newSource("sfx/sfx_death_blu.ogg", "static"),
     ["sfx_death_sla"] = love.audio.newSource("sfx/sfx_death_sla.ogg", "static"),
-    ["sfx_death_pie"] = love.audio.newSource("sfx/sfx_death_pie.ogg", "static")
+    ["sfx_death_pie"] = love.audio.newSource("sfx/sfx_death_pie.ogg", "static"),
+    ["sfx_death_ble"] = love.audio.newSource("sfx/sfx_death_ble.ogg", "static")
 }
 
 FONTS = {

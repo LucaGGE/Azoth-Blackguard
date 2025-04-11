@@ -836,33 +836,50 @@ function turns_manager(current_player, npc_turn)
         -- add to played turns
         player_comp.turns = player_comp.turns + 1
 
-        -- check 'game cycle' completion (15 turns)
-        if player_comp.turns > 15 then
-            local player_stat = current_player["entity"].comp["stats"].stat
+        -- check 'game cycle' completion for player's hp regen/hunger increase
+        if player_comp.turns > 20 then
+            local stat = current_player["entity"].comp["stats"].stat
 
             player_comp.turns = 0
-            player_stat["hunger"] = player_stat["hunger"] + 1
+            stat["hunger"] = stat["hunger"] + 1
 
-            -- if player is well fed (first 225 turns), regain 1 hp
-            if player_stat["hunger"] <= 15 then
-                player_stat["hp"] = player_stat["hp"] + 1
+            -- if player is well fed (first 400 turns), regain 1 hp
+            if stat["hunger"] <= 20 and stat["hp"] < stat["maxhp"] then
+                local base_color = {0.28, 0.46, 0.73}
+                local flash_color = {1, 1, 1, 1}
+
+                stat["hp"] = stat["hp"] + 1
+
+                -- flashing gold color. Activating a tween state isn't necessary, since it's
+                -- always the same target that flashes, unlike the console messages
+                g.hp_rgb = flash_color
+                g.cnv_ui = ui_manager_play()
+
+                -- flash white hp value on player's UI
+                Timer.tween(TWEENING_TIME, {}):finish(function ()
+                    g.hp_rgb = base_color
+                    g.cnv_ui = ui_manager_play()
+                end)
             end
 
             -- after 750 turns withous eating, player starts to starve
-            if player_stat["hunger"] > 50 then
+            if stat["hunger"] > 50 then
                 local name = current_player["entity"].name
                 local color = {1, 0.5, 0.4, 1}
+
+                -- this is the max value for hunger
+                stat["hunger"] = 51
 
                 console_event(name .. " is in dire want of sustenance!", color)
 
                 death_check(current_player["entity"], "1d1", "starvation", "perished from starvation!")
 
                 -- check if starvation killed player
-                if player_stat["hp"] <= 0 then
+                if stat["hp"] <= 0 then
                     local deceased = {
                         ["player"] = current_player["entity"].name,
                         ["killer"] = "starvation",
-                        ["loot"] = player_stat["gold"],
+                        ["loot"] = stat["gold"],
                         ["place"] = "Black Swamps"
                     }
                     table.insert(g.cemetery, deceased)
@@ -870,8 +887,8 @@ function turns_manager(current_player, npc_turn)
             end
 
             print("------ Player hunger/hp:")
-            print(player_stat["hunger"])
-            print(player_stat["hp"])
+            print(stat["hunger"])
+            print(stat["hp"])
             print("------")
         end
 
@@ -946,9 +963,9 @@ function ui_manager_play()
         love.graphics.setFont(FONTS["ui"])
 
         -- setting font color for player data
-        love.graphics.setColor(0.28, 0.46, 0.73, 1)
-
+        love.graphics.setColor(g.hp_rgb)
         love.graphics.print("Life "..player_stats["hp"], PADDING, PADDING * 2.5)
+        love.graphics.setColor(g.gold_rgb)
         love.graphics.print("Gold "..player_stats["gold"], PADDING, PADDING * 3.5)
     end
     

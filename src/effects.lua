@@ -180,6 +180,8 @@ end
 
 function stat_gold(target, input)
     local target_stats = target.comp["stats"].stat
+    local base_color = {0.28, 0.46, 0.73}
+    local flash_color = {1, 1, 1, 1}
 
     -- give feedback to eventual trigger that Entity has no stats or 'gold' stat
     if not target_stats or not target_stats["gold"] then
@@ -189,6 +191,18 @@ function stat_gold(target, input)
     target_stats["gold"] = target_stats["gold"] + dice_roll(input)
 
     print(target.name .. " gold has been changed: " .. input)
+
+    -- flashing gold color. Activating a tween state isn't necessary, since it's
+    -- always the same target that flashes, unlike the console messages
+    g.gold_rgb = flash_color
+    g.cnv_ui = ui_manager_play()
+
+    -- flash white gold value on player's UI
+    Timer.tween(TWEENING_TIME, {}):finish(function ()
+        g.gold_rgb = base_color
+        g.cnv_ui = ui_manager_play()
+    end)
+
     return true
 end
 

@@ -22,6 +22,8 @@ g = {
     game_state, -- the current game state
     error_messages = {}, -- holds all error messages to print on screen
     new_event = false,
+    hp_rgb = {0.28, 0.46, 0.73, 1},
+    gold_rgb = {0.28, 0.46, 0.73, 1},
     console = {
         ["string"] = nil,
         ["event1"] = nil,

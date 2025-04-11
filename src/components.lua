@@ -205,6 +205,7 @@ function Stats:new(stats_table)
 
     local STAT_DTABLE = {
         ["hp"] = funcs["generate_k"],
+        ["maxhp"] = funcs["generate_k"],
         ["dmg"] = funcs["die_set"],
         ["mana"] = funcs["generate_k"],
         ["gold"] = funcs["generate_k"],

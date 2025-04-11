@@ -18,6 +18,7 @@ local AI_DTABLE = {
             local out_row
             local out_col
             local direction
+            local has_moved
 
             if owner.cell["grid_row"] < target_row then
                 out_row = 1
@@ -36,7 +37,21 @@ local AI_DTABLE = {
 
             direction = {out_row, out_col}
 
-            owner.comp["movable"]:move_entity(owner, direction)
+            has_moved = owner.comp["movable"]:move_entity(owner, direction)
+
+            -- if has_moved is false, try to unstuck NPC from position that impede
+            -- needed diagonal movement
+            if not has_moved then
+                print("try: row")
+                direction = {out_row, 0}
+                has_moved = owner.comp["movable"]:move_entity(owner, direction)
+            end
+
+            if not has_moved then
+                print("try: column")
+                direction = {0, out_col}
+                has_moved = owner.comp["movable"]:move_entity(owner, direction)
+            end
 
             return true
         end

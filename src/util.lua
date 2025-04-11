@@ -1373,7 +1373,7 @@ function inventory_update(player)
 
         -- establish and set tag_str and text_y
         tag_str = string.sub(inv_str, i, i) .. ": "
-        text_y = (SIZE_DEF + SIZE_DEF / 3) * (i + 2)
+        text_y = (SIZE_DEF + SIZE_DEF / 8) * (i + 2)
 
         -- print string canvas
         love.graphics.printf(tag_str .. item_str .. stack_str .. slot_str,
@@ -1581,6 +1581,7 @@ function bestow_place_func(player_comp, player_entity, key)
     local item
     local item_key = player_comp.string
     local item_str
+    local inventory = player_entity.comp["inventory"]
 
     valid_key, pawn, entity, target_cell = target_selector(player_comp, player_entity, key)
 
@@ -1615,7 +1616,7 @@ function bestow_place_func(player_comp, player_entity, key)
     item_str = string_selector(item)
 
     -- then remove item from inventory using item_key position in alphabet
-    player_entity.comp["inventory"]:remove(item_key)
+    inventory:remove(item_key)
     inventory_update(player_entity)
     player_comp.string = false
 
@@ -1634,6 +1635,9 @@ function bestow_place_func(player_comp, player_entity, key)
     else
         table.insert(g.hidden_group, item)
     end
+
+    -- free an inventory space
+    inventory.spaces = inventory.spaces + 1
 
     -- play a 'touching the ground' sound (same as stepping)
     play_sound(SOUNDS[TILES_PHYSICS[target_cell.index]])
@@ -1877,7 +1881,6 @@ function pickup_func(player_comp, player_entity, key)
 
     -- if target has no pickup comp then warn player
     if entity.comp["pickup"] then
-        play_sound(SOUNDS["sfx_pickup"])
         return player_entity.comp["inventory"]:add(entity)
     else
         console_event("Thee art unable to pick hider up")
@@ -2443,6 +2446,7 @@ function inventory_add(item, comp)
     -- immediately check if space is available
     if not (comp.spaces > 0) then
         console_event("Thy inventory is full")
+        play_sound(SOUNDS["puzzle_fail"])
 
         return false
     end
@@ -2463,6 +2467,8 @@ function inventory_add(item, comp)
         return false
     end
 
+    -- at this point, pickup is valid and ready to be added to inventory
+
     -- if everything is in check, stack Entity in inventory, even if equipped
     for _, obj in ipairs(comp.items) do
         if obj.id == item.id then
@@ -2475,6 +2481,7 @@ function inventory_add(item, comp)
 
             console_event("Thee pick up " .. item_ref)
             item.alive = "inventory"
+            play_sound(SOUNDS["sfx_pickup"])
 
             return true
         end
@@ -2487,6 +2494,7 @@ function inventory_add(item, comp)
     table.insert(comp.items, item)
     console_event("Thee pick up " .. item_ref)
     item.alive = "inventory"
+    play_sound(SOUNDS["sfx_pickup"])
 
     return true
 end

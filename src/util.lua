@@ -229,9 +229,10 @@ function entities_spawner(bp, loc_row, loc_col, name)
 
         -- save Player pilot in entity.pilot
         instanced_entity.pilot = instanced_entity.comp["player"]
-        -- check if player has Stats() component with "hp". If not, add stat/comp
+        -- check if player has Stats() comp with hp and hunger. If not, add both
         if not instanced_entity.comp["stats"] then
-            local stat_component = components_interface({"stats", "hp:1"})
+            print("YAAAS")
+            local stat_component = components_interface({"stats", "hp=1", "hunger=0"})
             instanced_entity.comp["stats"] = stat_component
         end
 
@@ -793,6 +794,8 @@ function turns_manager(current_player, npc_turn)
     Timer.tween(TWEENING_TIME, {
         [g.camera] =  {x = x_for_tweening, y = y_for_tweening}        
     }):finish(function ()
+        local player_comp = current_player["player_comp"]
+
         -- if it's not the NPCs turn, apply player pawn effects and enable them 
         if not npc_turn and current_player["entity"].alive then
             for i, effect_tag in ipairs(current_player["entity"].effects) do
@@ -829,6 +832,48 @@ function turns_manager(current_player, npc_turn)
         end
 
         ::continue::
+
+        -- add to played turns
+        player_comp.turns = player_comp.turns + 1
+
+        -- check 'game cycle' completion (15 turns)
+        if player_comp.turns > 15 then
+            local player_stat = current_player["entity"].comp["stats"].stat
+
+            player_comp.turns = 0
+            player_stat["hunger"] = player_stat["hunger"] + 1
+
+            -- if player is well fed (first 225 turns), regain 1 hp
+            if player_stat["hunger"] <= 15 then
+                player_stat["hp"] = player_stat["hp"] + 1
+            end
+
+            -- after 750 turns withous eating, player starts to starve
+            if player_stat["hunger"] > 50 then
+                local name = current_player["entity"].name
+                local color = {1, 0.5, 0.4, 1}
+
+                console_event(name .. " is in dire want of sustenance!", color)
+
+                death_check(current_player["entity"], "1d1", "starvation", "perished from starvation!")
+
+                -- check if starvation killed player
+                if player_stat["hp"] <= 0 then
+                    local deceased = {
+                        ["player"] = current_player["entity"].name,
+                        ["killer"] = "starvation",
+                        ["loot"] = player_stat["gold"],
+                        ["place"] = "Black Swamps"
+                    }
+                    table.insert(g.cemetery, deceased)
+                end
+            end
+
+            print("------ Player hunger/hp:")
+            print(player_stat["hunger"])
+            print(player_stat["hp"])
+            print("------")
+        end
 
         g.tweening["turn"] = nil
         console_cmd(nil)

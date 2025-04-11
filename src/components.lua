@@ -13,6 +13,7 @@ function Player:new()
     self.action_state = nil
     self.valid_input = "qwertyuiopasdfghjklzxcvbnmspace"
     self.string = "" -- stores player input for all action_modes
+    self.turns = 0 -- useful to keep track of for hunger and HP regen
     -- this variable contains all the movement inputs key-values
     -- for both keypad and keyboard, with key corresponding to (row, column)
     self.movement_inputs = {
@@ -197,16 +198,17 @@ function Stats:new(stats_table)
         ["die_set"] = function(input)
             return input
         end,
-        ["random_k"] = function (input)
+        ["generate_k"] = function (input)
             return dice_roll(input)
         end
     }
 
     local STAT_DTABLE = {
-        ["hp"] = funcs["random_k"],
+        ["hp"] = funcs["generate_k"],
         ["dmg"] = funcs["die_set"],
-        ["mana"] = funcs["random_k"],
-        ["gold"] = funcs["random_k"]
+        ["mana"] = funcs["generate_k"],
+        ["gold"] = funcs["generate_k"],
+        ["hunger"] = funcs["generate_k"]
     }
 
     for i, stat in ipairs(stats_table) do

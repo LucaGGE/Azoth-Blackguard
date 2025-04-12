@@ -848,6 +848,9 @@ function turns_manager(current_player, npc_turn)
                 local base_color = {0.28, 0.46, 0.73}
                 local flash_color = {1, 1, 1, 1}
 
+                -- this flags to print once a 'starting to be hungry' message
+                g.hunger_msg = true
+
                 stat["hp"] = stat["hp"] + 1
 
                 -- flashing gold color. Activating a tween state isn't necessary, since it's
@@ -860,6 +863,15 @@ function turns_manager(current_player, npc_turn)
                     g.hp_rgb = base_color
                     g.cnv_ui = ui_manager_play()
                 end)
+            else
+                if g.hunger_msg then
+                    local name = current_player["entity"].name
+                    local color = {1, 0.5, 0.4, 1}
+
+                    console_event(name .. " belly is most empty!", color)
+                    -- set this to false so it won't print again
+                    g.hunger_msg = false
+                end
             end
 
             -- after 750 turns withous eating, player starts to starve

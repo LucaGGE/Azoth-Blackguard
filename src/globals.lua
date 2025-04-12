@@ -24,6 +24,7 @@ g = {
     new_event = false,
     hp_rgb = {0.28, 0.46, 0.73, 1},
     gold_rgb = {0.28, 0.46, 0.73, 1},
+    hunger_msg = true,
     console = {
         ["string"] = nil,
         ["event1"] = nil,

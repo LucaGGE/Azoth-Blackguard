@@ -897,11 +897,6 @@ function turns_manager(current_player, npc_turn)
                     table.insert(g.cemetery, deceased)
                 end
             end
-
-            print("------ Player hunger/hp:")
-            print(stat["hunger"])
-            print(stat["hp"])
-            print("------")
         end
 
         g.tweening["turn"] = nil
@@ -1483,7 +1478,7 @@ function action_to_power(owner, target, key)
     end
 
     -- activate target power
-    owner.powers[key]:activate(owner)
+    owner.powers[key]:activate(owner, target, nil)
 end
 
 function observe_func(player_comp, player_entity, key)
@@ -1834,7 +1829,7 @@ function use_func(player_comp, player_entity, key)
 
     -- if the target has a trigger 'trig_on_coll' comp, trigger immediately
     if entity.comp["trigger"] and entity.comp["trigger"].trig_on_coll then
-        entity.comp["trigger"]:activate(entity, player_entity)
+        entity.comp["trigger"]:activate(entity, player_entity, nil)
     end
 
     -- if usable target is found activate, else warn player
@@ -1883,7 +1878,7 @@ function pickup_func(player_comp, player_entity, key)
         entity.comp["trigger"]:activate(entity, player_entity)
 
         -- activating optional pickup-related power
-        action_to_power(entity, player_entity, "pickup")
+        action_to_power(entity, player_entity, "on_pickup")
     end
 
     -- if target is has destroyontrigger, don't bother picking up
@@ -1919,7 +1914,7 @@ function talk_func(player_comp, player_entity, key)
         entity.comp["sealed"]:activate(entity, player_entity, player_comp)
 
         -- activating optional unseal-related power
-        action_to_power(entity, player_entity, "unseal")
+        action_to_power(entity, player_entity, "on_unseal")
 
         return true
     end
@@ -2207,7 +2202,7 @@ function movable_move_entity(owner, dir, comp)
         end
 
         -- if weapon is available, select its 'hit' power (always expected)
-        attack_mode =  attack_mode and attack_mode["item"].powers["hit"] or false
+        attack_mode =  attack_mode and attack_mode["item"].powers["on_hit"] or false
 
         -- moving against an Entity = interaction. If part of different groups
         -- or of special 'self' group, the interaction results in an attack
@@ -2229,11 +2224,12 @@ function movable_move_entity(owner, dir, comp)
         end
 
         -- selecting between weapon, if available, or unarmed attack
-        attack_mode = attack_mode or owner.powers["unarmed"]
+        attack_mode = attack_mode or owner.powers["on_unarmed"]
 
         -- an enemy was found, but owner has no weapon equipped or 'unarmed' power
         if not attack_mode then
-            print('Trying to attack other entity without weapon, but no "unarmed" power was assigned')
+            print('Trying to attack other entity without weapon, but no "on_unarmed" power was assigned')
+            print('If weapon is equipped, it lacks essential "on_hit" power')
 
             return false
         end
@@ -2261,7 +2257,7 @@ function movable_move_entity(owner, dir, comp)
         
         if succ_atk then
             -- NOTE: both "unarmed" and "hit" are expected powers previously checked
-            attack_mode:activate(pawn)
+            attack_mode:activate(owner, pawn, nil)
         else
             love.audio.play(SOUNDS["sfx_miss"])
         end
@@ -2332,12 +2328,12 @@ function npc_activate(owner, comp)
     return ai_behavior(owner, comp)
 end
 
-function trigger_activate(owner, entity, comp)  
+function trigger_activate(owner, entity, activator, comp)  
     -- check if owner Entity has a dedicated power flagged as 'trigger'
-    if owner.powers["trigger"] then
-        owner.powers["trigger"]:activate(entity)
+    if owner.powers["on_trigger"] then
+        owner.powers["on_trigger"]:activate(owner, entity, nil)
     else
-        print("Blank trigger: a trigger Entity has no 'trigger' power to activate")
+        print("Blank trigger: a trigger Entity has no 'on_trigger' power to activate")
     end
 
     -- check if trigger is set to print event
@@ -2362,18 +2358,50 @@ function trigger_activate(owner, entity, comp)
     end
 end
 
-function usable_activate(target, input_entity, input_key, comp)
+function usable_activate(owner, activator, input_key, comp)
     local key = input_key or "use"
-    local entity = input_entity
+    local target
 
-    -- trigger always hits activating Entity, even if linked comp is present
-    if target.comp["trigger"] then
-        target.comp["trigger"]:activate(target, entity)
+    -- search for linked comp and store eventual linked Entity coords
+    if owner.comp["linked"] and comp.uses[key] == "to_linked" then
+        print("Linked component + dedicated function found")
+        -- 'linked' comp activation returns name-store coordinates
+        local row, col = owner.comp["linked"]:activate(owner)
+        row = tonumber(row)
+        col = tonumber(col)
+
+        -- check immediately for NPC/Player
+        target = g.grid[row][col] and g.grid[row][col].pawn or false
+        -- if absent, check for Entity
+        if not target then target = g.grid[row][col].entity or false end
+
+        -- if linked but Entity is missing in cell, nothing happened and return true
+        if not target then
+            console_event("The target is absent")
+
+            return true
+        end
+
+        if not owner.powers["to_linked"] then
+            print('WARNING: Entity with "linked" component has no dedicated "to_linked" power')
+
+            return true
+        end
+
+        -- on_linked power needs to discriminate between target (linked Entity) and
+        -- activator (Entity interacting with self)
+        owner.powers["to_linked"]:activate(owner, target, activator)
+
+        return true
     end
 
-    print(target.alive)
+    -- trigger always hits activating Entity, even if linked comp is present
+    if owner.comp["trigger"] then
+        owner.comp["trigger"]:activate(owner, activator, nil)
+    end
+
     -- if Entity is destroyontrigger, don't bother with rest of code
-    if not target.alive then
+    if not owner.alive then
         return false
     end
 
@@ -2381,57 +2409,19 @@ function usable_activate(target, input_entity, input_key, comp)
         console_event("Nothing doth happen")
     end
 
-    if not target.powers[comp.uses[key]] then
+    if not owner.powers[comp.uses[key]] then
         print("NOTE: usable comp called, but no corresponding power")
 
         return false
     end
 
-    -- activate target power
-    target.powers[comp.uses[key]]:activate(target)
+    -- activate owner power, passing activator as target and nil as activator
+    owner.powers[comp.uses[key]]:activate(owner, activator, nil)
     
     -- if destroyonuse, destroy used object (useful for consumables)
     if comp.destroyonuse then
-        target.alive = false
+        owner.alive = false
     end
-
-    -- if comp.uses[key] ~= 'linked', no need to proceed
-    if comp.uses[key] ~= "linked" then
-        print("Power does not call for linked activation")
-        return true
-    end
-    
-    -- search for linked comp and store eventual linked Entity coords
-    if target.comp["linked"] then
-        print("Linked component was found")
-        -- 'linked' comp activation returns name-store coordinates
-        local row, col = target.comp["linked"]:activate(target)
-        row = tonumber(row)
-        col = tonumber(col)
-        -- check immediately for NPC/Player
-        entity = g.grid[row][col] and g.grid[row][col].pawn or false
-        -- if absent, check for Entity
-        if not entity then entity = g.grid[row][col].entity or false end
-    else
-        -- no linked component, return true
-        return true
-    end
-
-    -- if linked but Entity is missing in cell, nothing happened and return true
-    if not entity then
-        console_event("The target is absent")
-
-        return true
-    end
-
-    if not entity.powers["linked"] then
-        print("WARNING: linked Entity has no dedicated 'linked' power")
-
-        return true
-    end
-
-    -- at this point we know everything is in check, proceed
-    entity.powers["linked"]:activate(entity)
 
     return true
 end
@@ -2524,12 +2514,12 @@ function inventory_remove(item_key, comp)
 end
 
 function equipable_equip(owner, target)
-    if not owner.powers["equip"] then
-        print("Warning: trying to activate equip power, but none is found")
+    if not owner.powers["on_equip"] then
+        print('Warning: trying to activate "on_equip" power, but none is found')
         return false
     end
 
-    owner.powers["equip"]:activate(target)
+    owner.powers["on_equip"]:activate(owner, target, nil)
     return true
 end
 
@@ -2546,12 +2536,12 @@ function equipable_unequip(owner, target)
         return false
     end
 
-    if not owner.powers["unequip"] then
-        print("Warning: trying to activate unequip power, but none is found. Object unequipped anyway.")
+    if not owner.powers["on_unequip"] then
+        print('Warning: trying to activate "on_unequip" power, but none is found. Object unequipped anyway.')
         return true
     end
 
-    owner.powers["unequip"]:activate(target)
+    owner.powers["on_unequip"]:activate(owner, target, nil)
     return true
 end
 
@@ -2559,7 +2549,7 @@ function sealed_activate(target, entity, player_comp)
     if target.name == player_comp.string then
         console_event("Thou dost unseal it!")
         if target.comp["trigger"] then
-            target.comp["trigger"]:activate(target, entity)
+            target.comp["trigger"]:activate(owner, target, nil)
         end
 
         -- if Entity gets successfully unsealed, remove 'seled' comp
@@ -2579,14 +2569,14 @@ function locked_activate(owner, entity)
             if item.comp["key"] and item.name == owner.name then
                 console_event("Thou dost unlock it!")
                 if owner.comp["trigger"] then
-                    owner.comp["trigger"]:activate(owner, entity)
+                    owner.comp["trigger"]:activate(owner, entity, nil)
                 end
 
                 -- if Entity was successfully unlocked, remove 'Locked' comp
                 owner.comp["locked"] = nil
 
                 -- activating optional unlock-related power
-                action_to_power(owner, entity, "unlock")
+                action_to_power(owner, entity, "on_unlock")
 
                 return true
             end

@@ -60,22 +60,58 @@ function Power:new(input)
     for i, effect in ipairs(input) do
         -- first element of the table is power's name, skip
         if i ~= 1 then
-            local fx_input = str_slicer(effect, "=", 1)
+            local effect_target_input = str_slicer(effect, "=", 1)
+            local effect_target = str_slicer(effect_target_input[1], "_", 1)
+            local effect = effect_target[1]
+            local suffix = effect_target[2]
+            local value = effect_target_input[2]
+            local valid_suffix = false
+
+            -- check that a target suffix was fed
+            if not suffix then
+                print("No suffix given to effect to establish target (_activator, _owner, _target), set to _owner for: " .. effect)
+                effect_target_input[1] = effect .. "_owner"
+                goto continue
+            end
+
+            -- checking suffix validity
+            if suffix == "owner" or suffix == "activator" or suffix == "target" then
+                valid_suffix = true
+            end
+
+            if not valid_suffix then
+                print("Invalid suffix given to effect: " .. effect .. ", setting it to _owner")
+                effect_target_input[1] = effect .. "_owner"
+            end
+
+            ::continue::
 
             -- checking effects validity, storing valid ones
-            if EFFECTS_TABLE[fx_input[1]] then
-                self.effects[fx_input[1]] = fx_input[2]
+            if EFFECTS_TABLE[effect] then
+                self.effects[effect_target_input[1]] = value
             else
-                error_handler(fx_input[1] .. ": this effect doesn't exist, ignored")
+                error_handler(effect .. ": this effect doesn't exist, ignored")
             end
         end
     end
 end
 
-function Power:activate(target)
+function Power:activate(owner, target, activator)
+    -- decision table translating suffix to actual affected Entity
+    local D_TABLE = {
+        ["activator"] = activator,
+        ["owner"] = owner,
+        ["target"] = target
+    }
+
     -- for each effect in self.effects, call effect function and feed proper input
-    for effect, input in pairs(self.effects) do
-        EFFECTS_TABLE[effect](target, input)
+    for effect_suffix, input in pairs(self.effects) do
+        local effect_target = str_slicer(effect_suffix, "_", 1)
+        local effect = effect_target[1]
+        local target = effect_target[2]
+
+        -- suffixes are activator, target and owner. They establish affected Entity
+        EFFECTS_TABLE[effect](D_TABLE[target], input)
     end
 end
 
@@ -99,12 +135,98 @@ function EffectTag:activate()
 
     self.duration = self.duration - 1
 
-    success = self.func(self, self.target, self.input)
-    print("success:")
-    print(success)
+    success = self.func(self.target, self.input)
 
     -- if target is immune to EffectTag, then set its duration to 0
     if not success then self.duration = 0 end
+end
+
+-- effects influence entities in a variety of ways and are assigned by 'Power' comp.
+-- Effects are validated by EFFECTS_TABLE and executed by apply_effect() func.
+Effect = Object:extend()
+function Effect:new(input_effects)
+    self.active_effects = {}
+
+    -- immediately add optional effects and effect immunities on comp creation
+    self:add(input_effects)
+end
+
+function Effect:add(input_effects)
+    -- improve code ligibility with this variable
+    local active_fxs = self.active_effects
+
+    for i, input_fx in ipairs(input_effects) do
+        local effect_input = str_slicer(input_fx, "=", 1)
+        local effect = effect_input[1]
+        local input = effect_input[2]
+
+
+        -- checking that first arg is a valid effect
+        if not EFFECTS_TABLE[effect] then
+            error_handler(
+                'In component "Effect" tried to input invalid effect, ignored'
+            )
+            goto continue
+        end
+        -- checking if entity is assigned as immune to an effect
+        if input == "immune" then
+            active_fxs[effect] = input
+        end
+        -- checking if entity is immune to effect and in case skip rest of code
+        if active_fxs[effect] == "immune" then
+            print("Entity is immune to "..effect)
+            goto continue
+        end
+        -- checking if an effect is assigned permanent
+        if input == "permanent" then
+            -- some effects can be given as permanent effects
+            active_fxs[effect] = input
+        end
+        -- check if permanent and therefore cannot be modified, in case skip to end
+        if effect == "permanent" then
+            print("Effect is permanent and therefore its duration cannot be modified normally")
+            goto continue
+        end
+        -- checking if second arg is a valid number and assigning it
+        if input:match("%d") then
+            input = tonumber(input)
+            -- transforming possibly nil values to arithmetic values
+            if active_fxs[effect] == nil then
+                active_fxs[effect] = 0
+            end
+            --[[
+                Code below translates to:
+                'active_fxs[effect_name] duration = duration + modifier'
+                NOTE: this can receive a negative value, reducing effect duration!
+            ]]--
+            active_fxs[effect] = active_fxs[effect] + input
+        else
+            error_handler('In component "Effect" tried to assign invalid value to effect, ignored')
+        end
+
+        ::continue::
+    end
+end
+
+-- this is called each turn while the effect persists
+-- also kills the effect class if nothing is active anymore
+function Effect:activate(owner)
+    for i,effect in ipairs(self.active_effects) do
+        if effect == "immune" then
+            goto continue
+        end
+
+        -- apply effect, since validity is already checked on Effect:add()
+        apply_effect(owner, i)
+
+        -- reduce effect duration by 1 and eventually kill it (if not permanent)
+        if effect ~= "permanent" then
+            self.active_effects[i] = self.active_effects[i] - 1
+            if self.active_effects[i] <= 0 then self.active_effects[i] = nil end
+        end
+
+        ::continue::
+    end
 end
 
 -- base state definition

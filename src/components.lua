@@ -131,8 +131,8 @@ function Trigger:new(args)
     self.event = args[4]
 end
 
-function Trigger:activate(owner, entity)
-    return trigger_activate(owner, entity, self)  
+function Trigger:activate(owner, target, activator)
+    return trigger_activate(owner, target, activator, self)
 end
 
 -- Pickup is a 'flag' class, where its only utility is to let other Entities know

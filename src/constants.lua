@@ -156,5 +156,6 @@ EFFECTS_TABLE = {
     ["tileswitch"] = tile_switch,
     ["tilechange"] = tile_change,
     ["tilerestore"] = tile_restore,
-    ["physchange"] = phys_change
+    ["physchange"] = phys_change,
+    ["cmd"] = cmd_func
 }

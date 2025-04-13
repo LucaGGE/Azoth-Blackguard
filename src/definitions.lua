@@ -69,7 +69,7 @@ function Power:new(input)
 
             -- check that a target suffix was fed
             if not suffix then
-                print("No suffix given to effect to establish target (_activator, _owner, _target), set to _owner for: " .. effect)
+                print("No suffix given to effect to establish target (activator/owner/target), set to owner by default for: " .. effect)
                 effect_target_input[1] = effect .. "_owner"
                 goto continue
             end
@@ -80,7 +80,7 @@ function Power:new(input)
             end
 
             if not valid_suffix then
-                print("Invalid suffix given to effect: " .. effect .. ", setting it to _owner")
+                print("Invalid suffix given to effect: " .. effect .. ", setting it to owner")
                 effect_target_input[1] = effect .. "_owner"
             end
 
@@ -151,84 +151,6 @@ function Effect:new(input_effects)
     self:add(input_effects)
 end
 
-function Effect:add(input_effects)
-    -- improve code ligibility with this variable
-    local active_fxs = self.active_effects
-
-    for i, input_fx in ipairs(input_effects) do
-        local effect_input = str_slicer(input_fx, "=", 1)
-        local effect = effect_input[1]
-        local input = effect_input[2]
-
-
-        -- checking that first arg is a valid effect
-        if not EFFECTS_TABLE[effect] then
-            error_handler(
-                'In component "Effect" tried to input invalid effect, ignored'
-            )
-            goto continue
-        end
-        -- checking if entity is assigned as immune to an effect
-        if input == "immune" then
-            active_fxs[effect] = input
-        end
-        -- checking if entity is immune to effect and in case skip rest of code
-        if active_fxs[effect] == "immune" then
-            print("Entity is immune to "..effect)
-            goto continue
-        end
-        -- checking if an effect is assigned permanent
-        if input == "permanent" then
-            -- some effects can be given as permanent effects
-            active_fxs[effect] = input
-        end
-        -- check if permanent and therefore cannot be modified, in case skip to end
-        if effect == "permanent" then
-            print("Effect is permanent and therefore its duration cannot be modified normally")
-            goto continue
-        end
-        -- checking if second arg is a valid number and assigning it
-        if input:match("%d") then
-            input = tonumber(input)
-            -- transforming possibly nil values to arithmetic values
-            if active_fxs[effect] == nil then
-                active_fxs[effect] = 0
-            end
-            --[[
-                Code below translates to:
-                'active_fxs[effect_name] duration = duration + modifier'
-                NOTE: this can receive a negative value, reducing effect duration!
-            ]]--
-            active_fxs[effect] = active_fxs[effect] + input
-        else
-            error_handler('In component "Effect" tried to assign invalid value to effect, ignored')
-        end
-
-        ::continue::
-    end
-end
-
--- this is called each turn while the effect persists
--- also kills the effect class if nothing is active anymore
-function Effect:activate(owner)
-    for i,effect in ipairs(self.active_effects) do
-        if effect == "immune" then
-            goto continue
-        end
-
-        -- apply effect, since validity is already checked on Effect:add()
-        apply_effect(owner, i)
-
-        -- reduce effect duration by 1 and eventually kill it (if not permanent)
-        if effect ~= "permanent" then
-            self.active_effects[i] = self.active_effects[i] - 1
-            if self.active_effects[i] <= 0 then self.active_effects[i] = nil end
-        end
-
-        ::continue::
-    end
-end
-
 -- base state definition
 BaseState = Object:extend()
 
@@ -240,6 +162,3 @@ function BaseState:new()
 	function BaseState:exit() end
     function BaseState:manage_input() end -- states manage input in different ways
 end
-
-
-

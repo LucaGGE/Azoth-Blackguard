@@ -182,10 +182,7 @@ function entities_spawner(bp, loc_row, loc_col, name)
     local player_num = 1
     local is_pawn = false
     local is_npc = false
-    local new_player = {
-        ["entity"] = nil,
-        ["player_comp"] = nil
-    }
+    local new_player
 
     -- now create component instances to feed to new entity
     local instanced_comps = {}
@@ -201,7 +198,6 @@ function entities_spawner(bp, loc_row, loc_col, name)
             is_npc = true
             is_pawn = true
         elseif comp_tags[1] == "player" then
-            new_player["player_comp"] = new_component
             is_pawn = true
         end
     end
@@ -240,7 +236,7 @@ function entities_spawner(bp, loc_row, loc_col, name)
             instanced_entity.comp["stats"].stat["hp"] = 1
         end
 
-        new_player["entity"] = instanced_entity
+        new_player = instanced_entity
         table.insert(g.party_group, new_player)
     end
 
@@ -409,10 +405,10 @@ function map_generator(map_values, generate_players)
         -- players get generated at game start, and map generation happens each map.
         -- If players already exist, position them on their ordered spawn points
         for i, player in ipairs(g.party_group)  do
-            player["entity"].cell["cell"] = player_spawn[i]["cell"]
-            player["entity"].cell["cell"].pawn = player["entity"]
-            player["entity"].cell["grid_row"] = player_spawn[i]["row"]
-            player["entity"].cell["grid_col"] = player_spawn[i]["col"]
+            player.cell["cell"] = player_spawn[i]["cell"]
+            player.cell["cell"].pawn = player["entity"]
+            player.cell["grid_row"] = player_spawn[i]["row"]
+            player.cell["grid_col"] = player_spawn[i]["col"]
             table.insert(g.render_group, player["entity"])
         end
     end
@@ -715,7 +711,7 @@ end
 
 function camera_setting()
     -- setting g.camera to the first spawned player
-    local camera_entity = g.party_group[1]["entity"]
+    local camera_entity = g.party_group[1]
     if g.camera["entity"] == nil then
         g.camera["entity"] = camera_entity
         g.camera["x"] = camera_entity.cell["cell"].x
@@ -784,26 +780,26 @@ end
 -- NOTE: current player is always fed to coordinate camera position!
 function turns_manager(current_player, npc_turn)
     -- setting current_player coords for camera tweening
-    local x_for_tweening = current_player["entity"].cell["cell"].x
-    local y_for_tweening = current_player["entity"].cell["cell"].y
+    local x_for_tweening = current_player.cell["cell"].x
+    local y_for_tweening = current_player.cell["cell"].y
 
     -- set this next (or first) player as the g.camera entity
-    g.camera["entity"] = current_player["entity"]
+    g.camera["entity"] = current_player
 
     -- tween camera between previous and current active player
     Timer.tween(TWEENING_TIME, {
         [g.camera] =  {x = x_for_tweening, y = y_for_tweening}        
     }):finish(function ()
-        local player_comp = current_player["player_comp"]
+        local player_comp = current_player.comp["player"]
 
         -- if it's not the NPCs turn, apply player pawn effects and enable them 
-        if not npc_turn and current_player["entity"].alive then
-            for i, effect_tag in ipairs(current_player["entity"].effects) do
+        if not npc_turn and current_player.alive then
+            for i, effect_tag in ipairs(current_player.effects) do
                 -- activate lasting effects for current_player
                 effect_tag:activate()
                 -- remove concluded effects from current_player["entity"].effects
                 if effect_tag.duration <= 0 then
-                    table.remove(current_player["entity"].effects, i)
+                    table.remove(current_player.effects, i)
                 end
             end
 
@@ -838,7 +834,7 @@ function turns_manager(current_player, npc_turn)
 
         -- check 'game cycle' completion for player's hp regen/hunger increase
         if player_comp.turns > 20 then
-            local stat = current_player["entity"].comp["stats"].stat
+            local stat = current_player.comp["stats"].stat
 
             player_comp.turns = 0
             stat["hunger"] = stat["hunger"] + 1
@@ -865,7 +861,7 @@ function turns_manager(current_player, npc_turn)
                 end)
             else
                 if g.hunger_msg then
-                    local name = current_player["entity"].name
+                    local name = current_player.name
                     local color = {1, 0.5, 0.4, 1}
 
                     console_event(name .. " belly is most empty!", color)
@@ -876,7 +872,7 @@ function turns_manager(current_player, npc_turn)
 
             -- after 750 turns withous eating, player starts to starve
             if stat["hunger"] > 50 then
-                local name = current_player["entity"].name
+                local name = current_player.name
                 local color = {1, 0.5, 0.4, 1}
 
                 -- this is the max value for hunger
@@ -884,12 +880,12 @@ function turns_manager(current_player, npc_turn)
 
                 console_event(name .. " is in dire want of sustenance!", color)
 
-                death_check(current_player["entity"], "1d1", "starvation", "perished from starvation!")
+                death_check(current_player, "1d1", "starvation", "perished from starvation!")
 
                 -- check if starvation killed player
                 if stat["hp"] <= 0 then
                     local deceased = {
-                        ["player"] = current_player["entity"].name,
+                        ["player"] = current_player.name,
                         ["killer"] = "starvation",
                         ["loot"] = stat["gold"],
                         ["place"] = "Black Swamps"

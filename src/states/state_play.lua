@@ -62,7 +62,7 @@ function StatePlay:init(map, generate_players)
 
         -- setting camera and launching player inventory
         camera_setting()
-        inventory_update(g.party_group[current_turn]["entity"])
+        inventory_update(g.party_group[current_turn])
     else
         g.game_state:exit()
         g.game_state = StateFatalError()
@@ -83,7 +83,7 @@ function StatePlay:update()
         -- sending input to current player input_manager (if alive)
         if player then
             for i2,key in ipairs(g.keys_pressed) do
-                valid_action = player["player_comp"]:manage_input(player["entity"], key)
+                valid_action = player.comp["player"]:manage_input(player, key)
                 -- removing input that was taken care of
                 table.remove(g.keys_pressed, i2)
                 -- if action isn't valid, return false and wait for valid return
@@ -95,7 +95,7 @@ function StatePlay:update()
         -- If not, player died (g.party_group[current_turn] == nil)
         if valid_action or g.party_group[current_turn] then
             -- a successful action quits the action mode
-            player["player_comp"].action_state = nil
+            player.comp["player"].action_state = nil
             -- a successful action closes inventory
             g.view_inv = false 
             current_turn = current_turn + 1
@@ -116,7 +116,7 @@ function StatePlay:update()
             if g.party_group[current_turn] then
                 -- reset current_turn number, move NPCs and apply their effects
                 turns_manager(g.party_group[current_turn], true)
-                inventory_update(g.party_group[current_turn]["entity"])
+                inventory_update(g.party_group[current_turn])
             elseif g.game_state:is(StatePlay) then
                 -- if we didn't simply pass through an exit, it's a Game Over!
                 g.game_state = StateGameOver()
@@ -166,9 +166,9 @@ function StatePlay:refresh()
     love.graphics.draw(g.cnv_static, 0, 0)
 
     -- removing dead players from g.party_group
-    for i, player_ref in ipairs(g.party_group) do
-        if player_ref["entity"].alive == false then
-            player_ref["entity"].cell["cell"].pawn = nil
+    for i, player in ipairs(g.party_group) do
+        if player.alive == false then
+            player.cell["cell"].pawn = nil
             table.remove(g.party_group, i)
         end
     end
@@ -236,7 +236,7 @@ function StatePlay:refresh()
 
     g.cnv_ui = ui_manager_play()
     if g.party_group[current_turn] then
-        inventory_update(g.party_group[current_turn]["entity"])
+        inventory_update(g.party_group[current_turn])
     end
 end
 

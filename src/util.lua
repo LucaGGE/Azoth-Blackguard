@@ -2504,14 +2504,6 @@ end
 function inventory_add(item, comp)
     local item_ref
 
-    -- immediately check if space is available
-    if not (comp.spaces > 0) then
-        console_event("Thy inventory is full")
-        play_sound(SOUNDS["puzzle_fail"])
-
-        return false
-    end
-
     item_ref = string_selector(item)
 
     -- if not stackable, simply add to inventory
@@ -2529,7 +2521,6 @@ function inventory_add(item, comp)
     end
 
     -- at this point, pickup is valid and ready to be added to inventory
-
     -- if everything is in check, stack Entity in inventory, even if equipped
     for _, obj in ipairs(comp.items) do
         if obj.id == item.id then
@@ -2550,6 +2541,14 @@ function inventory_add(item, comp)
 
     -- pickup is non-stackable or stackable but not yet collected, add
     ::addtoinv::
+
+    -- check if space is available (stackable entities do not require more spaces)
+    if not (comp.spaces > 0) then
+        console_event("Thy inventory is full")
+        play_sound(SOUNDS["puzzle_fail"])
+
+        return false
+    end
 
     comp.spaces = comp.spaces - 1
     table.insert(comp.items, item)

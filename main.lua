@@ -53,7 +53,7 @@ function love.load()
     math.randomseed(os.time())
     
     -- game screen and tile settings
-    GAME_SCREEN = love.window.setMode(g.w_width, g.w_height, {resizable=true, vsync=0, minwidth=400, minheight=300})
+    GAME_SCREEN = love.window.setMode(g.w_width, g.w_height, {resizable=true, vsync=0, minwidth=400, minheight=240})
 
     -- set correct filtering for global tileset & border tiles
     TILESET:setFilter("nearest", "nearest")

@@ -405,7 +405,7 @@ function map_generator(map_values, generate_players)
             player.cell["cell"].pawn = player["entity"]
             player.cell["grid_row"] = player_spawn[i]["row"]
             player.cell["grid_col"] = player_spawn[i]["col"]
-            table.insert(g.render_group, player["entity"])
+            table.insert(g.render_group, player)
         end
     end
 end
@@ -1280,8 +1280,6 @@ function register_death(victim_entity, killer_name, place)
         ["loot"] = victim_entity.comp["stats"].stat["gold"],
         ["place"] = place
     }
-    print("sassddddddddddddddddd")
-    print(deceased["loot"])
     table.insert(g.cemetery, deceased)
 end
 

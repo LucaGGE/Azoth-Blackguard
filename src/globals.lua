@@ -1,7 +1,7 @@
 g = {
     game_track = nil, -- the game's soundtrack
-    w_width = 1280, -- screen size must be an odd number to have perfect pixels
-    w_height = 720,
+    w_width = 640, -- screen size must be an odd number to have perfect pixels
+    w_height = 512,
     cnv_static, -- game canvas for un-moving, un-changing visuals
     cnv_dynamic, -- game canvas for dynamic, changing visuals
     cnv_ui, -- used only during state_play because of state stacking

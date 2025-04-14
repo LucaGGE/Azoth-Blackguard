@@ -2,6 +2,23 @@
 local TILESET_WIDTH = TILESET:getWidth()
 local TILESET_HEIGHT = TILESET:getHeight()
 local sprites_groups = {} -- for blueprints with random/semi-random sprites
+local SIZE = {
+    ["MAX"] = (mod.SIZE_MAX or 30) * SIZE_MULT,
+    ["SUB"] = (mod.SIZE_SUB or 17.5) * SIZE_MULT,
+    ["TAG"] = (mod.SIZE_TAG or 22.5) * SIZE_MULT,
+    ["DEF"] = (mod.SIZE_DEF or 15) * SIZE_MULT,
+    ["ERR"] = (mod.SIZE_DEF or 12) * SIZE_MULT,
+    ["PAD"] = (mod.padding or 16) * SIZE_MULT
+}
+local FONTS = {
+    ["tag"] = love.graphics.newFont("fonts/GothicPixels.ttf", SIZE["TAG"]),
+    ["logo"] = love.graphics.newFont("fonts/GothicPixels.ttf", SIZE["SUB"]),
+    ["title"] = love.graphics.newFont("fonts/GothicPixels.ttf", SIZE["MAX"]),
+    ["subtitle"] = love.graphics.newFont("fonts/alagard.ttf", SIZE["SUB"]),
+    ["ui"] = love.graphics.newFont("fonts/alagard.ttf", SIZE["DEF"]),
+    ["error"] = love.graphics.newFont("fonts/BitPotion.ttf", SIZE["ERR"]),
+    ["console"] = love.graphics.newFont("fonts/VeniceClassic.ttf", SIZE["DEF"]),
+}
 
 -- simple, user-friendly error message handler
 function error_handler(error_input_1, error_input_2)
@@ -489,6 +506,27 @@ function tile_to_quad(index)
     TILE_SIZE, TILE_SIZE, TILESET_WIDTH, TILESET_HEIGHT)
 end
 
+-- when screen changes to larger or smaller sizes, fonts and sizes need adjustment
+function size_adjust()
+    SIZE = {
+        ["MAX"] = (mod.SIZE_MAX or 30) * SIZE_MULT,
+        ["SUB"] = (mod.SIZE_SUB or 17.5) * SIZE_MULT,
+        ["TAG"] = (mod.SIZE_TAG or 22.5) * SIZE_MULT,
+        ["DEF"] = (mod.SIZE_DEF or 15) * SIZE_MULT,
+        ["ERR"] = (mod.SIZE_DEF or 12) * SIZE_MULT,
+        ["PAD"] = (mod.padding or 16) * SIZE_MULT
+    }
+    FONTS = {
+        ["tag"] = love.graphics.newFont("fonts/GothicPixels.ttf", SIZE["TAG"]),
+        ["logo"] = love.graphics.newFont("fonts/GothicPixels.ttf", SIZE["SUB"]),
+        ["title"] = love.graphics.newFont("fonts/GothicPixels.ttf", SIZE["MAX"]),
+        ["subtitle"] = love.graphics.newFont("fonts/alagard.ttf", SIZE["SUB"]),
+        ["ui"] = love.graphics.newFont("fonts/alagard.ttf", SIZE["DEF"]),
+        ["error"] = love.graphics.newFont("fonts/BitPotion.ttf", SIZE["ERR"]),
+        ["console"] = love.graphics.newFont("fonts/VeniceClassic.ttf", SIZE["DEF"]),
+    }
+end
+
 -- screen pixel-perfect adjustment (screen size must always be even)
 function pixel_adjust(w, h)
     if w % 2 ~= 0 then
@@ -497,7 +535,24 @@ function pixel_adjust(w, h)
     if h % 2 ~= 0 then
         h = h + 1
     end
+
     print(("Window resized to width: %d and height: %d."):format(w, h))
+
+    -- change dinamically SIZE_MULT
+    if w < 640 then
+        local mod_mult = mod.IMAGE_SIZE_MULTIPLIER
+
+        SIZE_MULT = mod_mult and mod_mult / 2 or 1
+        size_adjust()
+    end
+
+    if w >= 640 then
+        local mod_mult = mod.IMAGE_SIZE_MULTIPLIER
+
+        SIZE_MULT = mod_mult or 2
+        size_adjust()
+    end
+
     return w, h
 end
 
@@ -908,7 +963,7 @@ function ui_manager_play()
     -- if present, print console["string"]
     if g.console["string"] then
         love.graphics.printf(g.console["string"], 0,
-        g.w_height - (PADDING * 1.5), g.w_width, "center")
+        g.w_height - (SIZE["PAD"] * 1.5), g.w_width, "center")
     end
 
     -- storing colors for better legibility
@@ -925,24 +980,27 @@ function ui_manager_play()
     event_2 = g.console["event2"] or "Error: fed nothing to console_event() or forgot to reset its value in main.lua"
     event_1 = g.console["event1"] or "Error: fed nothing to console_event() or forgot to reset its value in main.lua"
 
-    -- print console events
-    love.graphics.setColor(color_5)
-    love.graphics.print(event_5, PADDING, g.w_height - (PADDING * 5.5))
-
-    love.graphics.setColor(color_4)
-    love.graphics.print(event_4, PADDING, g.w_height - (PADDING * 4.5))
-
-    love.graphics.setColor(color_3)
-    love.graphics.print(event_3, PADDING, g.w_height - (PADDING * 3.5))
-
-    love.graphics.setColor(color_2)
-    love.graphics.print(event_2, PADDING, g.w_height - (PADDING * 2.5))
-
+    -- always print newest console event
     love.graphics.setColor(color_1)
-    love.graphics.print(event_1, PADDING, g.w_height - (PADDING * 1.5))
+    love.graphics.print(event_1, SIZE["PAD"], g.w_height - (SIZE["PAD"] * 1.5))
 
+    -- if inventory is closed, show all the other events that would otherwise bloat screen
     if not g.view_inv then
         local player_stats = g.camera["entity"].comp["stats"].stat
+
+        -- print console events
+        love.graphics.setColor(color_5)
+        love.graphics.print(event_5, SIZE["PAD"], g.w_height - (SIZE["PAD"] * 5.5))
+
+        love.graphics.setColor(color_4)
+        love.graphics.print(event_4, SIZE["PAD"], g.w_height - (SIZE["PAD"] * 4.5))
+
+        love.graphics.setColor(color_3)
+        love.graphics.print(event_3, SIZE["PAD"], g.w_height - (SIZE["PAD"] * 3.5))
+
+        love.graphics.setColor(color_2)
+        love.graphics.print(event_2, SIZE["PAD"], g.w_height - (SIZE["PAD"] * 2.5))
+
         -- set proper font
         love.graphics.setFont(FONTS["tag"])
 
@@ -950,16 +1008,15 @@ function ui_manager_play()
         love.graphics.setColor(0.49, 0.82, 0.90, 1)
         
         -- print player stats
-        love.graphics.print(g.camera["entity"].name, PADDING, PADDING)
+        love.graphics.print(g.camera["entity"].name, SIZE["PAD"], SIZE["PAD"])
 
-        
         love.graphics.setFont(FONTS["ui"])
 
         -- setting font color for player data
         love.graphics.setColor(g.hp_rgb)
-        love.graphics.print("Life "..player_stats["hp"], PADDING, PADDING * 2.5)
+        love.graphics.print("Life "..player_stats["hp"], SIZE["PAD"], SIZE["PAD"] * 2.5)
         love.graphics.setColor(g.gold_rgb)
-        love.graphics.print("Gold "..player_stats["gold"], PADDING, PADDING * 3.5)
+        love.graphics.print("Gold "..player_stats["gold"], SIZE["PAD"], SIZE["PAD"] * 3.5)
     end
     
     -- restoring default RGBA, since this function influences ALL graphics
@@ -1017,7 +1074,7 @@ function ui_manager_menu(text_in, input_phase, n_of_players, current_player, nam
 
     -- logo coordinates setting
     logo_x = 0
-    logo_y = (g.w_height / 5) - SIZE_MAX
+    logo_y = (g.w_height / 5) - SIZE["MAX"]
 
     love.graphics.setColor(0.78, 0.96, 0.94, 1) 
     love.graphics.setFont(FONTS["logo"])
@@ -1036,9 +1093,9 @@ function ui_manager_menu(text_in, input_phase, n_of_players, current_player, nam
 
     -- text and text input coordinates setting
     text_x = 0
-    text_y = g.w_height / 5 + (PADDING * 4)
+    text_y = g.w_height / 5 + (SIZE["PAD"] * 4)
     input_x = 0
-    input_y = g.w_height / 5 + (PADDING * 4)
+    input_y = g.w_height / 5 + (SIZE["PAD"] * 4)
 
     love.graphics.setFont(FONTS["subtitle"])
     if input_phase == 1 then
@@ -1072,10 +1129,10 @@ function ui_manager_gameover()
 
     -- set text coordinates
     title_x = 0
-    title_y = g.w_height / 4 - PADDING
+    title_y = g.w_height / 4 - SIZE["PAD"]
 
     text_x = 0
-    text_y = g.w_height / 4 + PADDING
+    text_y = g.w_height / 4 + SIZE["PAD"]
 
     list_x = 0
 
@@ -1092,7 +1149,7 @@ function ui_manager_gameover()
 
     -- printing all deceased players and info about their death
     for i, death in ipairs(g.cemetery) do
-        list_y = g.w_height / 3.5 + (PADDING * (i * 3))
+        list_y = g.w_height / 3.5 + (SIZE["PAD"] * (i * 3))
         love.graphics.printf(death["player"]..", killed by "..death["killer"].." for "..death["loot"].." gold,\n"..
         "has found a final resting place in "..death["place"]..".",
         list_x, list_y, g.w_width, "center")
@@ -1336,7 +1393,7 @@ function inventory_update(player)
     love.graphics.setColor(title_color)
 
     -- printing owner's name
-    love.graphics.printf(player.name .. "'s bag", 0, SIZE_DEF, g.w_width, "center")
+    love.graphics.printf(player.name .. "'s bag", 0, SIZE["DEF"], g.w_width, "center")
 
     -- at this point, reference 'inventory' comp table of items
     inventory = inventory.items
@@ -1382,7 +1439,7 @@ function inventory_update(player)
 
         -- establish and set tag_str and text_y
         tag_str = string.sub(inv_str, i, i) .. ": "
-        text_y = (SIZE_DEF + SIZE_DEF / 8) * (i + 2)
+        text_y = (SIZE["DEF"] + SIZE["DEF"] / 8) * (i + 2)
 
         -- print string canvas
         love.graphics.printf(tag_str .. item_str .. stack_str .. slot_str,
@@ -1460,6 +1517,17 @@ end
 function play_sound(sfx_input)
     love.audio.stop(sfx_input)
     love.audio.play(sfx_input)
+end
+
+function print_errors()
+    love.graphics.setFont(FONTS["error"])
+    love.graphics.setColor(1, 0.56, 0.68, 1)
+
+    for i, error_msg in ipairs(g.error_messages) do
+        love.graphics.printf(error_msg, 0, (i - 1) * SIZE["ERR"], g.w_width, "left")
+    end
+
+    love.graphics.setColor(1, 1, 1, 1)
 end
 
 --[[

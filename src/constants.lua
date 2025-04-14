@@ -5,7 +5,7 @@
     You'll need to modify these to your local path since the system, to date, cannot
     find other than LUA files in the relative path.
 ]]--
-FILES_PATH = mod.FILES_PATH or "F:/Development/Dev_Games/GOBLET/source/azoth!_blackguard/modding/"
+FILES_PATH = mod.FILES_PATH or "C:/Users/foxre/"
 
 GAME_LOGO = "Azoth! Blackguard"
 local game_title = "Descent into the Grim Path"
@@ -41,18 +41,12 @@ FRAMESET = love.graphics.newImage(mod.PATH_TO_FRAMESET or "graphics/borders.png"
 -- duration of normal tweening animations
 TWEENING_TIME = 0.25
 
--- sizes relative to all available fonts
-SIZE_MAX = mod.SIZE_MAX or 60
-SIZE_SUB = mod.SIZE_SUB or 35
-SIZE_TAG = mod.SIZE_TAG or 45
-SIZE_DEF = mod.SIZE_DEF or 30
-SIZE_ERR = mod.SIZE_DEF or 24
-PADDING = mod.padding or 32
+-- this resized everything to better adapt to different screen sizes
+SIZE_MULT = mod.IMAGE_SIZE_MULTIPLIER or 2
 
 -- sizes relative to tiles
-TILE_SIZE = mod.TILE_SIZE or 20 -- used for cell size/tileset slicing.
+TILE_SIZE = mod.TILE_SIZE or 20 -- used for cell size/tileset slicing
 HALF_TILE = (mod.TILE_SIZE or 20) / 2 -- used when centering the screen on player
-SIZE_MULT = mod.IMAGE_SIZE_MULTIPLIER or 2
 
 MUSIC = {
     ["swamp"] = love.audio.newSource("sfx/st_swamp.ogg", "static"),
@@ -94,16 +88,6 @@ SOUNDS = {
     ["sfx_death_sla"] = love.audio.newSource("sfx/sfx_death_sla.ogg", "static"),
     ["sfx_death_pie"] = love.audio.newSource("sfx/sfx_death_pie.ogg", "static"),
     ["sfx_death_ble"] = love.audio.newSource("sfx/sfx_death_ble.ogg", "static")
-}
-
-FONTS = {
-    ["tag"] = love.graphics.newFont("fonts/GothicPixels.ttf", SIZE_TAG),
-    ["logo"] = love.graphics.newFont("fonts/GothicPixels.ttf", SIZE_SUB),
-    ["title"] = love.graphics.newFont("fonts/GothicPixels.ttf", SIZE_MAX),
-    ["subtitle"] = love.graphics.newFont("fonts/alagard.ttf", SIZE_SUB),
-    ["ui"] = love.graphics.newFont("fonts/alagard.ttf", SIZE_DEF),
-    ["error"] = love.graphics.newFont("fonts/BitPotion.ttf", SIZE_ERR),
-    ["console"] = love.graphics.newFont("fonts/VeniceClassic.ttf", SIZE_DEF),
 }
 
 BORDERS = {

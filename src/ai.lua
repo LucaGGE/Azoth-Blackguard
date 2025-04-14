@@ -103,7 +103,7 @@ function target_entity(owner, npc_comp)
 
             -- evaluate target only if it is not an obstacle
             if target.comp["npc"] or target.comp["player"] then
-                print("Found potential target: " .. target.name)
+                print(owner.name .. " found potential target: " .. target.name)
                 table.insert(targets, target)                
             end
 
@@ -123,7 +123,7 @@ function target_entity(owner, npc_comp)
     -- try to find old target
     for _, target in ipairs(targets) do
         if target == npc_comp.target then
-            print("Found old target: " .. target.name)
+            print(owner.name .. " found old target: " .. target.name)
             return target
         end
         -- if potential new_target was already established, skip rest of code
@@ -133,7 +133,7 @@ function target_entity(owner, npc_comp)
         -- exploit loop to search for potential new target, favor enemies
         for _, group in ipairs(npc_comp.enemies) do
             if group == target.group then
-                print("Found Entity from enemy group: " .. target.name)
+                print(owner.name .. " found Entity from enemy group: " .. target.name)
                 new_target = target
             end
         end
@@ -143,11 +143,11 @@ function target_entity(owner, npc_comp)
     -- at this point, no old target was found; check if new_target is assigned
     if new_target then
         npc_comp.target = new_target
-        print("Selected first Entity from enemy group found")
+        print(owner.name .. " selected first Entity from enemy group found")
         return new_target
     end
     -- if it wasn't assigned, return first found target
     npc_comp.target = targets[1]
-    print("Selected first target found: " .. targets[1].name)
+    print(owner.name .. " selected first target found: " .. targets[1].name)
     return targets[1]
 end

@@ -879,14 +879,8 @@ function turns_manager(current_player, npc_turn)
                 death_check(current_player, "1d1", "starvation", "perished from starvation!")
 
                 -- check if starvation killed player
-                if stat["hp"] <= 0 then
-                    local deceased = {
-                        ["player"] = current_player.name,
-                        ["killer"] = "starvation",
-                        ["loot"] = stat["gold"],
-                        ["place"] = "Black Swamps"
-                    }
-                    table.insert(g.cemetery, deceased)
+                if not current_player.alive then
+                    register_death(current_player, "starvation", "Black Swamps")
                 end
             end
         end
@@ -1214,6 +1208,7 @@ function console_cmd(cmd)
     g.cnv_ui = ui_manager_play()
 end
 
+-- this function applies damage, gives consonle feedback and sets Entities as dead
 function death_check(target, damage_dice, type, message, sound)
     -- this is needed to output messages on screen in yellow or red
     local event_rgb = {
@@ -1256,7 +1251,11 @@ function death_check(target, damage_dice, type, message, sound)
 
     -- target is dead
     if stats["hp"] <= 0 then
+        -- Entity will be removed from render_group and cell during refresh()
         target.alive = false
+
+        -- canont go below 0
+        stats["hp"] = 0
 
         -- play dedicated death message and sound depending on damage
         if sound then
@@ -1271,6 +1270,19 @@ function death_check(target, damage_dice, type, message, sound)
     -- returning success and damage inflicted, useful to influence EffectTags:
     -- i.e. the harder you slash someone, the longer he will bleed
     return true, damage_score
+end
+
+-- simple function to register decess details for game over screen
+function register_death(victim_entity, killer_name, place)
+    local deceased = {
+        ["player"] = victim_entity.name,
+        ["killer"] = killer_name,
+        ["loot"] = victim_entity.comp["stats"].stat["gold"],
+        ["place"] = place
+    }
+    print("sassddddddddddddddddd")
+    print(deceased["loot"])
+    table.insert(g.cemetery, deceased)
 end
 
 -- check if Entity can be interacted with actions such as pickup, use, etc
@@ -2254,21 +2266,10 @@ function movable_move_entity(owner, dir, comp)
             love.audio.play(SOUNDS["sfx_miss"])
         end
 
-        if target_stats["hp"] <= 0 then
-            target_stats["hp"] = 0
-            -- Entity will be removed from render_group and cell during refresh()
-            pawn.alive = false
-            -- if a player just died, save all deceased's relevant info in cemetery
-            -- variable for recap in Game Over screen
-            if pawn.comp["player"] then
-                local deceased = {
-                    ["player"] = pawn.name,
-                    ["killer"] = owner.name,
-                    ["loot"] = pawn.comp["stats"].stat["gold"],
-                    ["place"] = "Black Swamps"
-                }
-                table.insert(g.cemetery, deceased)
-            end
+        -- if a player just died, save all deceased's relevant info in cemetery
+        -- variable for recap in Game Over screen
+        if pawn.alive == false and pawn.comp["player"] then
+            register_death(pawn, owner.name, "Black Swamps")
         end
 
         return true

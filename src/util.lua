@@ -225,15 +225,11 @@ function entities_spawner(bp, loc_row, loc_col, name)
 
         -- save Player pilot in entity.pilot
         instanced_entity.pilot = instanced_entity.comp["player"]
-        -- check if player has Stats() comp with hp and hunger. If not, add both
-        if not instanced_entity.comp["stats"] then
-            print("YAAAS")
-            local stat_component = components_interface({"stats", "hp=1", "hunger=0"})
-            instanced_entity.comp["stats"] = stat_component
-        end
 
-        if not instanced_entity.comp["stats"].stat["hp"] then
-            instanced_entity.comp["stats"].stat["hp"] = 1
+        -- check if player has Stats() comp with hp, maxhp, gold and hunger
+        if not instanced_entity.comp["stats"] then
+            local stat_component = components_interface({"stats", "hp=1", "maxhp=1", "gold=0", "hunger=0"})
+            instanced_entity.comp["stats"] = stat_component
         end
 
         new_player = instanced_entity

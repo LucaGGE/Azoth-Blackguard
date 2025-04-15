@@ -53,7 +53,7 @@ function love.load()
     math.randomseed(os.time())
     
     -- game screen and tile settings
-    GAME_SCREEN = love.window.setMode(g.w_width, g.w_height, {resizable=true, vsync=0, minwidth=400, minheight=300})
+    GAME_SCREEN = love.window.setMode(g.w_width, g.w_height, {resizable=true, vsync=0, minwidth=400, minheight=240})
 
     -- set correct filtering for global tileset & border tiles
     TILESET:setFilter("nearest", "nearest")
@@ -81,10 +81,5 @@ end
 function love.draw()
     g.game_state:draw()
     -- errors will always be printed on screen, to aid modders
-    love.graphics.setFont(FONTS["error"])
-    love.graphics.setColor(1, 0.56, 0.68, 1)
-    for i, error_msg in ipairs(g.error_messages) do
-        love.graphics.printf(error_msg, 0, (i - 1) * SIZE_ERR, g.w_width, "left")
-    end
-    love.graphics.setColor(1, 1, 1, 1)
+    print_errors()
 end

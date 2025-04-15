@@ -2,6 +2,23 @@
 local TILESET_WIDTH = TILESET:getWidth()
 local TILESET_HEIGHT = TILESET:getHeight()
 local sprites_groups = {} -- for blueprints with random/semi-random sprites
+local SIZE = {
+    ["MAX"] = (mod.SIZE_MAX or 30) * SIZE_MULT,
+    ["SUB"] = (mod.SIZE_SUB or 17.5) * SIZE_MULT,
+    ["TAG"] = (mod.SIZE_TAG or 22.5) * SIZE_MULT,
+    ["DEF"] = (mod.SIZE_DEF or 15) * SIZE_MULT,
+    ["ERR"] = (mod.SIZE_DEF or 12) * SIZE_MULT,
+    ["PAD"] = (mod.padding or 16) * SIZE_MULT
+}
+local FONTS = {
+    ["tag"] = love.graphics.newFont("fonts/GothicPixels.ttf", SIZE["TAG"]),
+    ["logo"] = love.graphics.newFont("fonts/GothicPixels.ttf", SIZE["SUB"]),
+    ["title"] = love.graphics.newFont("fonts/GothicPixels.ttf", SIZE["MAX"]),
+    ["subtitle"] = love.graphics.newFont("fonts/alagard.ttf", SIZE["SUB"]),
+    ["ui"] = love.graphics.newFont("fonts/alagard.ttf", SIZE["DEF"]),
+    ["error"] = love.graphics.newFont("fonts/BitPotion.ttf", SIZE["ERR"]),
+    ["console"] = love.graphics.newFont("fonts/VeniceClassic.ttf", SIZE["DEF"]),
+}
 
 -- simple, user-friendly error message handler
 function error_handler(error_input_1, error_input_2)
@@ -182,10 +199,7 @@ function entities_spawner(bp, loc_row, loc_col, name)
     local player_num = 1
     local is_pawn = false
     local is_npc = false
-    local new_player = {
-        ["entity"] = nil,
-        ["player_comp"] = nil
-    }
+    local new_player
 
     -- now create component instances to feed to new entity
     local instanced_comps = {}
@@ -201,7 +215,6 @@ function entities_spawner(bp, loc_row, loc_col, name)
             is_npc = true
             is_pawn = true
         elseif comp_tags[1] == "player" then
-            new_player["player_comp"] = new_component
             is_pawn = true
         end
     end
@@ -229,18 +242,14 @@ function entities_spawner(bp, loc_row, loc_col, name)
 
         -- save Player pilot in entity.pilot
         instanced_entity.pilot = instanced_entity.comp["player"]
-        -- check if player has Stats() comp with hp and hunger. If not, add both
+
+        -- check if player has Stats() comp with hp, maxhp, gold and hunger
         if not instanced_entity.comp["stats"] then
-            print("YAAAS")
-            local stat_component = components_interface({"stats", "hp=1", "hunger=0"})
+            local stat_component = components_interface({"stats", "hp=1", "maxhp=1", "gold=0", "hunger=0"})
             instanced_entity.comp["stats"] = stat_component
         end
 
-        if not instanced_entity.comp["stats"].stat["hp"] then
-            instanced_entity.comp["stats"].stat["hp"] = 1
-        end
-
-        new_player["entity"] = instanced_entity
+        new_player = instanced_entity
         table.insert(g.party_group, new_player)
     end
 
@@ -409,11 +418,11 @@ function map_generator(map_values, generate_players)
         -- players get generated at game start, and map generation happens each map.
         -- If players already exist, position them on their ordered spawn points
         for i, player in ipairs(g.party_group)  do
-            player["entity"].cell["cell"] = player_spawn[i]["cell"]
-            player["entity"].cell["cell"].pawn = player["entity"]
-            player["entity"].cell["grid_row"] = player_spawn[i]["row"]
-            player["entity"].cell["grid_col"] = player_spawn[i]["col"]
-            table.insert(g.render_group, player["entity"])
+            player.cell["cell"] = player_spawn[i]["cell"]
+            player.cell["cell"].pawn = player["entity"]
+            player.cell["grid_row"] = player_spawn[i]["row"]
+            player.cell["grid_col"] = player_spawn[i]["col"]
+            table.insert(g.render_group, player)
         end
     end
 end
@@ -497,6 +506,27 @@ function tile_to_quad(index)
     TILE_SIZE, TILE_SIZE, TILESET_WIDTH, TILESET_HEIGHT)
 end
 
+-- when screen changes to larger or smaller sizes, fonts and sizes need adjustment
+function size_adjust()
+    SIZE = {
+        ["MAX"] = (mod.SIZE_MAX or 30) * SIZE_MULT,
+        ["SUB"] = (mod.SIZE_SUB or 17.5) * SIZE_MULT,
+        ["TAG"] = (mod.SIZE_TAG or 22.5) * SIZE_MULT,
+        ["DEF"] = (mod.SIZE_DEF or 15) * SIZE_MULT,
+        ["ERR"] = (mod.SIZE_DEF or 12) * SIZE_MULT,
+        ["PAD"] = (mod.padding or 16) * SIZE_MULT
+    }
+    FONTS = {
+        ["tag"] = love.graphics.newFont("fonts/GothicPixels.ttf", SIZE["TAG"]),
+        ["logo"] = love.graphics.newFont("fonts/GothicPixels.ttf", SIZE["SUB"]),
+        ["title"] = love.graphics.newFont("fonts/GothicPixels.ttf", SIZE["MAX"]),
+        ["subtitle"] = love.graphics.newFont("fonts/alagard.ttf", SIZE["SUB"]),
+        ["ui"] = love.graphics.newFont("fonts/alagard.ttf", SIZE["DEF"]),
+        ["error"] = love.graphics.newFont("fonts/BitPotion.ttf", SIZE["ERR"]),
+        ["console"] = love.graphics.newFont("fonts/VeniceClassic.ttf", SIZE["DEF"]),
+    }
+end
+
 -- screen pixel-perfect adjustment (screen size must always be even)
 function pixel_adjust(w, h)
     if w % 2 ~= 0 then
@@ -505,7 +535,24 @@ function pixel_adjust(w, h)
     if h % 2 ~= 0 then
         h = h + 1
     end
+
     print(("Window resized to width: %d and height: %d."):format(w, h))
+
+    -- change dinamically SIZE_MULT
+    if w < 640 then
+        local mod_mult = mod.IMAGE_SIZE_MULTIPLIER
+
+        SIZE_MULT = mod_mult and mod_mult / 2 or 1
+        size_adjust()
+    end
+
+    if w >= 640 then
+        local mod_mult = mod.IMAGE_SIZE_MULTIPLIER
+
+        SIZE_MULT = mod_mult or 2
+        size_adjust()
+    end
+
     return w, h
 end
 
@@ -715,7 +762,7 @@ end
 
 function camera_setting()
     -- setting g.camera to the first spawned player
-    local camera_entity = g.party_group[1]["entity"]
+    local camera_entity = g.party_group[1]
     if g.camera["entity"] == nil then
         g.camera["entity"] = camera_entity
         g.camera["x"] = camera_entity.cell["cell"].x
@@ -784,26 +831,26 @@ end
 -- NOTE: current player is always fed to coordinate camera position!
 function turns_manager(current_player, npc_turn)
     -- setting current_player coords for camera tweening
-    local x_for_tweening = current_player["entity"].cell["cell"].x
-    local y_for_tweening = current_player["entity"].cell["cell"].y
+    local x_for_tweening = current_player.cell["cell"].x
+    local y_for_tweening = current_player.cell["cell"].y
 
     -- set this next (or first) player as the g.camera entity
-    g.camera["entity"] = current_player["entity"]
+    g.camera["entity"] = current_player
 
     -- tween camera between previous and current active player
     Timer.tween(TWEENING_TIME, {
         [g.camera] =  {x = x_for_tweening, y = y_for_tweening}        
     }):finish(function ()
-        local player_comp = current_player["player_comp"]
+        local player_comp = current_player.comp["player"]
 
         -- if it's not the NPCs turn, apply player pawn effects and enable them 
-        if not npc_turn and current_player["entity"].alive then
-            for i, effect_tag in ipairs(current_player["entity"].effects) do
+        if not npc_turn and current_player.alive then
+            for i, effect_tag in ipairs(current_player.effects) do
                 -- activate lasting effects for current_player
                 effect_tag:activate()
                 -- remove concluded effects from current_player["entity"].effects
                 if effect_tag.duration <= 0 then
-                    table.remove(current_player["entity"].effects, i)
+                    table.remove(current_player.effects, i)
                 end
             end
 
@@ -838,7 +885,7 @@ function turns_manager(current_player, npc_turn)
 
         -- check 'game cycle' completion for player's hp regen/hunger increase
         if player_comp.turns > 20 then
-            local stat = current_player["entity"].comp["stats"].stat
+            local stat = current_player.comp["stats"].stat
 
             player_comp.turns = 0
             stat["hunger"] = stat["hunger"] + 1
@@ -865,7 +912,7 @@ function turns_manager(current_player, npc_turn)
                 end)
             else
                 if g.hunger_msg then
-                    local name = current_player["entity"].name
+                    local name = current_player.name
                     local color = {1, 0.5, 0.4, 1}
 
                     console_event(name .. " belly is most empty!", color)
@@ -876,7 +923,7 @@ function turns_manager(current_player, npc_turn)
 
             -- after 750 turns withous eating, player starts to starve
             if stat["hunger"] > 50 then
-                local name = current_player["entity"].name
+                local name = current_player.name
                 local color = {1, 0.5, 0.4, 1}
 
                 -- this is the max value for hunger
@@ -884,17 +931,11 @@ function turns_manager(current_player, npc_turn)
 
                 console_event(name .. " is in dire want of sustenance!", color)
 
-                death_check(current_player["entity"], "1d1", "starvation", "perished from starvation!")
+                death_check(current_player, "1d1", "starvation", "perished from starvation!")
 
                 -- check if starvation killed player
-                if stat["hp"] <= 0 then
-                    local deceased = {
-                        ["player"] = current_player["entity"].name,
-                        ["killer"] = "starvation",
-                        ["loot"] = stat["gold"],
-                        ["place"] = "Black Swamps"
-                    }
-                    table.insert(g.cemetery, deceased)
+                if not current_player.alive then
+                    register_death(current_player, "starvation", "Black Swamps")
                 end
             end
         end
@@ -922,7 +963,7 @@ function ui_manager_play()
     -- if present, print console["string"]
     if g.console["string"] then
         love.graphics.printf(g.console["string"], 0,
-        g.w_height - (PADDING * 1.5), g.w_width, "center")
+        g.w_height - (SIZE["PAD"] * 1.5), g.w_width, "center")
     end
 
     -- storing colors for better legibility
@@ -939,24 +980,27 @@ function ui_manager_play()
     event_2 = g.console["event2"] or "Error: fed nothing to console_event() or forgot to reset its value in main.lua"
     event_1 = g.console["event1"] or "Error: fed nothing to console_event() or forgot to reset its value in main.lua"
 
-    -- print console events
-    love.graphics.setColor(color_5)
-    love.graphics.print(event_5, PADDING, g.w_height - (PADDING * 5.5))
-
-    love.graphics.setColor(color_4)
-    love.graphics.print(event_4, PADDING, g.w_height - (PADDING * 4.5))
-
-    love.graphics.setColor(color_3)
-    love.graphics.print(event_3, PADDING, g.w_height - (PADDING * 3.5))
-
-    love.graphics.setColor(color_2)
-    love.graphics.print(event_2, PADDING, g.w_height - (PADDING * 2.5))
-
+    -- always print newest console event
     love.graphics.setColor(color_1)
-    love.graphics.print(event_1, PADDING, g.w_height - (PADDING * 1.5))
+    love.graphics.print(event_1, SIZE["PAD"], g.w_height - (SIZE["PAD"] * 1.5))
 
+    -- if inventory is closed, show all the other events that would otherwise bloat screen
     if not g.view_inv then
         local player_stats = g.camera["entity"].comp["stats"].stat
+
+        -- print console events
+        love.graphics.setColor(color_5)
+        love.graphics.print(event_5, SIZE["PAD"], g.w_height - (SIZE["PAD"] * 5.5))
+
+        love.graphics.setColor(color_4)
+        love.graphics.print(event_4, SIZE["PAD"], g.w_height - (SIZE["PAD"] * 4.5))
+
+        love.graphics.setColor(color_3)
+        love.graphics.print(event_3, SIZE["PAD"], g.w_height - (SIZE["PAD"] * 3.5))
+
+        love.graphics.setColor(color_2)
+        love.graphics.print(event_2, SIZE["PAD"], g.w_height - (SIZE["PAD"] * 2.5))
+
         -- set proper font
         love.graphics.setFont(FONTS["tag"])
 
@@ -964,16 +1008,15 @@ function ui_manager_play()
         love.graphics.setColor(0.49, 0.82, 0.90, 1)
         
         -- print player stats
-        love.graphics.print(g.camera["entity"].name, PADDING, PADDING)
+        love.graphics.print(g.camera["entity"].name, SIZE["PAD"], SIZE["PAD"])
 
-        
         love.graphics.setFont(FONTS["ui"])
 
         -- setting font color for player data
         love.graphics.setColor(g.hp_rgb)
-        love.graphics.print("Life "..player_stats["hp"], PADDING, PADDING * 2.5)
+        love.graphics.print("Life "..player_stats["hp"], SIZE["PAD"], SIZE["PAD"] * 2.5)
         love.graphics.setColor(g.gold_rgb)
-        love.graphics.print("Gold "..player_stats["gold"], PADDING, PADDING * 3.5)
+        love.graphics.print("Gold "..player_stats["gold"], SIZE["PAD"], SIZE["PAD"] * 3.5)
     end
     
     -- restoring default RGBA, since this function influences ALL graphics
@@ -1031,7 +1074,7 @@ function ui_manager_menu(text_in, input_phase, n_of_players, current_player, nam
 
     -- logo coordinates setting
     logo_x = 0
-    logo_y = (g.w_height / 5) - SIZE_MAX
+    logo_y = (g.w_height / 5) - SIZE["MAX"]
 
     love.graphics.setColor(0.78, 0.96, 0.94, 1) 
     love.graphics.setFont(FONTS["logo"])
@@ -1050,9 +1093,9 @@ function ui_manager_menu(text_in, input_phase, n_of_players, current_player, nam
 
     -- text and text input coordinates setting
     text_x = 0
-    text_y = g.w_height / 5 + (PADDING * 4)
+    text_y = g.w_height / 5 + (SIZE["PAD"] * 4)
     input_x = 0
-    input_y = g.w_height / 5 + (PADDING * 4)
+    input_y = g.w_height / 5 + (SIZE["PAD"] * 4)
 
     love.graphics.setFont(FONTS["subtitle"])
     if input_phase == 1 then
@@ -1086,10 +1129,10 @@ function ui_manager_gameover()
 
     -- set text coordinates
     title_x = 0
-    title_y = g.w_height / 4 - PADDING
+    title_y = g.w_height / 4 - SIZE["PAD"]
 
     text_x = 0
-    text_y = g.w_height / 4 + PADDING
+    text_y = g.w_height / 4 + SIZE["PAD"]
 
     list_x = 0
 
@@ -1106,7 +1149,7 @@ function ui_manager_gameover()
 
     -- printing all deceased players and info about their death
     for i, death in ipairs(g.cemetery) do
-        list_y = g.w_height / 3.5 + (PADDING * (i * 3))
+        list_y = g.w_height / 3.5 + (SIZE["PAD"] * (i * 3))
         love.graphics.printf(death["player"]..", killed by "..death["killer"].." for "..death["loot"].." gold,\n"..
         "has found a final resting place in "..death["place"]..".",
         list_x, list_y, g.w_width, "center")
@@ -1222,6 +1265,7 @@ function console_cmd(cmd)
     g.cnv_ui = ui_manager_play()
 end
 
+-- this function applies damage, gives consonle feedback and sets Entities as dead
 function death_check(target, damage_dice, type, message, sound)
     -- this is needed to output messages on screen in yellow or red
     local event_rgb = {
@@ -1264,7 +1308,11 @@ function death_check(target, damage_dice, type, message, sound)
 
     -- target is dead
     if stats["hp"] <= 0 then
+        -- Entity will be removed from render_group and cell during refresh()
         target.alive = false
+
+        -- canont go below 0
+        stats["hp"] = 0
 
         -- play dedicated death message and sound depending on damage
         if sound then
@@ -1279,6 +1327,17 @@ function death_check(target, damage_dice, type, message, sound)
     -- returning success and damage inflicted, useful to influence EffectTags:
     -- i.e. the harder you slash someone, the longer he will bleed
     return true, damage_score
+end
+
+-- simple function to register decess details for game over screen
+function register_death(victim_entity, killer_name, place)
+    local deceased = {
+        ["player"] = victim_entity.name,
+        ["killer"] = killer_name,
+        ["loot"] = victim_entity.comp["stats"].stat["gold"],
+        ["place"] = place
+    }
+    table.insert(g.cemetery, deceased)
 end
 
 -- check if Entity can be interacted with actions such as pickup, use, etc
@@ -1334,7 +1393,7 @@ function inventory_update(player)
     love.graphics.setColor(title_color)
 
     -- printing owner's name
-    love.graphics.printf(player.name .. "'s bag", 0, SIZE_DEF, g.w_width, "center")
+    love.graphics.printf(player.name .. "'s bag", 0, SIZE["DEF"], g.w_width, "center")
 
     -- at this point, reference 'inventory' comp table of items
     inventory = inventory.items
@@ -1380,7 +1439,7 @@ function inventory_update(player)
 
         -- establish and set tag_str and text_y
         tag_str = string.sub(inv_str, i, i) .. ": "
-        text_y = (SIZE_DEF + SIZE_DEF / 8) * (i + 2)
+        text_y = (SIZE["DEF"] + SIZE["DEF"] / 8) * (i + 2)
 
         -- print string canvas
         love.graphics.printf(tag_str .. item_str .. stack_str .. slot_str,
@@ -1458,6 +1517,17 @@ end
 function play_sound(sfx_input)
     love.audio.stop(sfx_input)
     love.audio.play(sfx_input)
+end
+
+function print_errors()
+    love.graphics.setFont(FONTS["error"])
+    love.graphics.setColor(1, 0.56, 0.68, 1)
+
+    for i, error_msg in ipairs(g.error_messages) do
+        love.graphics.printf(error_msg, 0, (i - 1) * SIZE["ERR"], g.w_width, "left")
+    end
+
+    love.graphics.setColor(1, 1, 1, 1)
 end
 
 --[[
@@ -2262,21 +2332,10 @@ function movable_move_entity(owner, dir, comp)
             love.audio.play(SOUNDS["sfx_miss"])
         end
 
-        if target_stats["hp"] <= 0 then
-            target_stats["hp"] = 0
-            -- Entity will be removed from render_group and cell during refresh()
-            pawn.alive = false
-            -- if a player just died, save all deceased's relevant info in cemetery
-            -- variable for recap in Game Over screen
-            if pawn.comp["player"] then
-                local deceased = {
-                    ["player"] = pawn.name,
-                    ["killer"] = owner.name,
-                    ["loot"] = pawn.comp["stats"].stat["gold"],
-                    ["place"] = "Black Swamps"
-                }
-                table.insert(g.cemetery, deceased)
-            end
+        -- if a player just died, save all deceased's relevant info in cemetery
+        -- variable for recap in Game Over screen
+        if pawn.alive == false and pawn.comp["player"] then
+            register_death(pawn, owner.name, "Black Swamps")
         end
 
         return true
@@ -2445,14 +2504,6 @@ end
 function inventory_add(item, comp)
     local item_ref
 
-    -- immediately check if space is available
-    if not (comp.spaces > 0) then
-        console_event("Thy inventory is full")
-        play_sound(SOUNDS["puzzle_fail"])
-
-        return false
-    end
-
     item_ref = string_selector(item)
 
     -- if not stackable, simply add to inventory
@@ -2470,7 +2521,6 @@ function inventory_add(item, comp)
     end
 
     -- at this point, pickup is valid and ready to be added to inventory
-
     -- if everything is in check, stack Entity in inventory, even if equipped
     for _, obj in ipairs(comp.items) do
         if obj.id == item.id then
@@ -2491,6 +2541,14 @@ function inventory_add(item, comp)
 
     -- pickup is non-stackable or stackable but not yet collected, add
     ::addtoinv::
+
+    -- check if space is available (stackable entities do not require more spaces)
+    if not (comp.spaces > 0) then
+        console_event("Thy inventory is full")
+        play_sound(SOUNDS["puzzle_fail"])
+
+        return false
+    end
 
     comp.spaces = comp.spaces - 1
     table.insert(comp.items, item)

@@ -69,7 +69,7 @@ function Power:new(input)
 
             -- check that a target suffix was fed
             if not suffix then
-                print("No suffix given to effect to establish target (activator/owner/target), set to owner by default for: " .. effect)
+                print("No suffix given to effect: " .. effect .. ", setting it to owner")
                 effect_target_input[1] = effect .. "_owner"
                 goto continue
             end

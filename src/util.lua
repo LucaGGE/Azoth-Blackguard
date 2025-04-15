@@ -837,6 +837,10 @@ function turns_manager(current_player, npc_turn)
     -- set this next (or first) player as the g.camera entity
     g.camera["entity"] = current_player
 
+    -- immediately nil console string, or it will linger for a moment after an
+    -- action like 'equip' that closes inventory has been executed
+    console_cmd(nil)
+
     -- tween camera between previous and current active player
     Timer.tween(TWEENING_TIME, {
         [g.camera] =  {x = x_for_tweening, y = y_for_tweening}        
@@ -941,7 +945,6 @@ function turns_manager(current_player, npc_turn)
         end
 
         g.tweening["turn"] = nil
-        console_cmd(nil)
         g.game_state:refresh()        
     end)
 end
@@ -949,21 +952,35 @@ end
 function ui_manager_play()
     local color_1, color_2, color_3, color_4, color_5, color_0
     local event_1, event_2, event_3, event_4, event_5
+    local cmd_x, cmd_y, cmd_alignment
     -- generating and setting a canvas of the proper size
     local new_canvas  = love.graphics.newCanvas(g.w_width, g.w_height)
     love.graphics.setCanvas(new_canvas)
 
     -- clear to transparent black
     love.graphics.clear(0, 0, 0, 0)
-    -- drawing UI on top of everything for the current player    
+
+    -- setting UI position based on inventory open/closed
+    if not g.view_inv then
+        cmd_x = 0
+        cmd_y = (g.w_height / 2) - SIZE["DEF"] - (TILE_SIZE * 1.5)
+        cmd_alignment = "center"
+    else
+        cmd_x = SIZE["PAD"]
+        cmd_y = g.w_height - (SIZE["PAD"] * 1.5)
+        cmd_alignment = "left"
+    end
+
+    -- drawing UI on top of everything for the current player
     love.graphics.setFont(FONTS["console"])
     -- setting font color for name/console
     love.graphics.setColor(0.49, 0.82, 0.90, 1)
     
     -- if present, print console["string"]
     if g.console["string"] then
-        love.graphics.printf(g.console["string"], 0,
-        g.w_height - (SIZE["PAD"] * 1.5), g.w_width, "center")
+        love.graphics.printf(g.console["string"], cmd_x, cmd_y,
+        g.w_width, cmd_alignment
+    )
     end
 
     -- storing colors for better legibility
@@ -980,9 +997,11 @@ function ui_manager_play()
     event_2 = g.console["event2"] or "Error: fed nothing to console_event() or forgot to reset its value in main.lua"
     event_1 = g.console["event1"] or "Error: fed nothing to console_event() or forgot to reset its value in main.lua"
 
-    -- always print newest console event
-    love.graphics.setColor(color_1)
-    love.graphics.print(event_1, SIZE["PAD"], g.w_height - (SIZE["PAD"] * 1.5))
+    -- print newest console event with inv open and no console cmd or inv closed
+    if g.view_inv and not g.console["string"] or not g.view_inv then
+        love.graphics.setColor(color_1)
+        love.graphics.print(event_1, SIZE["PAD"], g.w_height - (SIZE["PAD"] * 1.5))
+    end
 
     -- if inventory is closed, show all the other events that would otherwise bloat screen
     if not g.view_inv then

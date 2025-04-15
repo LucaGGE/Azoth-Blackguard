@@ -962,7 +962,7 @@ function ui_manager_play()
 
     -- setting UI position based on inventory open/closed
     if not g.view_inv then
-        cmd_x = 0
+        cmd_x = HALF_TILE
         cmd_y = (g.w_height / 2) - SIZE["DEF"] - (TILE_SIZE * 1.5)
         cmd_alignment = "center"
     else
@@ -974,7 +974,7 @@ function ui_manager_play()
     -- drawing UI on top of everything for the current player
     love.graphics.setFont(FONTS["console"])
     -- setting font color for name/console
-    love.graphics.setColor(0.49, 0.82, 0.90, 1)
+    love.graphics.setColor(0.78, 0.97, 0.95, 1)
     
     -- if present, print console["string"]
     if g.console["string"] then

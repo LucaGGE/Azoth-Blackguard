@@ -46,7 +46,7 @@ SIZE_MULT = mod.IMAGE_SIZE_MULTIPLIER or 2
 
 -- sizes relative to tiles
 TILE_SIZE = mod.TILE_SIZE or 20 -- used for cell size/tileset slicing
-HALF_TILE = (mod.TILE_SIZE or 20) / 2 -- used when centering the screen on player
+HALF_TILE = TILE_SIZE / 2 -- used when centering the screen on player
 
 MUSIC = {
     ["swamp"] = love.audio.newSource("sfx/st_swamp.ogg", "static"),

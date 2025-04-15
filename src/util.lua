@@ -2328,10 +2328,10 @@ function npc_activate(owner, comp)
     return ai_behavior(owner, comp)
 end
 
-function trigger_activate(owner, entity, activator, comp)  
+function trigger_activate(owner, target, activator, comp)  
     -- check if owner Entity has a dedicated power flagged as 'trigger'
     if owner.powers["on_trigger"] then
-        owner.powers["on_trigger"]:activate(owner, entity, nil)
+        owner.powers["on_trigger"]:activate(owner, target, nil)
     else
         print("Blank trigger: a trigger Entity has no 'on_trigger' power to activate")
     end

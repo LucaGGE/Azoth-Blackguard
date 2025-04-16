@@ -410,5 +410,5 @@ end
 -- picked up (even if equipped). Stack number corresponds to stat = hp.
 Stack = Object:extend()
 function Stack:new(args)
-
+    self.max = tonumber(args[1])
 end

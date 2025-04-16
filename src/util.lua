@@ -277,6 +277,8 @@ function entities_spawner(bp, loc_row, loc_col, name)
     else
         table.insert(g.hidden_group, instanced_entity)
     end
+
+    return instanced_entity
 end
 
 --[[
@@ -1225,7 +1227,6 @@ end
 
 function entity_kill(entity, index, group)
     table.remove(group, index)
-
     if entity.comp["obstacle"] or entity.comp["player"] or entity.comp["npc"] then
         print("Pawn entity or obstacle entity destroyed")
 
@@ -2522,6 +2523,8 @@ end
 
 function inventory_add(item, comp)
     local item_ref
+    local stack
+    local success = false
 
     item_ref = string_selector(item)
 
@@ -2544,29 +2547,55 @@ function inventory_add(item, comp)
     for _, obj in ipairs(comp.items) do
         if obj.id == item.id then
             local supplement =  item.comp["stats"].stat["hp"]
-            local stack = obj.comp["stats"]
+            local stack_stat
 
-            stack.stat["hp"] = stack.stat["hp"] + supplement
+            stack = obj
+            stack_stat = stack.comp["stats"]
 
-            print("Entity succesfully stacked: ".. stack.stat["hp"])
+            -- search for a stack not yet full
+            if stack_stat.stat["hp"] == stack.comp["stack"].max then
+                stack = false
+            end
 
-            console_event("Thee pick up " .. item_ref)
-            item.alive = "inventory"
-            play_sound(SOUNDS["sfx_pickup"])
-
-            return true
+            -- if target non-full stack is found, skip rest of code
+            if stack then
+                stack_stat.stat["hp"] = stack_stat.stat["hp"] + supplement
+                play_sound(SOUNDS["sfx_pickup"])
+                -- a partial pickup happened, return true
+                success = true
+                break
+            end
         end
     end
 
-    -- pickup is non-stackable or stackable but not yet collected, add
+    -- pickup is non-stackable, not yet collected or a new stack, add
     ::addtoinv::
 
-    -- check if space is available (stackable entities do not require more spaces)
-    if not (comp.spaces > 0) then
-        console_event("Thy inventory is full")
-        play_sound(SOUNDS["puzzle_fail"])
+    -- now check if stack is exceeding its max size
+    if stack and stack.comp["stats"].stat["hp"] > stack.comp["stack"].max then
+        print("stack exceeding its max size")
+        local max_stack = stack.comp["stack"].max
+        local difference = stack.comp["stats"].stat["hp"] - max_stack
 
-        return false
+        -- set picked stackable Entity HP as its max stack capacity
+        stack.comp["stats"].stat["hp"] = max_stack
+        item.comp["stats"].stat["hp"] = difference
+    end
+
+    -- check if space is available (stackable entities do not require more spaces)
+    -- return is true or false based on partial (from stackables)/no pickup
+    if not (comp.spaces > 0) then
+        if not success then
+            console_event("Thy inventory is full")
+            play_sound(SOUNDS["puzzle_fail"])
+
+            return false
+        end
+
+        console_event("Thee pick up some " .. item_ref)
+        play_sound(SOUNDS["sfx_pickup"])
+
+        return true
     end
 
     comp.spaces = comp.spaces - 1

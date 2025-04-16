@@ -22,5 +22,5 @@
 @crossbowlight|:82|pickup|equipable,true,weapon|shooter,1,dartpierce,dartflat|stats,dmg=3d3|description,light crossbow|*on_hit,sfx=sfx_mace_light,action_target=is hit,bludgeon_target=1d3
 @crossbowheavy|:81|pickup|equipable,true,weapon|shooter,1,dartpierce,dartflat|stats,dmg=4d3+10|description,heavy crossbow|*on_hit,sfx=sfx_mace_heavy,action_target=is hit,bludgeon_target=1d3+2
 @sword|:77|pickup|equipable,false,weapon|description,mighty sword|*on_hit,action_target=is slashed,sfx=sfx_sword,slash_target=3d4
-@dartpierce|:84|pickup|stack|stats,hp=4|equipable,false,quiver|*on_hit,slash_target=1d2|description,piercing bolts
-@dartflat|:85|pickup|stack|stats,hp=4|equipable,false,quiver|*on_hit,slash_target=1d2|description,flat bolts
+@dartpierce|:84|pickup|stack,24|stats,hp=20|equipable,false,quiver|*on_hit,slash_target=1d2|description,piercing bolts
+@dartflat|:85|pickup|stack,24|stats,hp=20|equipable,false,quiver|*on_hit,slash_target=1d2|description,flat bolts

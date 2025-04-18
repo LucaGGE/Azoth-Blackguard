@@ -131,6 +131,7 @@ COMPONENTS_TABLE = {
 -- valid effects for the that can be applied to Entities
 EFFECTS_TABLE = {
     ["poison"] = poison,
+    ["hemorrage"] = hemorrage,
     ["slash"] = slash,
     ["bludgeon"] = bludgeon,
     ["pierce"] = pierce,

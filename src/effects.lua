@@ -48,8 +48,18 @@ function pierce(target, input)
     success, damage = death_check(target, input, "pierce", "hath been massacred", "sfx_death_pie")
 end
 
+function hemorrage(target, input)
+    print(target.name)
+    -- bleed duration is established by input
+    table.insert(target.effects, EffectTag(target, input, dice_roll(input), bleed))
+end
+
+-- this is only called by EffetTag class
 function bleed(target, input)
     local success
+
+    -- if player is suffering effect, warn him
+    effect_player_check(target, "is bleeding")
 
     success, _ = death_check(target, "1", "bleeding", "hath bled to death", "sfx_death_ble")
 

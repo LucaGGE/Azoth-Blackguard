@@ -115,7 +115,7 @@ function StatePlay:update()
             -- if g.party_group[1] is false, all players died/we are changing level
             if g.party_group[current_turn] then
                 -- reset current_turn number, move NPCs and apply their effects
-                turns_manager(g.party_group[current_turn], true)
+                turns_manager(g.party_group[current_turn])
                 inventory_update(g.party_group[current_turn])
             elseif g.game_state:is(StatePlay) then
                 -- if we didn't simply pass through an exit, it's a Game Over!
@@ -127,7 +127,7 @@ function StatePlay:update()
             
             -- Move NPCs and apply their effects
             -- Player/NPCs is established by second arg, true/false!
-            turns_manager(g.party_group[current_turn], false)
+            turns_manager(g.party_group[current_turn])
         end
         -- pre-tween refresh
         g.game_state:refresh()

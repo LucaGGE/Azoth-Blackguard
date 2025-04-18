@@ -1,5 +1,6 @@
 @player|:72|player|stats,hp=10,maxhp=15,hunger=19,mana=5,gold=0|movable,walk|slots,head,chest,cape,quiver,weapon|*on_unarmed,sfx=sfx_mace_light,action_target=is punched,bludgeon_target=1d2|inventory,10
 @lemure|:108|stats,hp=10|npc,group=lemure,enemies=none,nature=neutral,sight=15,hearing=5|movable,walk,climb
+@barbed frog|:114|stats,hp=3|npc,group=toads,enemies=none,nature=passive,sight=5,hearing=10|movable,walk,ruck,swim|*on_hurt,pierce_target=1d2,hemorrage_target=1d3
 @crab|:110|stats,hp=15,mana=10|npc,group=crabs,enemies=none,nature=aggressive,sight=3,hearing=1|movable,walk,swim,ruck|*on_unarmed,sfx=sfx_crab,action_target=is clamped,pierce_target=1d2|profile,slash=-2,bleeding=immune
 @gold1|:86|description,handful of golden coins|trigger,true,false,false,hath been gathered|*on_trigger,statgold_target=1d5+5,sfx=sfx_gold
 @gold2|:87|description,small mound of golden coins|trigger,true,false,false,hath been gathered|*on_trigger,statgold_target=1d6+10,sfx=sfx_gold

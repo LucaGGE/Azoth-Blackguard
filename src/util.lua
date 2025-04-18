@@ -831,7 +831,7 @@ end
 
 -- manages turns and applies effects before Entity activation
 -- NOTE: current player is always fed to coordinate camera position!
-function turns_manager(current_player, npc_turn)
+function turns_manager(current_player)
     -- setting current_player coords for camera tweening
     local x_for_tweening = current_player.cell["cell"].x
     local y_for_tweening = current_player.cell["cell"].y
@@ -850,8 +850,10 @@ function turns_manager(current_player, npc_turn)
         local player_comp = current_player.comp["player"]
 
         -- if it's not the NPCs turn, apply player pawn effects and enable them 
-        if not npc_turn and current_player.alive then
+        if current_player.alive then
+            print("Player turn...")
             for i, effect_tag in ipairs(current_player.effects) do
+                print("Player effect tag detected")
                 -- activate lasting effects for current_player
                 effect_tag:activate()
                 -- remove concluded effects from current_player["entity"].effects
@@ -859,9 +861,6 @@ function turns_manager(current_player, npc_turn)
                     table.remove(current_player.effects, i)
                 end
             end
-
-            -- ignore NPCs activation and skip to end of code
-            goto continue
         end
 
         -- activate NPCs and apply their effects
@@ -2348,6 +2347,11 @@ function movable_move_entity(owner, dir, comp)
         if succ_atk then
             -- NOTE: both "unarmed" and "hit" are expected powers previously checked
             attack_mode:activate(owner, pawn, nil)
+
+            -- if target has reactive 'on_hurt' power, activate immediately
+            if pawn.powers["on_hurt"] then
+                pawn.powers["on_hurt"]:activate(pawn, owner, nil)
+            end
         else
             love.audio.play(SOUNDS["sfx_miss"])
         end
@@ -2768,4 +2772,19 @@ function  stat_update(target, id, mods)
     end
 
     return true
+end
+
+-- this warns the player when an EffectTag influences him
+function effect_player_check(target, string)
+    -- if player is suffering effect, warn him
+    if target.comp["player"] then
+        local color = {[1] = 1, [2] = 0.97, [3] = 0.44}
+
+        console_event(target.name .. " " .. string .. "!", color)
+
+        return true
+    end
+
+    -- if not a player, ignore
+    return false
 end

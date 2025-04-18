@@ -2705,6 +2705,7 @@ function linked_activate(owner)
 end
 
 -- this func updates all the stats values based on base value + modifiers
+-- all modifiers are contatined in table 'mods' (needs to be a table)
 function  stat_update(target, id, mods)
     local stats = target.comp["stats"]
     -- immediately check target entity to update is in order
@@ -2713,21 +2714,58 @@ function  stat_update(target, id, mods)
         return false
     end
 
-    -- if mods ~= nil id is not being removed, so it shouldn't be double
+    -- if mods ~= nil and id is present, system is trying to create a duplicate
     if mods and stats.modifiers[id] then
         error_handler("Trying to add modifier in stat_update() but id is already occupied")
         return false
     end
 
-    -- this code translates to self.modifiers["id"] = {
-    -- ["maxhp"] = +3, ["sight"] = -1, ...} or self.modifiers["id"] = nil (remove)
-    stats.modifiers[id] = mods
-    print(tonumber(mods))
-
-    -- now update current value for all stats based on new data
-    for _, data in pairs(stats.stat) do
-        for _, id in pairs (stats.modifiers) do
-            stats.stat[data] = stats.base_stat[data] + (id[data] or 0)
-        end
+    -- if mods == nil and id is present, then mutagen modificator is being removed
+    if mods == nil and stats.modifiers[id] then
+        stats.modifiers[id] = nil
     end
+
+    -- if mods ~= nil id is not present, system is adding a new mutagen modificator
+    if mods and not stats.modifiers[id] then
+        -- this code translates to something like stats.modifiers["id"] = {
+        -- ["maxhp"] = +3, ["sight"] = -1, ...}
+        stats.modifiers[id] = mods
+    end
+
+    -- update all statistics with its base_stat + corresponding modifier
+    -- NOTE: if modifier but no stat = ignored. If stat but no modifier = 0.
+    for statistic, _ in pairs(stats.stat) do
+
+        -- if no mods input and no mods stored, reset to base values and skip
+        if not mods and not stats.modifier then
+            print(":::::STATS RESET:::::")
+            print("Stat selected: " .. statistic)
+            print("Stat base: " .. stats.base_stat[statistic])
+            print("Stat current: " .. stats.stat[statistic])
+            stats.stat[statistic] = stats.base_stat[statistic]
+            print("Result: " .. stats.stat[statistic])
+
+            goto continue
+        end
+
+        -- each mutagen modificator in stats.modifier needs to be checked. This will
+        -- be done for both add/removal, except when stats.modifiers is empty,
+        -- since the loop wouldn't run
+        for mod_id, modificator in pairs(stats.modifiers) do
+            local mod_value = modificator[statistic] or 0
+
+            print(":::::STATS MODIFICATION:::::")
+            print("Modifier id: " .. mod_id)
+            print("Stat selected: " .. statistic)
+            print("Stat base: " .. stats.base_stat[statistic])
+            print("Stat current: " .. stats.stat[statistic])
+            print("Stat modifier value: " .. mod_value)
+            stats.stat[statistic] = stats.base_stat[statistic] + (mod_value)
+            print("Result: " .. stats.stat[statistic])
+        end
+
+        ::continue::
+    end
+
+    return true
 end

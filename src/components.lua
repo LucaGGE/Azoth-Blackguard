@@ -419,19 +419,25 @@ function Stack:new(args)
     self.max = tonumber(args[1])
 end
 
--- mutation Entities will change target's stats by adding/removing their modificator
+-- mutagen Entities will change target's stats by adding/removing their modificator
 -- data from target's 'stats' components, identified by unique id
-Mutation = Object:extend()
-function Mutation:new(args)
+Mutagen = Object:extend()
+function Mutagen:new(args)
     self.modificators = {}
 
     for _, element in pairs(args) do
-        local stat, modifier = str_slicer(element, "=", 1)
+        local stat, modifier
+        local output = str_slicer(element, "=", 1)
 
-        -- modifier must present and be a number
-        if not stat[2] or stat[2] and stat[2]:match("%d") then
-            error_handler('Adding modifier to mutation, but no "=" symbol/valid value found')
+        stat = output[1]
+        -- if present, convert modifier to number
+        modifier = output[2] and tonumber(output[2]) or false
+
+        -- modifier must present and must be a number
+        if not modifier or modifier and not modifier == "number" then
+            error_handler('Adding modifier "' .. stat .. '" to mutagen comp, but no "=" symbol/valid value found')
         else
+            print("Mutagen: " .. stat .. ": " .. modifier)
             self.modificators[stat] = modifier
         end
     end

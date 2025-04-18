@@ -1,7 +1,7 @@
 --[[
     Variable containing the path to the necessary CSV files.
     The two current local paths I use are:
-    "F:/Development/Dev_Games/GOBLET/source/azoth!_blackguard/modding/" or "C:/Users/foxre/".
+    "F:/Development/Dev_Games/GOBLET/source/azoth!_blackguard/modding/" or "C:/Users/foxre/"
     You'll need to modify these to your local path since the system, to date, cannot
     find other than LUA files in the relative path.
 ]]--
@@ -125,7 +125,7 @@ COMPONENTS_TABLE = {
     ["locked"] = Locked,
     ["shooter"] = Shooter,
     ["stack"] = Stack,
-    ["mutation"] = Mutation
+    ["mutagen"] = Mutagen
 }
 
 -- valid effects for the that can be applied to Entities
@@ -143,6 +143,6 @@ EFFECTS_TABLE = {
     ["tilerestore"] = tile_restore,
     ["physchange"] = phys_change,
     ["cmd"] = cmd_func,
-    ["mutationapply"] = mutation_apply,
-    ["mutationremove"] = mutation_remove
+    ["mutagenapply"] = mutagen_apply,
+    ["mutagenremove"] = mutagen_remove
 }

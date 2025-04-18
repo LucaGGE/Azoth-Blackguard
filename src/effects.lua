@@ -174,20 +174,26 @@ function cmd_func(target, input)
     target.powers[target_use]:activate(target, nil, nil)
 end
 
-function mutation_apply(target, input, owner)
-    print("mutation_apply() inputs:")
-    print(target.name)
-    print(owner.name)
-    print("------------------------")
+function mutagen_apply(target, input, owner)
+    if not owner.comp["mutagen"] then
+        error_handler('Trying to mutagen_apply, but effect owner has no "mutagen" component')
+        return false
+    end
+
+    -- feed target, owner.id to store unique set of modifiers, and modifiers table
+    stat_update(target, owner.id, owner.comp["mutagen"].modificators)
 
     return true
 end
 
-function mutation_remove(target, input, owner)
-    print("mutation_remove() inputs:")
+function mutagen_remove(target, input, owner)
+    print("mutagen_remove() inputs:")
     print(target.name)
     print(owner.name)
     print("------------------------")
+
+    -- feed target, owner.id to identify unique set of modifiers, and nil
+    stat_update(target, owner.id, nil)
 
     return true
 end

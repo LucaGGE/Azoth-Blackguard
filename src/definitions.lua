@@ -111,7 +111,7 @@ function Power:activate(owner, target, activator)
         local target = effect_target[2]
 
         -- suffixes are activator, target and owner. They establish affected Entity
-        EFFECTS_TABLE[effect](D_TABLE[target], input)
+        EFFECTS_TABLE[effect](D_TABLE[target], input, owner)
     end
 end
 

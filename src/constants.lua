@@ -124,7 +124,8 @@ COMPONENTS_TABLE = {
     ["key"] = Key,
     ["locked"] = Locked,
     ["shooter"] = Shooter,
-    ["stack"] = Stack
+    ["stack"] = Stack,
+    ["mutation"] = Mutation
 }
 
 -- valid effects for the that can be applied to Entities
@@ -141,5 +142,7 @@ EFFECTS_TABLE = {
     ["tilechange"] = tile_change,
     ["tilerestore"] = tile_restore,
     ["physchange"] = phys_change,
-    ["cmd"] = cmd_func
+    ["cmd"] = cmd_func,
+    ["mutationapply"] = mutation_apply,
+    ["mutationremove"] = mutation_remove
 }

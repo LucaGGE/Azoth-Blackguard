@@ -173,3 +173,21 @@ function cmd_func(target, input)
     -- activate target power, feeding only owner arg (the target)
     target.powers[target_use]:activate(target, nil, nil)
 end
+
+function mutation_apply(target, input, owner)
+    print("mutation_apply() inputs:")
+    print(target.name)
+    print(owner.name)
+    print("------------------------")
+
+    return true
+end
+
+function mutation_remove(target, input, owner)
+    print("mutation_remove() inputs:")
+    print(target.name)
+    print(owner.name)
+    print("------------------------")
+
+    return true
+end

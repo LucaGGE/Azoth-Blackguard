@@ -193,6 +193,10 @@ end
 Stats = Object:extend()
 function Stats:new(stats_table)
     self.stat = {}
+    self.base_stat = {}
+    -- this stores slot = stat modifier, in this fashion:
+    -- self.modifiers["id"] = {["maxhp"] = +5, ["sight"] = -1}
+    self.modifiers = {}
 
     local funcs = {
         ["die_set"] = function(input)
@@ -228,6 +232,8 @@ function Stats:new(stats_table)
             -- store as constant or dice depending if value was already assigned
             stat_value = stat_value or STAT_DTABLE[stat_name](stat_input[2])
             self.stat[stat_name] = stat_value
+            -- also store this original values inside self.base_stat{}
+            self.base_stat[stat_name] = stat_value
         else
             error_handler("WARNING: trying to assign invalid stat: " .. stat_name)
         end
@@ -411,4 +417,22 @@ end
 Stack = Object:extend()
 function Stack:new(args)
     self.max = tonumber(args[1])
+end
+
+-- mutation Entities will change target's stats by adding/removing their modificator
+-- data from target's 'stats' components, identified by unique id
+Mutation = Object:extend()
+function Mutation:new(args)
+    self.modificators = {}
+
+    for _, element in pairs(args) do
+        local stat, modifier = str_slicer(element, "=", 1)
+
+        -- modifier must present and be a number
+        if not stat[2] or stat[2] and stat[2]:match("%d") then
+            error_handler('Adding modifier to mutation, but no "=" symbol/valid value found')
+        else
+            self.modificators[stat] = modifier
+        end
+    end
 end

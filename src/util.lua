@@ -2620,6 +2620,7 @@ function inventory_remove(item_key, comp)
 end
 
 function equipable_equip(owner, target)
+    -- try to activate 'on_equip' related powers, if any
     if not owner.powers["on_equip"] then
         print('Warning: trying to activate "on_equip" power, but none is found')
         return false
@@ -2701,4 +2702,32 @@ function linked_activate(owner)
     local column = row_column[2]
 
     return row, column
+end
+
+-- this func updates all the stats values based on base value + modifiers
+function  stat_update(target, id, mods)
+    local stats = target.comp["stats"]
+    -- immediately check target entity to update is in order
+    if not stats then
+        error_handler("Trying to stat_update() an entity without stats component")
+        return false
+    end
+
+    -- if mods ~= nil id is not being removed, so it shouldn't be double
+    if mods and stats.modifiers[id] then
+        error_handler("Trying to add modifier in stat_update() but id is already occupied")
+        return false
+    end
+
+    -- this code translates to self.modifiers["id"] = {
+    -- ["maxhp"] = +3, ["sight"] = -1, ...} or self.modifiers["id"] = nil (remove)
+    stats.modifiers[id] = mods
+    print(tonumber(mods))
+
+    -- now update current value for all stats based on new data
+    for _, data in pairs(stats.stat) do
+        for _, id in pairs (stats.modifiers) do
+            stats.stat[data] = stats.base_stat[data] + (id[data] or 0)
+        end
+    end
 end

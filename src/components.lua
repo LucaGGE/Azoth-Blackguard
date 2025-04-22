@@ -213,7 +213,9 @@ function Stats:new(stats_table)
         ["dmg"] = funcs["die_set"],
         ["mana"] = funcs["generate_k"],
         ["gold"] = funcs["generate_k"],
-        ["hunger"] = funcs["generate_k"]
+        ["hunger"] = funcs["generate_k"],
+        ["regen"] = funcs["generate_k"],
+        ["stamina"] = funcs["generate_k"]
     }
 
     for i, stat in ipairs(stats_table) do

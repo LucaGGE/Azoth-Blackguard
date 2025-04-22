@@ -245,7 +245,9 @@ function entities_spawner(bp, loc_row, loc_col, name)
 
         -- check if player has Stats() comp with hp, maxhp, gold and hunger
         if not instanced_entity.comp["stats"] then
-            local stat_component = components_interface({"stats", "hp=1", "maxhp=1", "gold=0", "hunger=0"})
+            local stat_component = components_interface(
+                {"stats", "hp=1", "maxhp=1", "gold=0", "hunger=0", "regen=1", "stamina=20"}
+            )
             instanced_entity.comp["stats"] = stat_component
         end
 
@@ -893,10 +895,10 @@ function turns_manager(current_player)
             local stat = current_player.comp["stats"].stat
 
             player_comp.turns = 0
-            stat["hunger"] = stat["hunger"] + 1
+            stat["hunger"] = stat["hunger"] + stat["regen"]
 
             -- if player is well fed (first 400 turns), regain 1 hp
-            if stat["hunger"] <= 20 and stat["hp"] < stat["maxhp"] then
+            if stat["hunger"] <= stat["stamina"] and stat["hp"] < stat["maxhp"] then
                 local base_color = {0.28, 0.46, 0.73}
                 local flash_color = {1, 1, 1, 1}
 
@@ -2429,10 +2431,22 @@ function trigger_activate(owner, target, activator, comp)
     
     -- if owner is to 'destroyontrigger', destroy it
     if comp.destroyontrigger then
-        -- will be removed from render_group and cell during refresh()
-        owner.alive = false
+        local owner_stat
 
-        return
+        if not owner.comp["stack"] then
+            owner.alive = false
+
+            return true
+        end
+
+        owner_stat = owner.comp["stats"].stat
+        owner_stat["hp"] = owner_stat["hp"] - 1
+        
+        if owner_stat["hp"] <= 0 then
+            owner.alive = false
+        end
+
+        return true
     end
 
     -- if component is set to fire_once, destroy component
@@ -2503,7 +2517,20 @@ function usable_activate(owner, activator, input_key, comp)
     
     -- if destroyonuse, destroy used object (useful for consumables)
     if comp.destroyonuse then
-        owner.alive = false
+        local owner_stat
+
+        if not owner.comp["stack"] then
+            owner.alive = false
+
+            return true
+        end
+
+        owner_stat = owner.comp["stats"].stat
+        owner_stat["hp"] = owner_stat["hp"] - 1
+
+        if owner_stat["hp"] <= 0 then
+            owner.alive = false
+        end
     end
 
     return true

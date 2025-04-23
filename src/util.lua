@@ -867,7 +867,7 @@ function blueprints_manager()
     return true
 end
 
-function selector_generator(selector_data)
+function selectors_generator(selector_data)
     local selec_id
     -- selec_die_set will change from (num) to = 1d(num) based on n of elements
     local selec_die_set = 0
@@ -886,11 +886,7 @@ function selector_generator(selector_data)
             goto continue
         end
 
-        data = str_slicer(element, "=", 1)
-        if data[2] then
-            print(element .. " is element")
-            elements_input = element
-        end
+        elements_input = element
 
         ::continue::
     end
@@ -899,15 +895,7 @@ function selector_generator(selector_data)
     elements_input = str_slicer(elements_input, ",", 1)
 
     -- save all index = bp in selec_elements for Selector creation
-    for _, element in pairs(elements_input) do
-        local index
-        local bp
-
-        element = str_slicer(element, "=", 1)
-
-        index = tonumber(element[1])
-        bp = element[2]
-
+    for i, bp in pairs(elements_input) do
         -- check blueprint validity
         if not BP_LIST[bp] then
             error_handler(
@@ -916,7 +904,7 @@ function selector_generator(selector_data)
             goto continue
         end
 
-        selec_elements[index] = bp
+        selec_elements[i] = bp
         
         selec_die_set = selec_die_set + 1
 
@@ -941,7 +929,7 @@ function selectors_manager()
     end
 
     for _, selector in ipairs(selectors_csv) do
-        selector_generator(selector)
+        selectors_generator(selector)
     end
 
     return true

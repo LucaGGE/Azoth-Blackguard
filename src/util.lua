@@ -295,15 +295,30 @@ function map_generator(map_values, generate_players)
     local player_spawn = {}
     -- function dedicated to finalize cell generation with tile/entity
     local finalize_cell = function(tile_index, blueprint, i, j)
+        local new_index = tile_index
+
+        if tonumber(tile_index) == 0 then
+            new_index = "empty"
+        end
+        
+        -- if no tile, index == 0 or index == < 0, mark cell index as 'empty'
+        if tonumber(tile_index) < 0 then
+            error_handle("Cell invalid by index < 0 value at "..i..", "..j)
+            new_index = "empty"
+            tile_index = 0
+        end
+
+        if not TILES_PHYSICS[new_index] then
+            error_handler("Cell invalid by index value absent in TILES_PHYSICS at "..i..", "..j)
+            new_index = "empty"
+            tile_index = 0
+        end
+
         -- extracting the quad for graphics
         g.grid[i][j].tile = tile_to_quad(tile_index)
-        -- if no tile, index == 0 or index == < 0, mark cell index as 'empty'
-        if tonumber(tile_index) > 0 then
-            -- 'g.grid' reads STRINGS and NOT numbers! 
-            g.grid[i][j].index = tile_index
-        else
-            g.grid[i][j].index = "empty"
-        end
+                
+        -- 'g.grid' reads STRINGS and NOT numbers! 
+        g.grid[i][j].index = new_index
 
         -- spawning the entity from a blueprint
         if blueprint then
@@ -314,97 +329,105 @@ function map_generator(map_values, generate_players)
     local CELL_DTABLE = {
         [true] = function(tile_value_1, tile_value_2, tile_value_3, i, j)
             local tile_index = tile_value_1
-            -- if tile_value_1 is a tile, then tile_value_2 is a blueprint,
-            -- else, if it is = x, it's a player spawn point!
-            if tile_index:match("%d") then
-                local type
-                local blueprint
+            local type
+            local blueprint
 
-                -- check if it's a BP
-                type = str_slicer(tile_value_2, "@", 1)
-                if type[2] then
-                    local bp_index = type[2]
-                    
-                    if not BP_LIST[bp_index] then
-                        error_handler(
-                            "Map: illegal entity at row "..i.." column "..j..". Ignored."
-                        )
-
-                        finalize_cell(tile_index, false, i, j)                        
-                        return false
-                    end
-                    
-                    -- save entity in the blueprint variable
-                    blueprint = BP_LIST[bp_index]
-                    -- checking if a special name for the entity was fed in the map
-                    entity_name = tile_value_3
-
-                    goto continue
-                end
-
-                -- if not a BP, check if it's a Selector
-                type = str_slicer(tile_value_2, "#", 1)
-                if type[2] then
-                    local selector_index = tile_value_2
-                    local selector_ref
-                    local bp_index
-
-                    if not SE_LIST[selector_index] then
-                        error_handler(
-                            "Map: illegal selector at row "..i.." column "..j..". Ignored."
-                        )
-                        print(selector_index)
-                        return false
-                    end
-
-                    selector_ref = SE_LIST[selector_index]
-
-                    bp_index = dice_roll(selector_ref.die_set)
-
-                    blueprint = BP_LIST[selector_ref.elements[bp_index]]
-                end
-
-                ::continue::
-                finalize_cell(tile_index, blueprint, i, j)
-            elseif tile_index == "x" and tile_value_2:match("%d") then
+            -- if tile_index = x, it's a player spawn point!
+            if tile_index == "x" and tile_value_2:match("%d") then
                 -- if a spawn point, save locations for players to be spawned later
                 player_spawn[tonumber(tile_value_2)] = {["row"] = i, ["col"] = j, ["cell"] = g.grid[i][j]}
                 -- avoid finalize_cell() func, instead set cell to 'empty'
                 g.grid[i][j].index = "empty"
-            else
-                error_handler(
-                    "Map: illegal cell value at row "..i.." column "..j..". Replaced with empty cell."
-                )
-                g.grid[i][j].index = "empty"
+
+                return true
             end
+
+            -- if tile_index isn't x and neither a number, it's an illegal value!
+            if not tile_index:match("%d") then
+                error_handler("Map: illegal cell value at row "..i.." column "..j..". Replaced with empty cell.")
+                g.grid[i][j].index = "empty"
+
+                return false
+            end
+
+            -- check if tile_value_2 is a valid BP
+            type = str_slicer(tile_value_2, "@", 1)
+
+            if type[2] then
+                local bp_index = type[2]
+                
+                if not BP_LIST[bp_index] then
+                    error_handler(
+                        "Map: illegal entity at row "..i.." column "..j..". Ignored."
+                    )
+
+                    finalize_cell(tile_index, false, i, j)
+
+                    return false
+                end
+                
+                -- save entity in the blueprint variable
+                blueprint = BP_LIST[bp_index]
+                -- checking if a special name for the entity was fed in the map
+                entity_name = tile_value_3
+
+                goto continue
+            end
+
+            -- if tile_value_2 is not a BP, check if it's a Selector
+            type = str_slicer(tile_value_2, "#", 1)
+
+            if type[2] then
+                local selector_index = tile_value_2
+                local selector_ref
+                local bp_index
+
+                if not SE_LIST[selector_index] then
+                    error_handler(
+                        "Map: illegal selector at row "..i.." column "..j..". Ignored."
+                    )
+                    print(selector_index)
+
+                    return false
+                end
+
+                selector_ref = SE_LIST[selector_index]
+
+                bp_index = dice_roll(selector_ref.die_set)
+
+                blueprint = BP_LIST[selector_ref.elements[bp_index]]
+            end
+
+            ::continue::
+            finalize_cell(tile_index, blueprint, i, j)
+
+            return true
         end,
         [false] = function(tile_value_1, i, j)
             -- reset entity_name value
             entity_name = nil
             local tile_index = tile_value_1
-            --[[
-                If tile_index == nil there must be a blank line/unreadable value.
-                If tile index is not a number then there is an illegal value!
-            ]]--
+
+            -- if tile_index == nil there must be a blank line/unreadable value.
+            -- If tile index is not a number then there is an illegal value!
             if not tile_index or not tile_index:match("%d") then
-                -- not-numeric value for a tile
-                error_handler(
-                    "Map: illegal cell value at row "..i.." column "..j..". Replaced with empty cell."
-                )
+                error_handler("Map: illegal cell value at row "..i.." column "..j..". Replaced with empty cell.")
                 g.grid[i][j].index = "empty"
+
                 return false
-            elseif tile_index == "x" then
-                -- spawn location lacking an order number
-                error_handler(
-                    "Map: spawn point at row "..i.." column "..j.." lacking second arg. Replaced with empty cell."
-                )
-                g.grid[i][j].index = "empty"
-                return false
-            else
-                -- cell simply has no entities inside!
-                finalize_cell(tile_index, false, i, j)
             end
-            return tile_index
+
+            -- if spawn location but lacking an order number, then...
+            if tile_index == "x" then
+                error_handler("Map: spawn point at row "..i.." column "..j.." lacking second arg. Replaced with empty cell.")
+                g.grid[i][j].index = "empty"
+
+                return false
+            end
+
+            -- cell simply has no entities inside!
+            finalize_cell(tile_index, false, i, j)
+            return true
         end
     }
 

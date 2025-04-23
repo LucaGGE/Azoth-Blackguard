@@ -35,7 +35,7 @@ function Entity:new(id, tile, components, powers, name)
     self.og_tile = tile
 end
 
--- Selectors spawn Entities based on their arbitrary family and a die throw
+-- Selectors spawn Entities based on arbitrary family/group and a die throw
 Selector = Object:extend()
 
 function Selector:new(id, die_set, elements)

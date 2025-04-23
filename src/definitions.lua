@@ -44,10 +44,13 @@ function Selector:new(id, die_set, elements)
     self.elements = elements
 end
 
--- Spawners spawn Selectors
-Spawner = Object:extend()
+-- a Matrix spawns an arbitrary family/group of Selectors
+Matrix = Object:extend()
 
-function Spawner:new(input)
+function Matrix:new(input)
+    self.id = id
+    self.die_set = die_set
+    self.elements = elements
 end
 
 -- Powers are groups of Effects, and can be applied on self/target by Entities

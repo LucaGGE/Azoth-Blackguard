@@ -51,6 +51,7 @@ end
 function love.load()
     local blueprints
     local selectors
+    local matrices
     
     -- first thing first, use OS time to obtain unpredictable random numbers
     math.randomseed(os.time())
@@ -69,9 +70,10 @@ function love.load()
     -- check if correctly created
     blueprints = blueprints_manager()
     selectors = selectors_manager()
+    matrices = matrices_manager()
 
     -- if something went wrong, immediately go in StateFatalError()
-    if not blueprints and not selectors then
+    if not blueprints and not selectors and not matrices then
         g.game_state = StateFatalError()
     end
 

@@ -34,10 +34,10 @@ VALID_PHYSICS = {
 
 -- list of all entity blueprints registered from dedicated CSV file
 BP_LIST = {}
--- same, for selectors (spawn Entities from pool)
+-- same, for Selectors (spawn Entities from pool)
 SE_LIST = {}
--- same, for spawners (spawn Selectors from pool)
-SP_LIST = {}
+-- same, for Matrices (spawn Selectors from pool)
+MA_LIST = {}
 
 -- graphics sets
 TILESET = love.graphics.newImage(mod.PATH_TO_TILESET or "graphics/tileset.png")

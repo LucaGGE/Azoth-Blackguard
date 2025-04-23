@@ -396,6 +396,48 @@ function map_generator(map_values, generate_players)
                 bp_index = dice_roll(selector_ref.die_set)
 
                 blueprint = BP_LIST[selector_ref.elements[bp_index]]
+
+                goto continue
+            end
+
+            -- if tile_value_2 is not a Selector, check if it's a Matrix
+            type = str_slicer(tile_value_2, "&", 1)
+
+            if type[2] then
+                local matrix_index = tile_value_2
+                local matrix_ref
+                local selector_index
+                local selector_ref
+                local bp_index
+
+                if not MA_LIST[matrix_index] then
+                    error_handler(
+                        "Map: illegal matrix at row "..i.." column "..j..". Ignored."
+                    )
+                    print(matrix_index)
+
+                    return false
+                end
+
+                matrix_ref = MA_LIST[matrix_index]
+
+                -- first set selector_index as a random element
+                selector_index = tonumber(dice_roll(matrix_ref.die_set))
+                -- then set selector_index as actual Selector id string reference
+                selector_index = matrix_ref.elements[selector_index]
+
+                selector_ref = SE_LIST[selector_index]
+
+                bp_index = dice_roll(selector_ref.die_set)
+
+                blueprint = BP_LIST[selector_ref.elements[bp_index]]
+
+                goto continue
+            end
+
+            if not blueprint then
+                error_handler("Cell contains invalid arg without @, # or & identifiers at "..i.." column "..j..". Ignored.")
+                blueprint = false
             end
 
             ::continue::
@@ -898,24 +940,72 @@ function selectors_manager()
         return false
     end
 
-    for i, line in ipairs(selectors_csv) do
-        -- keeping track of all the entity components and counting
-        local n_of_elements = 0
-        local selector_elements = {}
-        local j = 1
+    for _, selector in ipairs(selectors_csv) do
+        selector_generator(selector)
+    end
 
-        -- counting number of components contained in each line
-        for _, component in ipairs(line) do
-            n_of_elements = n_of_elements + 1
+    return true
+end
+
+function matrices_generator(matrix_data)
+    local matrix_id
+    -- matrix_die_set will change from (num) to = 1d(num) based on n of selectors
+    local matrix_die_set = 0
+    local matrix_selectors = {}
+    local selectors_input
+
+    -- store all input data properly
+    for _, element in pairs(matrix_data) do
+        local data
+
+        data = str_slicer(element, "&", 1)
+        if data[2] then
+            print(element .. " is id")
+            matrix_id = element
+            
+            goto continue
         end
-        -- using j to index elements assigned to entity_components, starting from 1
-        -- storing components
-        for k = 1, n_of_elements do
-            selector_elements[j] = selectors_csv[i][k]
-            j = j + 1
+
+        selectors_input = element
+
+        ::continue::
+    end
+
+    -- slice selectors_input to index = selector
+    selectors_input = str_slicer(selectors_input, ",", 1)
+
+    -- save all index = selector in matrix_selectors for Selector creation
+    for i, selector in pairs(selectors_input) do
+        -- check blueprint validity
+        if not SE_LIST[selector] then
+            error_handler('Trying to add invalid selector "' .. selector .. '" to matrix')
+            goto continue
         end
-        -- passing the new entity with the data extracted from the CSV file
-        selector_generator(selector_elements)
+
+        matrix_selectors[i] = selector
+        
+        matrix_die_set = matrix_die_set + 1
+
+        ::continue::
+    end
+
+    -- create die set based on number of selectors contained by selector
+    matrix_die_set = "1d" .. tostring(matrix_die_set)
+
+    MA_LIST[matrix_id] = Selector(matrix_id, matrix_die_set, matrix_selectors)
+end
+
+function matrices_manager()
+    local matrices_csv = csv_reader(FILES_PATH .. "matrices.csv")
+
+    -- check if operation went right; if not, activate error_handler
+    if type(matrices_csv) == "string" then
+        error_handler("The above error was triggered while trying to read matrices.csv")
+        return false
+    end
+
+    for _, matrix in ipairs(matrices_csv) do
+        matrices_generator(matrix)
     end
 
     return true

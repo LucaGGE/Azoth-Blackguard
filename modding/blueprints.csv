@@ -1,27 +1,27 @@
-@player|:72|player|stats,hp=10,maxhp=15,hunger=19,mana=5,gold=0,regen=1,stamina=20,dexterity=7|movable,walk|slots,head,chest,cape,quiver,weapon|*on_unarmed,sfx=sfx_mace_light,action_target=is punched,bludgeon_target=1d2|inventory,10
+@player|:73|player|stats,hp=10,maxhp=15,hunger=19,mana=5,gold=0,regen=1,stamina=20,dexterity=7|movable,walk|slots,head,chest,cape,quiver,weapon|*on_unarmed,sfx=sfx_mace_light,action_target=is punched,bludgeon_target=1d2|inventory,10
 @lemure|:108|stats,hp=10|npc,group=lemure,enemies=none,nature=neutral,sight=15,hearing=5|movable,walk,climb
 @barbed frog|:114|stats,hp=3|npc,group=toads,enemies=none,nature=passive,sight=5,hearing=10|movable,walk,ruck,swim|*on_hurt,pierce_target=1d2,hemorrage_target=1d3
 @crab|:110|stats,hp=15,mana=10|npc,group=crabs,enemies=none,nature=aggressive,sight=3,hearing=1|movable,walk,swim,ruck|*on_unarmed,sfx=sfx_crab,action_target=is clamped,pierce_target=1d2|profile,slash=-2,bleeding=immune
-@gold1|:86|description,handful of golden coins|trigger,true,false,false,hath been gathered|*on_trigger,statgold_target=1d5+5,sfx=sfx_gold
-@gold2|:87|description,small mound of golden coins|trigger,true,false,false,hath been gathered|*on_trigger,statgold_target=1d6+10,sfx=sfx_gold
-@gold3|:88|description,heap of golden coins|trigger,true,false,false,hath been gathered|*on_trigger,statgold_target=1d10+30,sfx=sfx_gold
-@locket|:101|pickup|locked|description,golden locket|*on_unlock,sfx=sfx_unlock,action=is unlocked
-@key|:64|key|pickup|description,key
+@gold1|:93|description,handful of golden coins|trigger,true,false,false,hath been gathered|*on_trigger,statgold_target=1d5+5,sfx=sfx_gold
+@gold2|:94|description,small mound of golden coins|trigger,true,false,false,hath been gathered|*on_trigger,statgold_target=1d6+10,sfx=sfx_gold
+@gold3|:95|description,heap of golden coins|trigger,true,false,false,hath been gathered|*on_trigger,statgold_target=1d10+30,sfx=sfx_gold
+@locket|:80|pickup|locked|description,golden locket|*on_unlock,sfx=sfx_unlock,action=is unlocked
+@key|:92|key|pickup|description,key
 @door|:9|obstacle|usable,false,use=open|*open,sfx=sfx_door,tileswitch_owner=10,physchange_owner=obstacle
-@lever|:75|description,old lever|linked|usable,false,use=to_linked,turn=hidden|*to_linked,sfx=sfx_lever,action=is activated,cmd_target=use|*hidden,action=is turned
+@lever|:96|description,old lever|linked|usable,false,use=to_linked,turn=hidden|*to_linked,sfx=sfx_lever,action=is activated,cmd_target=use|*hidden,action=is turned
 @tome|:121|pickup|sealed|description,old tome|*on_unseal,sfx=puzzle_success,action=reads "broke the incantatio"|usable,false,read=text|*text,event="Super cool story written on the book"
-@cape1|:55|description,fool's cape|secret,fur cape|equipable,false,cape|pickup|mutagen,maxhp=+2,mana=-2|*on_equip,tilechange_target=65,action=feels a weird itch,mutagenapply_target=|*on_unequip,tilerestore_target=,mutagenremove_target=
+@cape1|:59|description,fool's cape|secret,fur cape|equipable,false,cape|pickup|mutagen,maxhp=+2,mana=-2|*on_equip,tilechange_target=66,action=feels a weird itch,mutagenapply_target=|*on_unequip,tilerestore_target=,mutagenremove_target=
 @exit|:1|exit,Thee travel to another level
 @shroom|:shrooms|obstacle|secret,unknown mushroom|description,deadly cap
 @shroom2|:shrooms|obstacle|description,most peculiar-looking mushroom
-@potion1|pickup|:potions|description,mana potion
-@potion2|pickup|:potions|description,life potion
-@potion3|pickup|:potions|description,elixir of hallucination
-@potion4|pickup|:potions|description,poison vial
-@potion5|pickup|:potions|description,phasing juice
-@potion6|pickup|:potions|description,blindness ointment
-@crossbowlight|:82|pickup|equipable,true,weapon|shooter,1,dartpierce,dartflat|stats,dmg=3d3|description,light crossbow|*on_hit,sfx=sfx_mace_light,action_target=is hit,bludgeon_target=1d3
-@crossbowheavy|:81|pickup|equipable,true,weapon|shooter,1,dartpierce,dartflat|stats,dmg=4d3+10|description,heavy crossbow|*on_hit,sfx=sfx_mace_heavy,action_target=is hit,bludgeon_target=1d3+2
-@sword|:77|pickup|equipable,false,weapon|description,mighty sword|*on_hit,action_target=is slashed,sfx=sfx_sword,slash_target=3d4
-@dartpierce|:84|pickup|stack,24|stats,hp=20|equipable,false,quiver|*on_hit,slash_target=1d2|description,piercing bolts
-@dartflat|:85|pickup|stack,24|stats,hp=20|equipable,false,quiver|*on_hit,slash_target=1d2|description,flat bolts
+@potion1|:potions|pickup|description,mana potion
+@potion2|:potions|pickup|description,life potion
+@potion3|:potions|pickup|description,elixir of hallucination
+@potion4|:potions|pickup|description,poison vial
+@potion5|:potions|pickup|description,phasing juice
+@potion6|:potions|pickup|description,blindness ointment
+@crossbowlight|:102|pickup|equipable,true,weapon|shooter,1,dartpierce,dartflat|stats,dmg=3d3|description,light crossbow|*on_hit,sfx=sfx_mace_light,action_target=is hit,bludgeon_target=1d3
+@crossbowheavy|:103|pickup|equipable,true,weapon|shooter,1,dartpierce,dartflat|stats,dmg=4d3+10|description,heavy crossbow|*on_hit,sfx=sfx_mace_heavy,action_target=is hit,bludgeon_target=1d3+2
+@sword|:98|pickup|equipable,false,weapon|description,mighty sword|*on_hit,action_target=is slashed,sfx=sfx_sword,slash_target=3d4
+@dartpierce|:105|pickup|stack,24|stats,hp=20|equipable,false,quiver|*on_hit,slash_target=1d2|description,piercing bolts
+@dartflat|:106|pickup|stack,24|stats,hp=20|equipable,false,quiver|*on_hit,slash_target=1d2|description,flat bolts

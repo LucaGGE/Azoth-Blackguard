@@ -130,8 +130,7 @@ COMPONENTS_TABLE = {
     ["locked"] = Locked,
     ["shooter"] = Shooter,
     ["stack"] = Stack,
-    ["mutagen"] = Mutagen,
-    ["variable"] = Variable
+    ["mutagen"] = Mutagen
 }
 
 -- valid effects for the that can be applied to Entities

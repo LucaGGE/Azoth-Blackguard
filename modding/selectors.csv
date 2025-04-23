@@ -1,2 +1,2 @@
-#potions|:1d6|1=potion1,2=potion2,3=potion3,4=potion4,5=potion5,6=potion6
-#weapons|:1d5|1=crossbowlight,2=crossbowheavy,3=sword,4=dartpierce,5=dartflat
+#potions|1=potion1,2=potion2,3=potion3,4=potion4,5=potion5,6=potion6
+#weapons|1=crossbowlight,2=crossbowheavy,3=sword,4=dartpierce,5=dartflat

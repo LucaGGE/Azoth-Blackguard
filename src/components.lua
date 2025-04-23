@@ -445,10 +445,3 @@ function Mutagen:new(args)
         end
     end
 end
-
--- variable Entities will vary from instance to instance by a set of parameters.
--- These parameters will be selected and applied on spawn. 
-Variable = Object:extend()
-function Variable:new(args)
-
-end

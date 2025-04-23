@@ -1059,9 +1059,6 @@ function turns_manager(current_player)
                 local base_color = {0.28, 0.46, 0.73}
                 local flash_color = {1, 1, 1, 1}
 
-                -- this flags to print once a 'starting to be hungry' message
-                g.hunger_msg = true
-
                 stat["hp"] = stat["hp"] + 1
 
                 -- flashing gold color. Activating a tween state isn't necessary, since it's
@@ -1074,7 +1071,9 @@ function turns_manager(current_player)
                     g.hp_rgb = base_color
                     g.cnv_ui = ui_manager_play()
                 end)
-            else
+            end
+
+            if stat["hunger"] >= 20 then
                 if g.hunger_msg then
                     local name = current_player.name
                     local color = {1, 0.5, 0.4, 1}
@@ -2345,7 +2344,8 @@ function movable_move_entity(owner, dir, comp)
     local adj_tiles = {}
     local row_mov = owner.cell["grid_row"] + dir[1]
     local col_mov = owner.cell["grid_col"] + dir[2]
-    local succ_score = 7 -- score to succeed, throw need to be less or equal
+    -- score to succeed, throw needs to be less or equal
+    local succ_score = owner.comp["stats"].stat["dexterity"] or 7 -- 7 by default
     local succ_atk = false -- by default, not needed and set to false
     local can_ruck = false
     -- this stores all the legal movement-phys MOV_TO_PHYS (see VALID_PHYSICS)
@@ -2501,7 +2501,7 @@ function movable_move_entity(owner, dir, comp)
         end
 
         -- dices get rolled to identify successful hit and eventual damage
-        succ_atk = dice_roll("1d12+1", succ_score)
+        succ_atk = dice_roll("1d12", succ_score)
         
         if succ_atk then
             -- NOTE: both "unarmed" and "hit" are expected powers previously checked

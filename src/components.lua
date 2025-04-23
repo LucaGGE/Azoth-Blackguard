@@ -215,7 +215,8 @@ function Stats:new(stats_table)
         ["gold"] = funcs["generate_k"],
         ["hunger"] = funcs["generate_k"],
         ["regen"] = funcs["generate_k"],
-        ["stamina"] = funcs["generate_k"]
+        ["stamina"] = funcs["generate_k"],
+        ["dexterity"] = funcs["generate_k"]
     }
 
     for i, stat in ipairs(stats_table) do
@@ -443,4 +444,11 @@ function Mutagen:new(args)
             self.modificators[stat] = modifier
         end
     end
+end
+
+-- variable Entities will vary from instance to instance by a set of parameters.
+-- These parameters will be selected and applied on spawn. 
+Variable = Object:extend()
+function Variable:new(args)
+
 end

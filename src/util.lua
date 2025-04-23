@@ -313,22 +313,58 @@ function map_generator(map_values, generate_players)
     -- decision table for entity/no entity cells chain of action
     local CELL_DTABLE = {
         [true] = function(tile_value_1, tile_value_2, tile_value_3, i, j)
-            local blueprint
             local tile_index = tile_value_1
             -- if tile_value_1 is a tile, then tile_value_2 is a blueprint,
             -- else, if it is = x, it's a player spawn point!
             if tile_index:match("%d") then
-                -- save entity in the blueprint variable
-                if BP_LIST[tile_value_2] then
-                    blueprint = BP_LIST[tile_value_2]
+                local type
+                local blueprint
+
+                -- check if it's a BP
+                type = str_slicer(tile_value_2, "@", 1)
+                if type[2] then
+                    local bp_index = type[2]
+                    
+                    if not BP_LIST[bp_index] then
+                        error_handler(
+                            "Map: illegal entity at row "..i.." column "..j..". Ignored."
+                        )
+
+                        finalize_cell(tile_index, false, i, j)                        
+                        return false
+                    end
+                    
+                    -- save entity in the blueprint variable
+                    blueprint = BP_LIST[bp_index]
                     -- checking if a special name for the entity was fed in the map
                     entity_name = tile_value_3
-                else
-                    error_handler(
-                        "Map: illegal entity at row "..i.." column "..j..". Ignored."
-                    )
+
+                    goto continue
                 end
 
+                -- if not a BP, check if it's a Selector
+                type = str_slicer(tile_value_2, "#", 1)
+                if type[2] then
+                    local selector_index = tile_value_2
+                    local selector_ref
+                    local bp_index
+
+                    if not SE_LIST[selector_index] then
+                        error_handler(
+                            "Map: illegal selector at row "..i.." column "..j..". Ignored."
+                        )
+                        print(selector_index)
+                        return false
+                    end
+
+                    selector_ref = SE_LIST[selector_index]
+
+                    bp_index = dice_roll(selector_ref.die_set)
+
+                    blueprint = BP_LIST[selector_ref.elements[bp_index]]
+                end
+
+                ::continue::
                 finalize_cell(tile_index, blueprint, i, j)
             elseif tile_index == "x" and tile_value_2:match("%d") then
                 -- if a spawn point, save locations for players to be spawned later
@@ -356,12 +392,14 @@ function map_generator(map_values, generate_players)
                     "Map: illegal cell value at row "..i.." column "..j..". Replaced with empty cell."
                 )
                 g.grid[i][j].index = "empty"
+                return false
             elseif tile_index == "x" then
                 -- spawn location lacking an order number
                 error_handler(
                     "Map: spawn point at row "..i.." column "..j.." lacking second arg. Replaced with empty cell."
                 )
                 g.grid[i][j].index = "empty"
+                return false
             else
                 -- cell simply has no entities inside!
                 finalize_cell(tile_index, false, i, j)
@@ -766,7 +804,8 @@ end
 
 function selector_generator(selector_data)
     local selec_id
-    local selec_die_set
+    -- selec_die_set will change from (num) to = 1d(num) based on n of elements
+    local selec_die_set = 0
     local selec_elements = {}
     local elements_input
 
@@ -778,14 +817,6 @@ function selector_generator(selector_data)
         if data[2] then
             print(element .. " is id")
             selec_id = element
-            
-            goto continue
-        end
-
-        data = str_slicer(element, ":", 1)
-        if data[2] then
-            print(data[2] .. " is die set")
-            selec_die_set = data[2]
             
             goto continue
         end
@@ -809,7 +840,7 @@ function selector_generator(selector_data)
 
         element = str_slicer(element, "=", 1)
 
-        index = element[1]
+        index = tonumber(element[1])
         bp = element[2]
 
         -- check blueprint validity
@@ -821,12 +852,14 @@ function selector_generator(selector_data)
         end
 
         selec_elements[index] = bp
+        
+        selec_die_set = selec_die_set + 1
 
-        print("----------------->>>")
-        print(index)
-        print(bp)
         ::continue::
     end
+
+    -- create die set based on number of elements contained by selector
+    selec_die_set = "1d" .. tostring(selec_die_set)
 
     SE_LIST[selec_id] = Selector(selec_id, selec_die_set, selec_elements)
 end

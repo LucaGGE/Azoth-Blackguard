@@ -5,7 +5,7 @@
     You'll need to modify these to your local path since the system, to date, cannot
     find other than LUA files in the relative path.
 ]]--
-FILES_PATH = mod.FILES_PATH or "F:/Development/Dev_Games/GOBLET/source/azoth!_blackguard/modding/"
+FILES_PATH = mod.FILES_PATH or "C:/Users/foxre/"
 
 GAME_LOGO = "Azoth! Blackguard"
 local game_title = "Descent into the Grim Path"

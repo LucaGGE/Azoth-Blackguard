@@ -38,7 +38,10 @@ end
 -- Selectors spawn Entities based on their arbitrary family and a die throw
 Selector = Object:extend()
 
-function Selector:new(input)
+function Selector:new(id, die_set, elements)
+    self.id = id
+    self.die_set = die_set
+    self.elements = elements
 end
 
 -- Spawners spawn Selectors

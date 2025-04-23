@@ -49,6 +49,9 @@ function love.keypressed(key)
 end
 
 function love.load()
+    local blueprints
+    local selectors
+    
     -- first thing first, use OS time to obtain unpredictable random numbers
     math.randomseed(os.time())
     
@@ -62,11 +65,13 @@ function love.load()
     -- immediately store in util.lua all sprites_groups for entities blueprints
     sprites_groups_manager()
 
-    -- then create and store all blueprints
-    local blueprints = blueprints_manager()
+    -- then create and store all blueprints in BP_LIST, also store locally to
+    -- check if correctly created
+    blueprints = blueprints_manager()
+    selectors = selectors_manager()
 
     -- if something went wrong, immediately go in StateFatalError()
-    if not blueprints then
+    if not blueprints and not selectors then
         g.game_state = StateFatalError()
     end
 

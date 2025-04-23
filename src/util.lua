@@ -726,8 +726,7 @@ function blueprint_generator(bp_data)
     end
 
     -- create final blueprint from entity and its components and save it in BP_LIST
-    local new_blueprint = Entity(id, tile, blueprint_components, blueprint_powers)
-    BP_LIST[id] = new_blueprint
+    BP_LIST[id] = Entity(id, tile, blueprint_components, blueprint_powers)
 end
 
 function blueprints_manager()
@@ -746,12 +745,13 @@ function blueprints_manager()
         -- keeping track of all the entity components and counting
         local n_of_elements = 0
         local entity_components = {}
+        local j = 1
+
         -- counting number of components contained in each line
         for _, component in ipairs(line) do
             n_of_elements = n_of_elements + 1
         end
         -- using j to index elements assigned to entity_components, starting from 1
-        local j = 1
         -- storing components
         for k = 1, n_of_elements do
             entity_components[j] = entities_csv[i][k]
@@ -759,6 +759,107 @@ function blueprints_manager()
         end
         -- passing the new entity with the data extracted from the CSV file
         blueprint_generator(entity_components)
+    end
+
+    return true
+end
+
+function selector_generator(selector_data)
+    local selec_id
+    local selec_die_set
+    local selec_elements = {}
+    local elements_input
+
+    -- store all input data properly
+    for _, element in pairs(selector_data) do
+        local data
+
+        data = str_slicer(element, "#", 1)
+        if data[2] then
+            print(element .. " is id")
+            selec_id = element
+            
+            goto continue
+        end
+
+        data = str_slicer(element, ":", 1)
+        if data[2] then
+            print(data[2] .. " is die set")
+            selec_die_set = data[2]
+            
+            goto continue
+        end
+
+        data = str_slicer(element, "=", 1)
+        if data[2] then
+            print(element .. " is element")
+            elements_input = element
+        end
+
+        ::continue::
+    end
+
+    -- slice elements_input to index = bp elements
+    elements_input = str_slicer(elements_input, ",", 1)
+
+    -- save all index = bp in selec_elements for Selector creation
+    for _, element in pairs(elements_input) do
+        local index
+        local bp
+
+        element = str_slicer(element, "=", 1)
+
+        index = element[1]
+        bp = element[2]
+
+        -- check blueprint validity
+        if not BP_LIST[bp] then
+            error_handler(
+                'Trying to add invalid blueprint "' .. bp .. '" to selector'
+            )
+            goto continue
+        end
+
+        selec_elements[index] = bp
+
+        print("----------------->>>")
+        print(index)
+        print(bp)
+        ::continue::
+    end
+
+    SE_LIST[selec_id] = Selector(selec_id, selec_die_set, selec_elements)
+end
+
+function selectors_manager()
+    local selectors_csv = csv_reader(FILES_PATH .. "selectors.csv")
+
+    -- check if operation went right; if not, activate error_handler
+    if type(selectors_csv) == "string" then
+        error_handler(
+            "The above error was triggered while trying to read selectors.csv"
+        )
+        return false
+    end
+
+    for i, line in ipairs(selectors_csv) do
+        -- keeping track of all the entity components and counting
+        local n_of_elements = 0
+        local selector_elements = {}
+        local j = 1
+
+        -- counting number of components contained in each line
+        for _, component in ipairs(line) do
+            n_of_elements = n_of_elements + 1
+        end
+        -- using j to index elements assigned to entity_components, starting from 1
+        -- storing components
+        for k = 1, n_of_elements do
+            selector_elements[j] = selectors_csv[i][k]
+            j = j + 1
+        end
+        -- passing the new entity with the data extracted from the CSV file
+        selector_generator(selector_elements)
     end
 
     return true

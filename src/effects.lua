@@ -184,6 +184,16 @@ function cmd_func(target, input)
     target.powers[target_use]:activate(target, nil, nil)
 end
 
+-- note that call_power can only input its target arg to another power, in case
+-- owner/activator are needed, it won't be useful 
+function call_power(target, input)
+    if not target.powers[input] then
+        print("Trying to call power with call_power effect, but no input-named power found")
+    end
+
+    target.powers[input]:activate(target, nil, nil)
+end
+
 function mutagen_apply(target, input, owner)
     if not owner.comp["mutagen"] then
         error_handler('Trying to mutagen_apply, but effect owner has no "mutagen" component')

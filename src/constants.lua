@@ -149,6 +149,7 @@ EFFECTS_TABLE = {
     ["tilerestore"] = tile_restore,
     ["physchange"] = phys_change,
     ["cmd"] = cmd_func,
+    ["power"] = call_power,
     ["mutagenapply"] = mutagen_apply,
     ["mutagenremove"] = mutagen_remove
 }

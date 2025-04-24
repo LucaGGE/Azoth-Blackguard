@@ -867,6 +867,22 @@ function blueprints_manager()
     return true
 end
 
+function simple_csv_manager(file_path, error_msg, generator_func)
+    local csv = csv_reader(FILES_PATH .. file_path)
+
+    -- check if operation went right; if not, activate error_handler
+    if type(csv) == "string" then
+        error_handler(error_msg)
+        return false
+    end
+
+    for _, line in ipairs(csv) do
+        generator_func(line)
+    end
+
+    return true
+end
+
 function selectors_generator(selector_data)
     local selec_id
     -- selec_die_set will change from (num) to = 1d(num) based on n of elements
@@ -918,21 +934,8 @@ function selectors_generator(selector_data)
 end
 
 function selectors_manager()
-    local selectors_csv = csv_reader(FILES_PATH .. "selectors.csv")
-
-    -- check if operation went right; if not, activate error_handler
-    if type(selectors_csv) == "string" then
-        error_handler(
-            "The above error was triggered while trying to read selectors.csv"
-        )
-        return false
-    end
-
-    for _, selector in ipairs(selectors_csv) do
-        selectors_generator(selector)
-    end
-
-    return true
+    local error_msg = "The above error was triggered while trying to read selectors.csv"
+    return simple_csv_manager("selectors.csv", error_msg, selectors_generator)
 end
 
 function matrices_generator(matrix_data)
@@ -984,19 +987,8 @@ function matrices_generator(matrix_data)
 end
 
 function matrices_manager()
-    local matrices_csv = csv_reader(FILES_PATH .. "matrices.csv")
-
-    -- check if operation went right; if not, activate error_handler
-    if type(matrices_csv) == "string" then
-        error_handler("The above error was triggered while trying to read matrices.csv")
-        return false
-    end
-
-    for _, matrix in ipairs(matrices_csv) do
-        matrices_generator(matrix)
-    end
-
-    return true
+    local error_msg = "The above error was triggered while trying to read matrices.csv"
+    return simple_csv_manager("matrices.csv", error_msg, matrices_generator)
 end
 
 function camera_setting()

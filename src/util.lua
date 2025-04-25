@@ -867,7 +867,75 @@ function blueprints_manager()
     return true
 end
 
-function simple_csv_manager(file_path, error_msg, generator_func)
+-- NOTE: at the time of coding, this is used only for selectors and matrices
+function simple_csv_generator(line_data, label, element_class)
+    local list_content = {
+        ["selector"] = BP_LIST,
+        ["matrix"] = SE_LIST
+    }
+    local list_container = {
+        ["selector"] = SE_LIST,
+        ["matrix"] = MA_LIST
+    }
+    local class = {
+        ["selector"] = Selector,
+        ["matrix"] = Matrix
+    }
+    local element_id
+    -- element_die_set will change from (num) to 1d(num) based on num of elements
+    local element_die_set = 0
+    -- blueprints for selectors, selectors for matrices
+    local element_parts = {}
+    local element_input
+
+    for _, part in pairs(line_data) do
+        local data
+
+        data = str_slicer(part, label, 1)
+
+        -- if label appears, then it's the element's name
+        if data[2] then
+            print(part .. " is id")
+            element_id = part
+
+            goto continue
+        end
+
+        -- if not, it's a csv line containing all its parts
+        element_input = part
+        print(element_input)
+        print("^^^^^")
+
+        ::continue::
+    end
+
+    -- slice element_input and make it a collection of its own parts
+    element_input = str_slicer(element_input, ",", 1)
+
+    -- save all element parts in element_parts table for element creation
+    for i, part in pairs(element_input) do
+        -- check part validity
+        if not list_content[element_class][part] then
+            error_handler('Trying to add invalid bp/selector to ' .. element_class)
+            goto continue
+        end
+
+        element_parts[i] = part
+
+        element_die_set = element_die_set + 1
+
+        ::continue::
+    end
+
+    -- create die set based on number of parts contained in element
+    element_die_set = "1d" .. tostring(element_die_set)
+
+    list_container[element_class][element_id] = class[element_class](element_id, element_die_set, element_parts)
+    print(element_class)
+    print(MA_LIST[element_id] and MA_LIST[element_id].id or "ciiofecaz")
+end
+
+function simple_csv_manager(file_path, error_msg, label, element_class)
     local csv = csv_reader(FILES_PATH .. file_path)
 
     -- check if operation went right; if not, activate error_handler
@@ -876,119 +944,26 @@ function simple_csv_manager(file_path, error_msg, generator_func)
         return false
     end
 
-    for _, line in ipairs(csv) do
-        generator_func(line)
+    for _, line_data_table in ipairs(csv) do
+        simple_csv_generator(line_data_table, label, element_class)
     end
 
     return true
 end
 
-function selectors_generator(selector_data)
-    local selec_id
-    -- selec_die_set will change from (num) to = 1d(num) based on n of elements
-    local selec_die_set = 0
-    local selec_elements = {}
-    local elements_input
 
-    -- store all input data properly
-    for _, element in pairs(selector_data) do
-        local data
+function selectors_matrices_manager()
+    local error_msg
+    local selectors
+    local matrices
 
-        data = str_slicer(element, "#", 1)
-        if data[2] then
-            print(element .. " is id")
-            selec_id = element
-            
-            goto continue
-        end
+    error_msg = "The above error was triggered while trying to read selectors.csv"
+    selectors = simple_csv_manager("selectors.csv", error_msg, "#", "selector")
 
-        elements_input = element
+    error_msg = "The above error was triggered while trying to read matrices.csv"
+    matrices = simple_csv_manager("matrices.csv", error_msg, "&", "matrix")
 
-        ::continue::
-    end
-
-    -- slice elements_input to index = bp elements
-    elements_input = str_slicer(elements_input, ",", 1)
-
-    -- save all index = bp in selec_elements for Selector creation
-    for i, bp in pairs(elements_input) do
-        -- check blueprint validity
-        if not BP_LIST[bp] then
-            error_handler(
-                'Trying to add invalid blueprint "' .. bp .. '" to selector'
-            )
-            goto continue
-        end
-
-        selec_elements[i] = bp
-        
-        selec_die_set = selec_die_set + 1
-
-        ::continue::
-    end
-
-    -- create die set based on number of elements contained by selector
-    selec_die_set = "1d" .. tostring(selec_die_set)
-
-    SE_LIST[selec_id] = Selector(selec_id, selec_die_set, selec_elements)
-end
-
-function selectors_manager()
-    local error_msg = "The above error was triggered while trying to read selectors.csv"
-    return simple_csv_manager("selectors.csv", error_msg, selectors_generator)
-end
-
-function matrices_generator(matrix_data)
-    local matrix_id
-    -- matrix_die_set will change from (num) to = 1d(num) based on n of selectors
-    local matrix_die_set = 0
-    local matrix_selectors = {}
-    local selectors_input
-
-    -- store all input data properly
-    for _, element in pairs(matrix_data) do
-        local data
-
-        data = str_slicer(element, "&", 1)
-        if data[2] then
-            print(element .. " is id")
-            matrix_id = element
-            
-            goto continue
-        end
-
-        selectors_input = element
-
-        ::continue::
-    end
-
-    -- slice selectors_input to index = selector
-    selectors_input = str_slicer(selectors_input, ",", 1)
-
-    -- save all index = selector in matrix_selectors for Selector creation
-    for i, selector in pairs(selectors_input) do
-        -- check blueprint validity
-        if not SE_LIST[selector] then
-            error_handler('Trying to add invalid selector "' .. selector .. '" to matrix')
-            goto continue
-        end
-
-        matrix_selectors[i] = selector
-        
-        matrix_die_set = matrix_die_set + 1
-
-        ::continue::
-    end
-
-    -- create die set based on number of selectors contained by selector
-    matrix_die_set = "1d" .. tostring(matrix_die_set)
-
-    MA_LIST[matrix_id] = Selector(matrix_id, matrix_die_set, matrix_selectors)
-end
-
-function matrices_manager()
-    local error_msg = "The above error was triggered while trying to read matrices.csv"
-    return simple_csv_manager("matrices.csv", error_msg, matrices_generator)
+    return selectors and matrices
 end
 
 function camera_setting()

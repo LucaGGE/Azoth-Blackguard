@@ -47,7 +47,7 @@ end
 -- a Matrix spawns an arbitrary family/group of Selectors
 Matrix = Object:extend()
 
-function Matrix:new(input)
+function Matrix:new(id, die_set, elements)
     self.id = id
     self.die_set = die_set
     self.elements = elements

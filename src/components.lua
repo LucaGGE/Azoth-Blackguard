@@ -214,7 +214,7 @@ function Stats:new(stats_table)
         ["mana"] = funcs["generate_k"],
         ["gold"] = funcs["generate_k"],
         ["hunger"] = funcs["generate_k"],
-        ["regen"] = funcs["generate_k"],
+        ["appetite"] = funcs["generate_k"],
         ["stamina"] = funcs["generate_k"],
         ["dexterity"] = funcs["generate_k"]
     }

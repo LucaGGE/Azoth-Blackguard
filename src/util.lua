@@ -246,7 +246,7 @@ function entities_spawner(bp, loc_row, loc_col, name)
         -- check if player has Stats() comp with hp, maxhp, gold and hunger
         if not instanced_entity.comp["stats"] then
             local stat_component = components_interface(
-                {"stats", "hp=1", "maxhp=1", "gold=0", "hunger=0", "regen=1", "stamina=20"}
+                {"stats", "hp=1", "maxhp=1", "gold=0", "hunger=0", "appetite=1", "stamina=20"}
             )
             instanced_entity.comp["stats"] = stat_component
         end
@@ -951,7 +951,6 @@ function simple_csv_manager(file_path, error_msg, label, element_class)
     return true
 end
 
-
 function selectors_matrices_manager()
     local error_msg
     local selectors
@@ -1092,12 +1091,12 @@ function turns_manager(current_player)
         -- add to played turns
         player_comp.turns = player_comp.turns + 1
 
-        -- check 'game cycle' completion for player's hp regen/hunger increase
+        -- check 'game cycle' completion for player's hp regeneration/hunger increase
         if player_comp.turns > 20 then
             local stat = current_player.comp["stats"].stat
 
             player_comp.turns = 0
-            stat["hunger"] = stat["hunger"] + stat["regen"]
+            stat["hunger"] = stat["hunger"] + stat["appetite"]
 
             -- if player is well fed (first 400 turns), regain 1 hp
             if stat["hunger"] <= stat["stamina"] and stat["hp"] < stat["maxhp"] then
@@ -2968,6 +2967,11 @@ function  stat_update(target, id, mods)
     -- update all statistics with its base_stat + corresponding modifier
     -- NOTE: if modifier but no stat = ignored. If stat but no modifier = 0.
     for statistic, _ in pairs(stats.stat) do
+
+        -- current hp and hunger can never be modified by mutagens
+        if statistic == "hp" or statistic == "hunger" then
+            goto continue
+        end
 
         -- if no mods input and no mods stored, reset to base values and skip
         if not mods and not stats.modifier then

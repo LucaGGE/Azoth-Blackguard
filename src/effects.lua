@@ -105,17 +105,17 @@ function sfx_play(target, input)
     end
 end
 
-function stat_gold(target, input)
-    local target_stats = target.comp["stats"].stat
+function gold_add(target, input)
+    local target_inventory = target.comp["inventory"]
     local base_color = {0.28, 0.46, 0.73}
     local flash_color = {1, 1, 1, 1}
 
-    -- give feedback to eventual trigger that Entity has no stats or 'gold' stat
-    if not target_stats or not target_stats["gold"] then
+    -- give feedback to eventual trigger that Entity has no inventory
+    if not target_inventory then
         return false
     end
     
-    target_stats["gold"] = target_stats["gold"] + dice_roll(input)
+    target_inventory.gold = target_inventory.gold + dice_roll(input)
 
     print(target.name .. " gold has been changed: " .. input)
 

@@ -243,10 +243,10 @@ function entities_spawner(bp, loc_row, loc_col, name)
         -- save Player pilot in entity.pilot
         instanced_entity.pilot = instanced_entity.comp["player"]
 
-        -- check if player has Stats() comp with hp, maxhp, gold and hunger
+        -- check if player has Stats() comp with hp, maxhp and hunger
         if not instanced_entity.comp["stats"] then
             local stat_component = components_interface(
-                {"stats", "hp=1", "maxhp=1", "gold=0", "hunger=0", "appetite=1", "stamina=20"}
+                {"stats", "hp=1", "maxhp=1", "hunger=0", "appetite=1", "stamina=20"}
             )
             instanced_entity.comp["stats"] = stat_component
         end
@@ -1208,7 +1208,13 @@ function ui_manager_play()
 
     -- if inventory is closed, show all the other events that would otherwise bloat screen
     if not g.view_inv then
-        local player_stats = g.camera["entity"].comp["stats"].stat
+        local pc_stats = g.camera["entity"].comp["stats"].stat
+        local pc_gold = g.camera["entity"].comp["inventory"].gold
+        local gold_rgb = g.gold_rgb
+
+        -- manage situations where the pc has no inventory
+        gold_rgb = pc_gold and gold_rgb or {[1] = 0.87, [2] = 0.26, [3] = 0.43}
+        pc_gold = pc_gold and "Gold " .. pc_gold or "Thou hast no bag"
 
         -- print console events
         love.graphics.setColor(color_5)
@@ -1236,9 +1242,9 @@ function ui_manager_play()
 
         -- setting font color for player data
         love.graphics.setColor(g.hp_rgb)
-        love.graphics.print("Life "..player_stats["hp"], SIZE["PAD"], SIZE["PAD"] * 2.5)
-        love.graphics.setColor(g.gold_rgb)
-        love.graphics.print("Gold "..player_stats["gold"], SIZE["PAD"], SIZE["PAD"] * 3.5)
+        love.graphics.print("Life "..pc_stats["hp"], SIZE["PAD"], SIZE["PAD"] * 2.5)
+        love.graphics.setColor(gold_rgb)
+        love.graphics.print(pc_gold, SIZE["PAD"], SIZE["PAD"] * 3.5)
     end
     
     -- restoring default RGBA, since this function influences ALL graphics
@@ -1555,7 +1561,7 @@ function register_death(victim_entity, killer_name, place)
     local deceased = {
         ["player"] = victim_entity.name,
         ["killer"] = killer_name,
-        ["loot"] = victim_entity.comp["stats"].stat["gold"],
+        ["loot"] = victim_entity.comp["inventory"].gold,
         ["place"] = place
     }
     table.insert(g.cemetery, deceased)

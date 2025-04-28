@@ -188,7 +188,7 @@ end
 --[[
     Container class to store all the entity's stats. NPCs need this comp or they
     won't have hp (this translates to them being immortal).
-    If a Player doesn't have it, the system adds it with hp = 1, gold = 0
+    If a Player doesn't have it, the system adds it with hp = 1
 ]]--
 Stats = Object:extend()
 function Stats:new(stats_table)
@@ -212,7 +212,6 @@ function Stats:new(stats_table)
         ["maxhp"] = funcs["generate_k"],
         ["dmg"] = funcs["die_set"],
         ["mana"] = funcs["generate_k"],
-        ["gold"] = funcs["generate_k"],
         ["hunger"] = funcs["generate_k"],
         ["appetite"] = funcs["generate_k"],
         ["stamina"] = funcs["generate_k"],
@@ -278,6 +277,7 @@ end
 -- for all Entities that can store items (i.e. Players, NPCs, chests, libraries...)
 Inventory = Object:extend()
 function Inventory:new(arg)
+    self.gold = 0
     self.items = {}
     self.spaces = 0 -- available spaces
     self.capacity = 0 -- max number of spaces

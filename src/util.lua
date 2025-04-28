@@ -251,6 +251,14 @@ function entities_spawner(bp, loc_row, loc_col, name)
             instanced_entity.comp["stats"] = stat_component
         end
 
+        -- all players have access to at least a basic inventory view with no spaces
+        if not instanced_entity.comp["inventory"] then
+            local inv_component = components_interface(
+                {"inventory", "0"}
+            )
+            instanced_entity.comp["inventory"] = inv_component
+        end
+
         new_player = instanced_entity
         table.insert(g.party_group, new_player)
     end
@@ -1209,12 +1217,11 @@ function ui_manager_play()
     -- if inventory is closed, show all the other events that would otherwise bloat screen
     if not g.view_inv then
         local pc_stats = g.camera["entity"].comp["stats"].stat
-        local pc_gold = g.camera["entity"].comp["inventory"].gold
-        local gold_rgb = g.gold_rgb
+        local pc_gold = g.camera["entity"].comp["inventory"]
 
-        -- manage situations where the pc has no inventory
-        gold_rgb = pc_gold and gold_rgb or {[1] = 0.87, [2] = 0.26, [3] = 0.43}
-        pc_gold = pc_gold and "Gold " .. pc_gold or "Thou hast no bag"
+        -- manage situations where the pc has no inventory object equipped
+        pc_gold = pc_gold and pc_gold.capacity > 0 and pc_gold.gold
+        pc_gold = pc_gold and "Gold " .. pc_gold or false
 
         -- print console events
         love.graphics.setColor(color_5)
@@ -1243,8 +1250,16 @@ function ui_manager_play()
         -- setting font color for player data
         love.graphics.setColor(g.hp_rgb)
         love.graphics.print("Life "..pc_stats["hp"], SIZE["PAD"], SIZE["PAD"] * 2.5)
-        love.graphics.setColor(gold_rgb)
+
+        -- if pc has no inventory, skip printing gold amount
+        if not pc_gold then
+            goto continue
+        end
+
+        love.graphics.setColor(g.gold_rgb)
         love.graphics.print(pc_gold, SIZE["PAD"], SIZE["PAD"] * 3.5)
+
+        ::continue::
     end
     
     -- restoring default RGBA, since this function influences ALL graphics
@@ -1558,10 +1573,11 @@ end
 
 -- simple function to register decess details for game over screen
 function register_death(victim_entity, killer_name, place)
+    local victim_inv = victim_entity.comp["inventory"]
     local deceased = {
         ["player"] = victim_entity.name,
         ["killer"] = killer_name,
-        ["loot"] = victim_entity.comp["inventory"].gold,
+        ["loot"] = victim_inv and victim_inv.gold or "0",
         ["place"] = place
     }
     table.insert(g.cemetery, deceased)
@@ -1717,9 +1733,11 @@ function target_selector(player_comp, performer, key)
             pawn_ref = nil
         end
 
+        -- RETURNING: valid input, target pawn, target Entity, target cell
         return true, pawn_ref, entity_ref, target_cell
     end
 
+    -- RETURNING: valid input, target pawn, target Entity from inventory
     return true, false, g.current_inv[key]
 end
 
@@ -1964,19 +1982,20 @@ function equip_func(player_comp, player_entity, key)
     -- player slots
     player_slots = player_slots.slots
 
-    -- check if there's an item coupled with this letter
-    if not g.current_inv[key] then
+    _, _, target_item = target_selector(player_comp, player_entity, key)
+
+    -- check if there's a target item
+    if not target_item then
         return false
     end
 
+    equipable_comp = target_item.comp["equipable"]
+
     -- check if the selected item is equipable
-    if not g.current_inv[key].comp["equipable"] then
+    if not equipable_comp then
         console_event("Thee can't equip this")
         return false
     end
-
-    -- item 'equipable' comp
-    equipable_comp = g.current_inv[key].comp["equipable"]
 
     if equipable_comp.slot_reference then
         console_event("This is already beset upon thee")
@@ -1987,22 +2006,27 @@ function equip_func(player_comp, player_entity, key)
     -- check if proper slot for the item is available in 'slots' component
     for _, slot in ipairs(equipable_comp.suitable_slots) do
         if player_slots[slot] == "empty" then
-            local item_str = string_selector(g.current_inv[key])
+            local item_str = string_selector(target_item)
 
             -- save occupied slot in equipped object for easier referencing
             equipable_comp.slot_reference = slot
             -- store item inside slots component
             player_slots[slot] = {
                 ["tag"] = key,
-                ["item"] = g.current_inv[key]
+                ["item"] = target_item
             }
 
             play_sound(SOUNDS["sfx_equip"])
             -- activate equip() func in 'equipable' component
             -- this can trigger dedicated effects thanks to 'equip' tagged power
-            equipable_comp:equip(g.current_inv[key], player_entity)
+            equipable_comp:equip(target_item, player_entity)
 
             console_event("Thou dost equip thyself with " .. item_str)
+
+            -- if target_item is on map, pickup
+            if not g.view_inv then
+                return pickup_func(target_item, player_entity)
+            end
 
             return true
         end
@@ -2148,18 +2172,23 @@ function use_func(player_comp, player_entity, key)
     return true
 end
 
-function pickup_func(player_comp, player_entity, key)
+function pickup_check_func(player_comp, player_entity, key)
     local valid_key
     local pawn, entity
+    local pc_inventory = player_entity.comp["inventory"]
+
+    -- if capacity <= 0, it is read as false
+    pc_inventory = pc_inventory and pc_inventory.capacity > 0
+
+    if not pc_inventory then
+        print("WARNING: Entity without inventory/inventory capacity is trying to pickup")
+        console_event("Thou hast no bag to stow this item")
+        return false
+    end            
 
     valid_key, pawn, entity = target_selector(player_comp, player_entity, key)
     
     if not valid_key then return false end
-
-    if not player_entity.comp["inventory"] then
-        error_handler("Entity without inventory is trying to pickup")
-        return false
-    end
 
     -- if no target is found, return a 'nothing found' message
     if not entity then
@@ -2170,22 +2199,26 @@ function pickup_func(player_comp, player_entity, key)
     -- block any interaction with 'locked' or 'sealed' Entities
     if not entity_available(entity) then return true end
 
+    return pickup_func(entity, player_entity) 
+end
+
+function pickup_func(target_entity, player_entity)
     -- if the target has a trigger comp, trigger immediately
-    if entity.comp["trigger"] then
-        entity.comp["trigger"]:activate(entity, player_entity)
+    if target_entity.comp["trigger"] then
+        target_entity.comp["trigger"]:activate(target_entity, player_entity)
 
         -- activating optional pickup-related power
-        action_to_power(entity, player_entity, "on_pickup")
+        action_to_power(target_entity, player_entity, "on_pickup")
     end
 
     -- if target is has destroyontrigger, don't bother picking up
-    if not entity.alive then
+    if not target_entity.alive then
         return true
     end
 
     -- if target has no pickup comp then warn player
-    if entity.comp["pickup"] then
-        return player_entity.comp["inventory"]:add(entity)
+    if target_entity.comp["pickup"] then
+        return player_entity.comp["inventory"]:add(target_entity)
     else
         console_event("Thee art unable to pick hider up")
         return false
@@ -2763,6 +2796,7 @@ function inventory_add(item, comp)
     local item_ref
     local stack
     local success = false
+    local print_event
 
     item_ref = string_selector(item)
 
@@ -2822,7 +2856,7 @@ function inventory_add(item, comp)
 
     -- check if space is available (stackable entities do not require more spaces)
     -- return is true or false based on partial (from stackables)/no pickup
-    if not (comp.spaces > 0) then
+    if comp.capacity > 0 and comp.spaces <= 0 then
         if not success then
             console_event("Thy inventory is full")
             play_sound(SOUNDS["puzzle_fail"])
@@ -2830,7 +2864,7 @@ function inventory_add(item, comp)
             return false
         end
 
-        console_event("Thee pick up some " .. item_ref)
+        print_event = comp.capacity > 0 and console_event("Thee pick up some " .. item_ref)
         play_sound(SOUNDS["sfx_pickup"])
 
         return true
@@ -2838,7 +2872,7 @@ function inventory_add(item, comp)
 
     comp.spaces = comp.spaces - 1
     table.insert(comp.items, item)
-    console_event("Thee pick up " .. item_ref)
+    print_event = comp.capacity > 0 and console_event("Thee pick up " .. item_ref)
     item.alive = "inventory"
     play_sound(SOUNDS["sfx_pickup"])
 

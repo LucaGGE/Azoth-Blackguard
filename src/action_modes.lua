@@ -87,7 +87,7 @@ IO_DTABLE = {
         return talk_func(player_comp, player_entity, key)
     end,
     ["pickup"] = function(player_comp, player_entity, key)
-        return pickup_func(player_comp, player_entity, key)
+        return pickup_check_func(player_comp, player_entity, key)
     end,
     ["use"] = function(player_comp, player_entity, key)
         return use_func(player_comp, player_entity, key)
@@ -202,7 +202,6 @@ function player_cmd(player_comp, input_key)
         end,
         ["equip"] = function(player_comp)
             if not player_comp.action_state then
-                g.view_inv = true
                 -- necessary to update UI so that only console string is visible
                 g.cnv_ui = ui_manager_play()
                 player_comp.action_state = "equip"

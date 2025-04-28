@@ -1062,7 +1062,6 @@ function turns_manager(current_player)
 
         -- if it's not the NPCs turn, apply player pawn effects and enable them 
         if current_player.alive then
-            print("Player turn...")
             for i, effect_tag in ipairs(current_player.effects) do
                 print("Player effect tag detected")
                 -- activate lasting effects for current_player
@@ -1607,12 +1606,7 @@ function panel_update(player)
     local inventory = player.comp["inventory"]
     local slots = player.comp["slots"]
     local available_items = {}
-    local equipped = false
     local title_color = {0.49, 0.82, 0.90, 1}
-    local text_color = {
-        [true] = {0.93, 0.18, 0.27, 1},
-        [false] = {0.28, 0.46, 0.73, 1}    
-    }
 
     -- setting a canvas of the proper size
     love.graphics.setCanvas(new_canvas)
@@ -1645,9 +1639,8 @@ function panel_update(player)
         -- print all item in player inventory and couple them with a letter
         for i = 1, string.len(inv_str) do
             -- reference item's 'equipable' comp for each item in inventory
-            local equipable_ref
+            local item_ref
             local stack_str = ""
-            local slot_str = ""
             local item_str
             local tag_str
             local text_y
@@ -1658,25 +1651,15 @@ function panel_update(player)
             end
 
             -- item exists, proceed referencing it
-            equipable_ref = inventory[i].comp["equipable"]
+            item_ref = inventory[i].comp["stack"]
 
-            -- choosing printf text_color to discriminate equipped/unequipped items
-            if equipable_ref and equipable_ref.slot_reference then
-                equipped = true
-                slot_str = " (" .. equipable_ref.slot_reference .. ")"
-            else
-                equipped = false
-            end
-
-            equipable_ref = inventory[i].comp["stack"]
-
-            if equipable_ref then
+            if item_ref then
                 local stack_qty = inventory[i].comp["stats"].stat["hp"]
                 stack_str = " [" .. stack_qty .. "]"
             end
 
             -- chosen text_color setting
-            love.graphics.setColor(text_color[equipped])
+            love.graphics.setColor({0.28, 0.46, 0.73, 1})
 
             -- print all items on canvas
             item_str = string_selector(inventory[i])
@@ -1686,7 +1669,7 @@ function panel_update(player)
             text_y = (SIZE["DEF"] + SIZE["DEF"] / 8) * (i + 2)
 
             -- print string canvas
-            love.graphics.printf(tag_str .. item_str .. stack_str .. slot_str,
+            love.graphics.printf(tag_str .. item_str .. stack_str,
             0, text_y, g.w_width, "center"
             )
             available_items[string.sub(inv_str, i, i)] = inventory[i]
@@ -1706,7 +1689,6 @@ function panel_update(player)
         end
 
         for i = 1, string.len(slots_str) do
-            print("Slotted items:")
             local slot_ref
             local stack_ref
             local item_str
@@ -1732,7 +1714,7 @@ function panel_update(player)
             end
 
             -- chosen text_color setting
-            love.graphics.setColor(text_color[true])
+            love.graphics.setColor({0.93, 0.18, 0.27, 1})
 
             -- print all items on canvas
             item_str = string_selector(slot_ref["item"])
@@ -1748,11 +1730,6 @@ function panel_update(player)
             love.graphics.printf(tag_str .. slot_ref_str .. item_str .. stack_str,
             SIZE["PAD"], text_y, g.w_width, "left"
             )
-
-            available_items[string.sub(inv_str, i, i)] = slot_ref["item"]
-
-            print(slot_ref["tag"])
-            print(slot_ref["item"])
         end
     end
 
@@ -2090,8 +2067,11 @@ function equip_func(player_comp, player_entity, key)
 
             -- if target_item is on map, pickup
             if not g.panel_on then
-                return pickup_func(target_item, player_entity)
+                target_item.alive = "inventory"
             end
+
+            -- if target_item is in inventory, remove
+            player_entity.comp["inventory"]:remove(key)
 
             return true
         end
@@ -2104,6 +2084,7 @@ end
 
 function unequip_func(player_comp, player_entity, key)
     local player_slots
+    local equipped_items = {}
 
     if not player_entity.comp["slots"] then
         print("WARNING: Entity without slots is trying to unequip")
@@ -2113,11 +2094,17 @@ function unequip_func(player_comp, player_entity, key)
     -- we can assume its data is predictable
     player_slots = player_entity.comp["slots"].slots
 
-    if g.active_panel[key] then
+    for _, slot_value in pairs(player_slots) do
+        if slot_value ~= "empty" then
+            equipped_items[slot_value["tag"]] = slot_value["item"]
+        end
+    end
+
+    if equipped_items[key] then
         local item
         local success
 
-        item = g.active_panel[key]
+        item = equipped_items[key]
 
         if not item.comp["equipable"] then
             print("Trying to unequip an unequippable object!")
@@ -2135,23 +2122,34 @@ function unequip_func(player_comp, player_entity, key)
         -- if item isn't cursed, empty player_slots component reference
         -- and also equipable component slot_reference
         if success then
-            local item_str = string_selector(g.active_panel[key])
+            local item_str = string_selector(equipped_items[key])
+            local store_item = player_entity.comp["inventory"]
 
             play_sound(SOUNDS["sfx_unequip"])
             player_slots[item.comp["equipable"].slot_reference] = "empty"
 
+            -- if player has inventory and available space, store item
+            store_item = store_item and store_item:add(item)
+
+            -- TO DO TO DO TO DO TO DO TO DO TO DO TO DO TO DO TO DO TO DO TO DO TO DO  WIP CODE TO DO TO DO TO DO TO DO TO DO TO DO
+            if not store_item or not player_entity.comp["inventory"] then
+                print("NO SPACE IN INVENTORY/INVENTORY COMPONENT, BESTOW...")
+            end
+
             item.comp["equipable"].slot_reference = false
+            item.alive = true
 
             console_event("Thou dost relinquish thy " .. item_str)
+
+            return true
         else
             play_sound(SOUNDS["sfx_cursed"])
+            return true
         end
     else
         print("No item at this key address")
         return false
     end
-
-    return true
 end
 
 function unlock_func(player_comp, player_entity, key)

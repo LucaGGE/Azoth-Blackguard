@@ -170,7 +170,7 @@ function player_cmd(player_comp, input_key)
         end,
         ["inventory"] = function()
             if not player_comp.action_state then
-                g.view_inv = not g.view_inv
+                g.panel_on = not g.panel_on
                 -- necessary to update UI so that only console string is visible
                 g.cnv_ui = ui_manager_play()
                 return false
@@ -193,7 +193,7 @@ function player_cmd(player_comp, input_key)
         ["pickup"] = function(player_comp)
             if not player_comp.action_state then
                 -- avoid picking up entities already in inventory
-                g.view_inv = false
+                g.panel_on = false
                 
                 player_comp.action_state = "pickup"
                 console_cmd("Pickup what?")          
@@ -211,7 +211,7 @@ function player_cmd(player_comp, input_key)
         end,
         ["unequip"] = function(player_comp)
             if not player_comp.action_state then
-                g.view_inv = true
+                g.panel_on = true
                 -- necessary to update UI so that only console string is visible
                 g.cnv_ui = ui_manager_play()
                 player_comp.action_state = "unequip"
@@ -221,7 +221,7 @@ function player_cmd(player_comp, input_key)
         end,
         ["loose"] = function(player_comp)
             if not player_comp.action_state then
-                g.view_inv = false
+                g.panel_on = false
                 player_comp.action_state = "loose"
                 console_cmd("Loose thy projectile where?")
                 return false
@@ -229,7 +229,7 @@ function player_cmd(player_comp, input_key)
         end,
         ["bestow"] = function(player_comp)
             if not player_comp.action_state then
-                g.view_inv = true
+                g.panel_on = true
                 -- necessary to update UI so that only console string is visible
                 g.cnv_ui = ui_manager_play()
                 -- used to drop stuff around or to place items in proper places

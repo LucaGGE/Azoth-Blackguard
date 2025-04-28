@@ -1172,7 +1172,7 @@ function ui_manager_play()
     love.graphics.clear(0, 0, 0, 0)
 
     -- setting UI position based on inventory open/closed
-    if not g.view_inv then
+    if not g.panel_on then
         cmd_x = HALF_TILE
         cmd_y = (g.w_height / 2) - SIZE["DEF"] - (TILE_SIZE * 1.5)
         cmd_alignment = "center"
@@ -1209,13 +1209,13 @@ function ui_manager_play()
     event_1 = g.console["event1"] or "Error: fed nothing to console_event() or forgot to reset its value in main.lua"
 
     -- print newest console event with inv open and no console cmd or inv closed
-    if g.view_inv and not g.console["string"] or not g.view_inv then
+    if g.panel_on and not g.console["string"] or not g.panel_on then
         love.graphics.setColor(color_1)
         love.graphics.print(event_1, SIZE["PAD"], g.w_height - (SIZE["PAD"] * 1.5))
     end
 
     -- if inventory is closed, show all the other events that would otherwise bloat screen
-    if not g.view_inv then
+    if not g.panel_on then
         local pc_stats = g.camera["entity"].comp["stats"].stat
         local pc_gold = g.camera["entity"].comp["inventory"]
 
@@ -1597,30 +1597,22 @@ function entity_available(target)
     end
 end
 
-function inventory_update(player)
+function panel_update(player)
     local new_canvas  = love.graphics.newCanvas(g.w_width, g.w_height)
     local size = SIZE_MULT * 2
     local t_size = TILE_SIZE * 2
     local inv_str = "abcdefghijklmnopqrstuvwxyz"
-    local tag_str
+    local slots_str = "01234567890"
     -- referencing eventual player's 'inventory' component
     local inventory = player.comp["inventory"]
+    local slots = player.comp["slots"]
     local available_items = {}
     local equipped = false
     local title_color = {0.49, 0.82, 0.90, 1}
-    local text_y
     local text_color = {
         [true] = {0.93, 0.18, 0.27, 1},
         [false] = {0.28, 0.46, 0.73, 1}    
     }
-
-    -- immediately check if player is missing inventory component
-    if not inventory then
-        error_handler(
-            "In 'inventory_update()', found player with missing inventory"
-        )
-        return false
-    end
 
     -- setting a canvas of the proper size
     love.graphics.setCanvas(new_canvas)
@@ -1638,61 +1630,134 @@ function inventory_update(player)
     -- printing owner's name
     love.graphics.printf(player.name .. "'s bag", 0, SIZE["DEF"], g.w_width, "center")
 
-    -- at this point, reference 'inventory' comp table of items
-    inventory = inventory.items
+    -- warn developer when player is missing inventory component
+    if not inventory then
+        print("INFO: In 'panel_update()', found player with missing inventory")
+    end
 
     -- setting font for inventory's items
     love.graphics.setFont(FONTS["ui"])
 
-    -- print all item in player inventory and couple them with a letter
-    for i = 1, string.len(inv_str) do
-        -- reference item's 'equipable' comp for each item in inventory
-        local equipable_ref
-        local stack_str = ""
-        local slot_str = ""
-        local item_str
-        -- if no more items are available, break loop
-        if not inventory[i] then
-            break
+    if inventory then
+        -- at this point, reference 'inventory' comp table of items
+        inventory = inventory.items
+
+        -- print all item in player inventory and couple them with a letter
+        for i = 1, string.len(inv_str) do
+            -- reference item's 'equipable' comp for each item in inventory
+            local equipable_ref
+            local stack_str = ""
+            local slot_str = ""
+            local item_str
+            local tag_str
+            local text_y
+
+            -- if no more items are available, break loop
+            if not inventory[i] then
+                break
+            end
+
+            -- item exists, proceed referencing it
+            equipable_ref = inventory[i].comp["equipable"]
+
+            -- choosing printf text_color to discriminate equipped/unequipped items
+            if equipable_ref and equipable_ref.slot_reference then
+                equipped = true
+                slot_str = " (" .. equipable_ref.slot_reference .. ")"
+            else
+                equipped = false
+            end
+
+            equipable_ref = inventory[i].comp["stack"]
+
+            if equipable_ref then
+                local stack_qty = inventory[i].comp["stats"].stat["hp"]
+                stack_str = " [" .. stack_qty .. "]"
+            end
+
+            -- chosen text_color setting
+            love.graphics.setColor(text_color[equipped])
+
+            -- print all items on canvas
+            item_str = string_selector(inventory[i])
+
+            -- establish and set tag_str and text_y
+            tag_str = string.sub(inv_str, i, i) .. ": "
+            text_y = (SIZE["DEF"] + SIZE["DEF"] / 8) * (i + 2)
+
+            -- print string canvas
+            love.graphics.printf(tag_str .. item_str .. stack_str .. slot_str,
+            0, text_y, g.w_width, "center"
+            )
+            available_items[string.sub(inv_str, i, i)] = inventory[i]
+        end
+    end
+
+    if slots then
+        -- at this point, reference 'slots' comp table of items
+        slots = slots.slots
+        local slot_key = {}
+        
+        -- store non-empty slot_comp.slots string keys in order
+        for key, value in pairs(slots) do
+            if value ~= "empty" then
+                table.insert(slot_key, key)
+            end
         end
 
-        -- item exists, proceed referencing it
-        equipable_ref = inventory[i].comp["equipable"]
+        for i = 1, string.len(slots_str) do
+            print("Slotted items:")
+            local slot_ref
+            local stack_ref
+            local item_str
+            local stack_str = ""
+            local slot_ref_str = ""
+            local tag_str
+            local text_y
 
-        -- choosing printf text_color to discriminate equipped/unequipped items
-        if equipable_ref and equipable_ref.slot_reference then
-            equipped = true
-            slot_str = " (" .. equipable_ref.slot_reference .. ")"
-        else
-            equipped = false
+            -- if no more items are available, break loop
+            if not slots[slot_key[i]] then
+                break
+            end
+
+            slot_ref = slots[slot_key[i]]
+            -- saving item's numerical tag
+            slot_ref["tag"] = string.sub(slots_str, i, i)
+
+            stack_ref = slot_ref["item"].comp["stack"]
+
+            if stack_ref then
+                local stack_qty = slot_ref["item"].comp["stats"].stat["hp"]
+                stack_str = " [" .. stack_qty .. "]"
+            end
+
+            -- chosen text_color setting
+            love.graphics.setColor(text_color[true])
+
+            -- print all items on canvas
+            item_str = string_selector(slot_ref["item"])
+
+            slot_ref_str = slot_ref["item"].comp["equipable"].slot_reference .. ": "
+
+            -- establish and set tag_str and text_y
+            tag_str = string.sub(slots_str, i, i) .. "."
+
+            text_y = (SIZE["DEF"] + SIZE["DEF"] / 8) * (i + 2)
+
+            -- print string canvas
+            love.graphics.printf(tag_str .. slot_ref_str .. item_str .. stack_str,
+            SIZE["PAD"], text_y, g.w_width, "left"
+            )
+
+            available_items[string.sub(inv_str, i, i)] = slot_ref["item"]
+
+            print(slot_ref["tag"])
+            print(slot_ref["item"])
         end
-
-        equipable_ref = inventory[i].comp["stack"]
-
-        if equipable_ref then
-            local stack_qty = inventory[i].comp["stats"].stat["hp"]
-            stack_str = " [" .. stack_qty .. "]"
-        end
-
-        -- chosen text_color setting
-        love.graphics.setColor(text_color[equipped])
-
-        -- print all items on canvas
-        item_str = string_selector(inventory[i])
-
-        -- establish and set tag_str and text_y
-        tag_str = string.sub(inv_str, i, i) .. ": "
-        text_y = (SIZE["DEF"] + SIZE["DEF"] / 8) * (i + 2)
-
-        -- print string canvas
-        love.graphics.printf(tag_str .. item_str .. stack_str .. slot_str,
-        0, text_y, g.w_width, "center"
-        )
-        available_items[string.sub(inv_str, i, i)] = inventory[i]
     end
 
     -- storing available_items to be used with action_modes
-    g.current_inv = available_items
+    g.active_panel = available_items
     -- copying updated inventory canvas to g.cnv_inv (global inventory canvas)
     g.cnv_inv = new_canvas
 
@@ -1711,7 +1776,7 @@ function target_selector(player_comp, performer, key)
     local pawn_ref, entity_ref -- Entities references
     
     
-    if not g.view_inv then
+    if not g.panel_on then
         if player_comp.movement_inputs[key] then
             local target_x, target_y
 
@@ -1738,7 +1803,7 @@ function target_selector(player_comp, performer, key)
     end
 
     -- RETURNING: valid input, target pawn, target Entity from inventory
-    return true, false, g.current_inv[key]
+    return true, false, g.active_panel[key]
 end
 
 -- based on Entity current components, select best proper string
@@ -1850,7 +1915,7 @@ function bestow_select_func(player_comp, player_entity, key)
         return false
     end
 
-    item = g.current_inv[key]
+    item = g.active_panel[key]
 
     -- check if there's an item coupled with this letter
     if not item then
@@ -1865,7 +1930,7 @@ function bestow_select_func(player_comp, player_entity, key)
 
 
     -- at this point, a valid item was selected
-    g.view_inv = false
+    g.panel_on = false
     player_comp.action_state = "/bestow"
     -- store selected item in player_comp.string
     player_comp.string = key
@@ -1932,14 +1997,14 @@ function bestow_place_func(player_comp, player_entity, key)
     end
 
     -- at this point, everything is in check. Store item
-    item = g.current_inv[item_key]
+    item = g.active_panel[item_key]
 
     -- set proper item string
     item_str = string_selector(item)
 
     -- then remove item from inventory using item_key position in alphabet
     inventory:remove(item_key)
-    inventory_update(player_entity)
+    panel_update(player_entity)
     player_comp.string = false
 
     -- then position item in target_cell and add to entities_group
@@ -2024,7 +2089,7 @@ function equip_func(player_comp, player_entity, key)
             console_event("Thou dost equip thyself with " .. item_str)
 
             -- if target_item is on map, pickup
-            if not g.view_inv then
+            if not g.panel_on then
                 return pickup_func(target_item, player_entity)
             end
 
@@ -2048,11 +2113,11 @@ function unequip_func(player_comp, player_entity, key)
     -- we can assume its data is predictable
     player_slots = player_entity.comp["slots"].slots
 
-    if g.current_inv[key] then
+    if g.active_panel[key] then
         local item
         local success
 
-        item = g.current_inv[key]
+        item = g.active_panel[key]
 
         if not item.comp["equipable"] then
             print("Trying to unequip an unequippable object!")
@@ -2070,7 +2135,7 @@ function unequip_func(player_comp, player_entity, key)
         -- if item isn't cursed, empty player_slots component reference
         -- and also equipable component slot_reference
         if success then
-            local item_str = string_selector(g.current_inv[key])
+            local item_str = string_selector(g.active_panel[key])
 
             play_sound(SOUNDS["sfx_unequip"])
             player_slots[item.comp["equipable"].slot_reference] = "empty"
@@ -2121,7 +2186,7 @@ function use_func(player_comp, player_entity, key)
 
     if not valid_key then return false end
 
-    if not g.view_inv then
+    if not g.panel_on then
         local input = player_comp.movement_inputs[key]
         -- player shouldn't be able to activate entities he's standing on,
         -- since they could change physics and block him improperly
@@ -2257,7 +2322,7 @@ end
 function loose_func(player_comp, player_entity, key)
     -- select behavior between launching item or shooting ranged weapon,
     -- depending on inventory open/close
-    if not g.view_inv then
+    if not g.panel_on then
         local weapon_ref = player_entity.comp["slots"]
         local quiver_ref = player_entity.comp["slots"]
 
@@ -2386,7 +2451,7 @@ function player_manage_input(entity, key, comp)
         end
 
         -- check if player has inventory open, to avoid undesired movement input
-        if g.view_inv then
+        if g.panel_on then
             return false
         end
 

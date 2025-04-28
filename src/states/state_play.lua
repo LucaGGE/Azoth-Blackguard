@@ -62,7 +62,7 @@ function StatePlay:init(map, generate_players)
 
         -- setting camera and launching player inventory
         camera_setting()
-        inventory_update(g.party_group[current_turn])
+        panel_update(g.party_group[current_turn])
     else
         g.game_state:exit()
         g.game_state = StateFatalError()
@@ -97,7 +97,7 @@ function StatePlay:update()
             -- a successful action quits the action mode
             player.comp["player"].action_state = nil
             -- a successful action closes inventory
-            g.view_inv = false 
+            g.panel_on = false 
             current_turn = current_turn + 1
         end
 
@@ -116,7 +116,7 @@ function StatePlay:update()
             if g.party_group[current_turn] then
                 -- reset current_turn number, move NPCs and apply their effects
                 turns_manager(g.party_group[current_turn])
-                inventory_update(g.party_group[current_turn])
+                panel_update(g.party_group[current_turn])
             elseif g.game_state:is(StatePlay) then
                 -- if we didn't simply pass through an exit, it's a Game Over!
                 g.game_state = StateGameOver()
@@ -236,13 +236,13 @@ function StatePlay:refresh()
 
     g.cnv_ui = ui_manager_play()
     if g.party_group[current_turn] then
-        inventory_update(g.party_group[current_turn])
+        panel_update(g.party_group[current_turn])
     end
 end
 
 function StatePlay:draw()
     -- if inventory is open and there's a player, draw inventory and return
-    if g.view_inv and g.camera["entity"] then
+    if g.panel_on and g.camera["entity"] then
         love.graphics.draw(g.cnv_inv, 0, 0)
         -- drawing UI dedicated canvas on top of everything, always locked on screen
         love.graphics.draw(g.cnv_ui, 0, 0)

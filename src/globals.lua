@@ -15,8 +15,8 @@ g = {
     party_group = {}, -- contains: Entities reacting to input, their Player comp
     npcs_group = {}, -- contains: all NPCs
     entities_group = {}, -- contains: all the other Entities, for effects applying
-    current_inv = {}, -- current player's inventory
-    view_inv = false, -- view inventory or not
+    active_panel = {}, -- current player's panel
+    panel_on = false, -- current player's panel visibility
     cemetery = {}, -- a table containing deaths data (player, killer, gold...)
     tweening = {}, -- suspends player input during animations
     game_state, -- the current game state

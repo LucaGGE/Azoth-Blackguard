@@ -1,4 +1,4 @@
-@player|:73|player|stats,hp=10,maxhp=15,hunger=19,mana=5,appetite=1,stamina=20,dexterity=7|movable,walk|slots,head,chest,cape,quiver,weapon|*on_unarmed,sfx=sfx_mace_light,action_target=is punched,bludgeon_target=1d2
+@player|:73|player|stats,hp=10,maxhp=15,hunger=19,mana=5,appetite=1,stamina=20,dexterity=7|movable,walk|slots,head,chest,cape,quiver,weapon|*on_unarmed,sfx=sfx_mace_light,action_target=is punched,bludgeon_target=1d2|inventory,1
 @lemure|:108|stats,hp=10|npc,group=lemure,enemies=none,nature=neutral,sight=15,hearing=5|movable,walk,climb
 @barbed frog|:114|stats,hp=3|npc,group=toads,enemies=none,nature=passive,sight=5,hearing=10|movable,walk,ruck,swim|*on_hurt,pierce_target=1d2,hemorrage_target=1d3
 @crab|:110|stats,hp=15,mana=10|npc,group=crabs,enemies=none,nature=aggressive,sight=3,hearing=1|movable,walk,swim,ruck|*on_unarmed,sfx=sfx_crab,action_target=is clamped,pierce_target=1d2|profile,slash=-2,bleeding=immune
@@ -20,8 +20,8 @@
 @potion4|:potions|pickup|description,poison vial
 @potion5|:potions|pickup|description,phasing juice
 @potion6|:potions|pickup|description,blindness ointment
-@crossbowlight|:102|pickup|equipable,true,weapon|shooter,1,dartpierce,dartflat|stats,dmg=3d3|description,light crossbow|*on_hit,sfx=sfx_mace_light,action_target=is hit,bludgeon_target=1d3
-@crossbowheavy|:103|pickup|equipable,true,weapon|shooter,1,dartpierce,dartflat|stats,dmg=4d3+10|description,heavy crossbow|*on_hit,sfx=sfx_mace_heavy,action_target=is hit,bludgeon_target=1d3+2
+@crossbowlight|:103|pickup|equipable,true,weapon|shooter,1,dartpierce,dartflat|stats,dmg=3d3|description,light crossbow|*on_hit,sfx=sfx_mace_light,action_target=is hit,bludgeon_target=1d3
+@crossbowheavy|:102|pickup|equipable,true,weapon|shooter,1,dartpierce,dartflat|stats,dmg=4d3+10|description,heavy crossbow|*on_hit,sfx=sfx_mace_heavy,action_target=is hit,bludgeon_target=1d3+2
 @sword|:98|pickup|equipable,false,weapon|description,mighty sword|*on_hit,action_target=is slashed,sfx=sfx_sword,slash_target=3d4
 @dartpierce|:105|pickup|stack,24|stats,hp=20|equipable,false,quiver|*on_hit,slash_target=1d2|description,piercing bolts
 @dartflat|:106|pickup|stack,24|stats,hp=20|equipable,false,quiver|*on_hit,slash_target=1d2|description,flat bolts

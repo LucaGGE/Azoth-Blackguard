@@ -251,14 +251,6 @@ function entities_spawner(bp, loc_row, loc_col, name)
             instanced_entity.comp["stats"] = stat_component
         end
 
-        -- all players have access to at least a basic inventory view with no spaces
-        if not instanced_entity.comp["inventory"] then
-            local inv_component = components_interface(
-                {"inventory", "0"}
-            )
-            instanced_entity.comp["inventory"] = inv_component
-        end
-
         new_player = instanced_entity
         table.insert(g.party_group, new_player)
     end
@@ -903,7 +895,6 @@ function simple_csv_generator(line_data, label, element_class)
 
         -- if label appears, then it's the element's name
         if data[2] then
-            print(part .. " is id")
             element_id = part
 
             goto continue
@@ -911,8 +902,6 @@ function simple_csv_generator(line_data, label, element_class)
 
         -- if not, it's a csv line containing all its parts
         element_input = part
-        print(element_input)
-        print("^^^^^")
 
         ::continue::
     end
@@ -939,8 +928,6 @@ function simple_csv_generator(line_data, label, element_class)
     element_die_set = "1d" .. tostring(element_die_set)
 
     list_container[element_class][element_id] = class[element_class](element_id, element_die_set, element_parts)
-    print(element_class)
-    print(MA_LIST[element_id] and MA_LIST[element_id].id or "ciiofecaz")
 end
 
 function simple_csv_manager(file_path, error_msg, label, element_class)
@@ -1601,7 +1588,7 @@ function panel_update(player)
     local size = SIZE_MULT * 2
     local t_size = TILE_SIZE * 2
     local inv_str = "abcdefghijklmnopqrstuvwxyz"
-    local slots_str = "01234567890"
+    local slots_str = "1234567890"
     -- referencing eventual player's 'inventory' component
     local inventory = player.comp["inventory"]
     local slots = player.comp["slots"]
@@ -1623,11 +1610,6 @@ function panel_update(player)
 
     -- printing owner's name
     love.graphics.printf(player.name .. "'s bag", 0, SIZE["DEF"], g.w_width, "center")
-
-    -- warn developer when player is missing inventory component
-    if not inventory then
-        print("INFO: In 'panel_update()', found player with missing inventory")
-    end
 
     -- setting font for inventory's items
     love.graphics.setFont(FONTS["ui"])
@@ -1938,14 +1920,14 @@ function quit_func(player_comp, player_entity, key)
 end
 
 -- bestow can be applied to any Entity in inventory, if not equipped
-function bestow_place_func(player_comp, player_entity, key)
+function bestow_place_func(player_comp, player_entity, key, input_item)
     local valid_key
     local pawn, entity
     local target_cell
-    local item
+    local item = input_item -- only used for non-inventory unequip & bestow
     local item_key = player_comp.string
     local item_str
-    local inventory = player_entity.comp["inventory"]
+    local pc_inventory = player_entity.comp["inventory"]
 
     valid_key, pawn, entity, target_cell = target_selector(player_comp, player_entity, key)
 
@@ -1973,14 +1955,22 @@ function bestow_place_func(player_comp, player_entity, key)
         return false
     end
 
-    -- at this point, everything is in check. Store item
-    item = g.active_panel[item_key]
+    -- this is only used if there's an inventory with available space
+    -- when input_item is fed, we know these conditions are not met
+    if g.active_panel[item_key] then
+        print("OMEGA KEKIS")
+        item = g.active_panel[item_key]
+
+        -- then remove item from inventory using item_key position in alphabet
+        pc_inventory:remove(item_key)
+
+        -- free an inventory space
+        pc_inventory.spaces = pc_inventory.spaces + 1
+    end
 
     -- set proper item string
     item_str = string_selector(item)
 
-    -- then remove item from inventory using item_key position in alphabet
-    inventory:remove(item_key)
     panel_update(player_entity)
     player_comp.string = false
 
@@ -2000,9 +1990,6 @@ function bestow_place_func(player_comp, player_entity, key)
         table.insert(g.hidden_group, item)
     end
 
-    -- free an inventory space
-    inventory.spaces = inventory.spaces + 1
-
     -- play a 'touching the ground' sound (same as stepping)
     play_sound(SOUNDS[TILES_PHYSICS[target_cell.index]])
 
@@ -2015,6 +2002,7 @@ function equip_func(player_comp, player_entity, key)
     local player_slots = player_entity.comp["slots"]
     local target_item
     local equipable_comp
+    local pc_inventory = player_entity.comp["inventory"]
 
     if not player_slots then
         error_handler("Trying to equip without slots component")
@@ -2068,10 +2056,13 @@ function equip_func(player_comp, player_entity, key)
             -- if target_item is on map, pickup
             if not g.panel_on then
                 target_item.alive = "inventory"
+
+                return true
             end
 
             -- if target_item is in inventory, remove
-            player_entity.comp["inventory"]:remove(key)
+            pc_inventory:remove(key)
+            pc_inventory.spaces = pc_inventory.spaces + 1
 
             return true
         end
@@ -2103,6 +2094,7 @@ function unequip_func(player_comp, player_entity, key)
     if equipped_items[key] then
         local item
         local success
+        local pc_inventory = player_entity.comp["inventory"]
 
         item = equipped_items[key]
 
@@ -2117,33 +2109,58 @@ function unequip_func(player_comp, player_entity, key)
             return false
         end
 
+        -- if player's have no inventory or no spaces left, drop item on ground
+        if not pc_inventory or pc_inventory.spaces <= 0 then
+            print("NO SPACE IN INVENTORY/INVENTORY COMPONENT, BESTOW...")
+            local bestowed
+            g.panel_on = false
+            cursed = item.comp["equipable"].cursed
+
+            if cursed then
+                play_sound(SOUNDS["sfx_cursed"])
+                console_event("Thy item is cursed and may not be removed!", {0.6, 0.2, 1})
+
+                return true
+            end
+
+            if not cursed then
+                bestowed = bestow_place_func(player_comp, player_entity, "s", item)
+            end
+
+            if bestowed then
+                play_sound(SOUNDS["sfx_unequip"])
+                item.comp["equipable"]:unequip(item, player_entity)
+                player_slots[item.comp["equipable"].slot_reference] = "empty"
+                item.comp["equipable"].slot_reference = false
+                item.alive = true
+            end
+
+            return true
+        end
+
         success = item.comp["equipable"]:unequip(item, player_entity)
+
+        if not success then
+            play_sound(SOUNDS["sfx_cursed"])
+            return true
+        end
 
         -- if item isn't cursed, empty player_slots component reference
         -- and also equipable component slot_reference
         if success then
             local item_str = string_selector(equipped_items[key])
-            local store_item = player_entity.comp["inventory"]
-
-            play_sound(SOUNDS["sfx_unequip"])
-            player_slots[item.comp["equipable"].slot_reference] = "empty"
+            local store_item = pc_inventory
 
             -- if player has inventory and available space, store item
             store_item = store_item and store_item:add(item)
 
-            -- TO DO TO DO TO DO TO DO TO DO TO DO TO DO TO DO TO DO TO DO TO DO TO DO  WIP CODE TO DO TO DO TO DO TO DO TO DO TO DO
-            if not store_item or not player_entity.comp["inventory"] then
-                print("NO SPACE IN INVENTORY/INVENTORY COMPONENT, BESTOW...")
-            end
-
+            play_sound(SOUNDS["sfx_unequip"])
+            player_slots[item.comp["equipable"].slot_reference] = "empty"
             item.comp["equipable"].slot_reference = false
             item.alive = true
 
             console_event("Thou dost relinquish thy " .. item_str)
 
-            return true
-        else
-            play_sound(SOUNDS["sfx_cursed"])
             return true
         end
     else
@@ -2245,8 +2262,8 @@ function pickup_check_func(player_comp, player_entity, key)
 
     if not pc_inventory then
         print("WARNING: Entity without inventory/inventory capacity is trying to pickup")
-        console_event("Thou hast no bag to stow this item")
-        return false
+        console_event("Thou hast no bag to stow items")
+        return true
     end            
 
     valid_key, pawn, entity = target_selector(player_comp, player_entity, key)
@@ -2924,7 +2941,7 @@ function inventory_add(item, comp)
             console_event("Thy inventory is full")
             play_sound(SOUNDS["puzzle_fail"])
 
-            return false
+            return true
         end
 
         print_event = comp.capacity > 0 and console_event("Thee pick up some " .. item_ref)

@@ -24,7 +24,7 @@ function StatePlay:manage_input(key)
 end
 
 -- NOTE: StatePlay:init() is here to take level-related arguments and spawn them
-function StatePlay:init(map, generate_players)
+function StatePlay:init(map, generate_pcs)
     -- stopping previous soundtrack
     if g.game_track then
         love.audio.stop(g.game_track)
@@ -35,7 +35,7 @@ function StatePlay:init(map, generate_players)
     love.audio.play(g.game_track)
 
     -- feeding 'true' the first level, to regen players
-    local current_map = map_reader(map, generate_players)
+    local current_map = map_reader(map, generate_pcs)
 
     if current_map then
         -- setting BKG color
@@ -78,12 +78,12 @@ function StatePlay:update()
 
     -- checking for input to resolve turns
     if g.keys_pressed[1] and next(g.tweening) == nil then
-        local player = g.party_group[current_turn]
+        local pc = g.party_group[current_turn]
         
         -- sending input to current player input_manager (if alive)
-        if player then
+        if pc then
             for i2,key in ipairs(g.keys_pressed) do
-                valid_action = player.comp["player"]:manage_input(player, key)
+                valid_action = pc.comp["player"]:manage_input(pc, key)
                 -- removing input that was taken care of
                 table.remove(g.keys_pressed, i2)
                 -- if action isn't valid, return false and wait for valid return
@@ -95,7 +95,7 @@ function StatePlay:update()
         -- If not, player died (g.party_group[current_turn] == nil)
         if valid_action or g.party_group[current_turn] then
             -- a successful action quits the action mode
-            player.comp["player"].action_state = nil
+            pc.comp["player"].action_state = nil
             -- a successful action closes inventory
             g.panel_on = false 
             current_turn = current_turn + 1
@@ -166,9 +166,9 @@ function StatePlay:refresh()
     love.graphics.draw(g.cnv_static, 0, 0)
 
     -- removing dead players from g.party_group
-    for i, player in ipairs(g.party_group) do
-        if player.alive == false then
-            player.cell["cell"].pawn = nil
+    for i, pc in ipairs(g.party_group) do
+        if pc.alive == false then
+            pc.cell["cell"].pawn = nil
             table.remove(g.party_group, i)
         end
     end

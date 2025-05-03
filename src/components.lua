@@ -30,7 +30,7 @@ function Player:new()
 end
 
 function Player:manage_input(entity, key)
-    return player_manage_input(entity, key, self)
+    return pc_manage_input(entity, key, self)
 end
 
 Movable = Object:extend()
@@ -355,8 +355,8 @@ function Sealed:new(input)
 
 end
 
-function Sealed:activate(target, entity, player_comp)
-    return sealed_activate(target, entity, player_comp)
+function Sealed:activate(target, entity, pc_comp)
+    return sealed_activate(target, entity, pc_comp)
 end
 
 -- when is requested to unlock from console, searches in requester inventory for an

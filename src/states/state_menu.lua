@@ -5,8 +5,8 @@ local valid_input = "qwertyuiopasdfghjklzxcvbnm1234567890space"
 
 local in_phase
 
-local n_of_players
-local current_player
+local n_of_pcs
+local current_pc
 -- clearing g.party_group in case we are restarting game
 g.party_group = {}
 
@@ -36,16 +36,16 @@ local key_output
 local INPUT_DTABLE1 = {
     ["escape"] = love.event.quit,
     ["right"] = function()
-        if n_of_players < 4 then
-            n_of_players = n_of_players + 1
+        if n_of_pcs < 4 then
+            n_of_pcs = n_of_pcs + 1
             play_sound(SOUNDS["button_switch"])
         else
             play_sound(SOUNDS["type_nil"])
         end
     end,
     ["left"] = function()
-        if n_of_players > 1 then
-            n_of_players = n_of_players - 1
+        if n_of_pcs > 1 then
+            n_of_pcs = n_of_pcs - 1
             play_sound(SOUNDS["button_switch"])
         else
             play_sound(SOUNDS["type_nil"])
@@ -69,17 +69,17 @@ local INPUT_DTABLE2 = {
         if in_name == "" then in_name = "Nameless Wanderer" end
 
         -- saving players names, checking if all players have a name
-        names_table[current_player] = in_name
+        names_table[current_pc] = in_name
         in_name = ""
-        current_player = current_player + 1
+        current_pc = current_pc + 1
 
-        if current_player > n_of_players then
+        if current_pc > n_of_pcs then
             -- finding and assigning to player_bp the player's blueprint
-            local player_bp = nil
-            player_bp = BP_LIST["player"]
+            local pc_bp = nil
+            pc_bp = BP_LIST["player"]
 
             -- check if player blueprint is missing, to avoid a crash
-            if player_bp == nil then
+            if pc_bp == nil then
                 error_handler(
                     "blueprints.csv does NOT contain a blueprint to spawn players!",
                     "blueprints.csv always needs a blueprint with id = player."
@@ -91,7 +91,7 @@ local INPUT_DTABLE2 = {
             end
 
             -- all fine, continue spawning. Assigning  new players to g.party_group
-            for i = 1, n_of_players do
+            for i = 1, n_of_pcs do
                 --[[
                     Creating a new Entity() and feeding it all player_bp data
                     + Players names.
@@ -147,8 +147,8 @@ function StateMenu:init()
     
         
     in_phase = 1
-    n_of_players = 1
-    current_player = 1
+    n_of_pcs = 1
+    current_pc = 1
     in_name = ""
     names_table = {}
     -- stopping old soundtrack
@@ -192,7 +192,7 @@ function StateMenu:update()
 end
 
 function StateMenu:refresh()
-    cnv_menu = ui_manager_menu(text, in_phase, n_of_players, current_player, in_name)
+    cnv_menu = ui_manager_menu(text, in_phase, n_of_pcs, current_pc, in_name)
 
     -- reset default canvas to draw on it in draw() func
     love.graphics.setCanvas()

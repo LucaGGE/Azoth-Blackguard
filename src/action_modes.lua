@@ -7,36 +7,36 @@
 
  -- table used for special console key input (player only)
 local INPUT_DTABLE = {
-    ["enter"] = function(player_comp)
+    ["enter"] = function(pc_comp)
         local return_value, custom_action
         -- reset console related values (action_state is set in player_cmd())
         console_cmd(nil)
-        player_comp.action_state = nil
+        pc_comp.action_state = nil
         
         play_sound(SOUNDS["button_select"])
 
         -- check action command, note that 'console' action is forbidden
-        if player_comp.string == "space" then
-            player_comp.string = ""
+        if pc_comp.string == "space" then
+            pc_comp.string = ""
         end
 
         -- if function received valid command, execute action
-        return_value, custom_action = player_cmd(player_comp, player_comp.string)
+        return_value, custom_action = pc_cmd(pc_comp, pc_comp.string)
 
         -- check if player is trying a custom action on Usable Entity
         -- this means any command out of player_cmd() local commands
         if custom_action then
-            player_comp.action_state = "use"
+            pc_comp.action_state = "use"
             console_cmd("Whither?")
         end
         
         -- false value signals to console that action_mode needs to be changed
         return false
     end,
-    ["backspace"] = function(player_comp)
-        player_comp.string = text_backspace(player_comp.string)
+    ["backspace"] = function(pc_comp)
+        pc_comp.string = text_backspace(pc_comp.string)
         -- return false, since player is typing action
-        return player_comp.string
+        return pc_comp.string
     end
 }
 INPUT_DTABLE["return"] = INPUT_DTABLE["enter"]
@@ -50,32 +50,30 @@ INPUT_DTABLE["return"] = INPUT_DTABLE["enter"]
     hence they are not in util.lua.
 ]]--
 IO_DTABLE = {
-    ["observe"] = function(player_comp, player_entity, key)
-        return observe_func(player_comp, player_entity, key)
+    ["observe"] = function(pc_comp, pc_entity, key)
+        return observe_func(pc_comp, pc_entity, key)
     end,
-    ["talk"] = function(player_comp, entity, key)
+    ["talk"] = function(pc_comp, entity, key)
         local return_value
 
         -- when message is ready, switch to special action_state
         if key == "enter" or key == "return" then
-            player_comp.action_state = "/talk"
+            pc_comp.action_state = "/talk"
             console_cmd("Whom dost thou tell? ")
 
             return false
         end
 
         if not INPUT_DTABLE[key] then
-            player_comp.string = text_input(
-                player_comp.valid_input, key, player_comp.string, 41
-            )
+            pc_comp.string = text_input(pc_comp.valid_input, key, pc_comp.string, 41)
             -- immediately show console string on screen
-            console_cmd("Thy utterances: " .. player_comp.string)            
+            console_cmd("Thy utterances: " .. pc_comp.string)            
             -- always return false, since player is typing action
             return false
         end
         
         -- if backspace or enter command, activate
-        return_value = INPUT_DTABLE[key](player_comp)
+        return_value = INPUT_DTABLE[key](pc_comp)
 
         if return_value then
             console_cmd("Thy utterances: " .. return_value)
@@ -83,55 +81,55 @@ IO_DTABLE = {
 
         return false
     end,
-    ["/talk"] = function(player_comp, player_entity, key)
-        return talk_func(player_comp, player_entity, key)
+    ["/talk"] = function(pc_comp, pc_entity, key)
+        return talk_func(pc_comp, pc_entity, key)
     end,
-    ["pickup"] = function(player_comp, player_entity, key)
-        return pickup_check_func(player_comp, player_entity, key)
+    ["pickup"] = function(pc_comp, pc_entity, key)
+        return pickup_check_func(pc_comp, pc_entity, key)
     end,
-    ["use"] = function(player_comp, player_entity, key)
-        return use_func(player_comp, player_entity, key)
+    ["use"] = function(pc_comp, pc_entity, key)
+        return use_func(pc_comp, pc_entity, key)
     end,
-    ["unlock"] = function(player_comp, player_entity, key)
-        return unlock_func(player_comp, player_entity, key)
+    ["unlock"] = function(pc_comp, pc_entity, key)
+        return unlock_func(pc_comp, pc_entity, key)
     end,
-    ["equip"] = function(player_comp, player_entity, key)
-        return equip_func(player_comp, player_entity, key)
+    ["equip"] = function(pc_comp, pc_entity, key)
+        return equip_func(pc_comp, pc_entity, key)
     end,
-    ["unequip"] = function(player_comp, player_entity, key)
-        return unequip_func(player_comp, player_entity, key)
+    ["unequip"] = function(pc_comp, pc_entity, key)
+        return unequip_func(pc_comp, pc_entity, key)
     end,
-    ["bestow"] = function(player_comp, player_entity, key)
-        return bestow_select_func(player_comp, player_entity, key)
+    ["bestow"] = function(pc_comp, pc_entity, key)
+        return bestow_select_func(pc_comp, pc_entity, key)
     end,
-    ["/bestow"] = function(player_comp, player_entity, key)
-        return bestow_place_func(player_comp, player_entity, key)
+    ["/bestow"] = function(pc_comp, pc_entity, key)
+        return bestow_place_func(pc_comp, pc_entity, key)
     end,
-    ["quit"] = function(player_comp, player_entity, key)
-        return quit_func(player_comp, player_entity, key)
+    ["quit"] = function(pc_comp, pc_entity, key)
+        return quit_func(pc_comp, pc_entity, key)
     end,
-    ["loose"] = function(player_comp, player_entity, key)
-        return loose_func(player_comp, player_entity, key)
+    ["loose"] = function(pc_comp, pc_entity, key)
+        return loose_func(pc_comp, pc_entity, key)
     end,
-    ["console"] = function(player_comp, entity, key)
+    ["console"] = function(pc_comp, entity, key)
         local return_value
 
         if not INPUT_DTABLE[key] then
-            player_comp.string = text_input(
-                player_comp.valid_input, key, player_comp.string, 9
+            pc_comp.string = text_input(
+                pc_comp.valid_input, key, pc_comp.string, 9
             )
             -- immediately show console string on screen
-            console_cmd("Thy action: " .. player_comp.string)            
+            console_cmd("Thy action: " .. pc_comp.string)            
             -- always return false, since player is typing action
             return false
         end
         
         -- if backspace or enter command, activate
-        return_value = INPUT_DTABLE[key](player_comp)
+        return_value = INPUT_DTABLE[key](pc_comp)
 
         -- if backspace, modify string
         if return_value then
-            console_cmd("Thy action: " .. player_comp.string)
+            console_cmd("Thy action: " .. pc_comp.string)
 
             return false
         end
@@ -141,106 +139,106 @@ IO_DTABLE = {
 }
 
 -- this func links hotkey/std console commands to corresponding action modes
-function player_cmd(player_comp, input_key)
+function pc_cmd(pc_comp, input_key)
     local key = input_key
 
     local commands = {
         ["/console"] = function()
-            if not player_comp.action_state then
-                player_comp.action_state = "console"
+            if not pc_comp.action_state then
+                pc_comp.action_state = "console"
                 -- immediately show console and update ui canvas
                 console_cmd("Thy action: ")
 
                 return false
             end
         end,
-        ["use"] = function(player_comp)
-            if not player_comp.action_state then
-                player_comp.action_state = "use"
+        ["use"] = function(pc_comp)
+            if not pc_comp.action_state then
+                pc_comp.action_state = "use"
                 console_cmd("Utilize what?")            
                 return false
             end
         end,
-        ["unlock"] = function(player_comp)
-            if not player_comp.action_state then
-                player_comp.action_state = "unlock"
+        ["unlock"] = function(pc_comp)
+            if not pc_comp.action_state then
+                pc_comp.action_state = "unlock"
                 console_cmd("Unbar what?")
                 return false
             end
         end,
         ["inventory"] = function()
-            if not player_comp.action_state then
+            if not pc_comp.action_state then
                 g.panel_on = not g.panel_on
                 -- necessary to update UI so that only console string is visible
                 g.cnv_ui = ui_manager_play()
                 return false
             end
         end,
-        ["observe"] = function(player_comp)
-            if not player_comp.action_state then
-                player_comp.action_state = "observe"
+        ["observe"] = function(pc_comp)
+            if not pc_comp.action_state then
+                pc_comp.action_state = "observe"
                 console_cmd("Observe what?")             
                 return false
             end
         end,
-        ["talk"] = function(player_comp)
-            if not player_comp.action_state then
-                player_comp.action_state = "talk"
+        ["talk"] = function(pc_comp)
+            if not pc_comp.action_state then
+                pc_comp.action_state = "talk"
                 console_cmd("Thy utterances: ")             
                 return false
             end
         end,
-        ["pickup"] = function(player_comp)
-            if not player_comp.action_state then
+        ["pickup"] = function(pc_comp)
+            if not pc_comp.action_state then
                 -- avoid picking up entities already in inventory
                 g.panel_on = false
                 
-                player_comp.action_state = "pickup"
+                pc_comp.action_state = "pickup"
                 console_cmd("Pickup what?")          
                 return false
             end
         end,
-        ["equip"] = function(player_comp)
-            if not player_comp.action_state then
+        ["equip"] = function(pc_comp)
+            if not pc_comp.action_state then
                 -- necessary to update UI so that only console string is visible
                 g.cnv_ui = ui_manager_play()
-                player_comp.action_state = "equip"
+                pc_comp.action_state = "equip"
                 console_cmd("Gear up thyself with what?")
                 return false
             end
         end,
-        ["unequip"] = function(player_comp)
-            if not player_comp.action_state then
+        ["unequip"] = function(pc_comp)
+            if not pc_comp.action_state then
                 g.panel_on = true
                 -- necessary to update UI so that only console string is visible
                 g.cnv_ui = ui_manager_play()
-                player_comp.action_state = "unequip"
+                pc_comp.action_state = "unequip"
                 console_cmd("Unequip from thyself what?")
                 return false
             end
         end,
-        ["loose"] = function(player_comp)
-            if not player_comp.action_state then
+        ["loose"] = function(pc_comp)
+            if not pc_comp.action_state then
                 g.panel_on = false
-                player_comp.action_state = "loose"
+                pc_comp.action_state = "loose"
                 console_cmd("Loose thy projectile where?")
                 return false
             end
         end,
-        ["bestow"] = function(player_comp)
-            if not player_comp.action_state then
+        ["bestow"] = function(pc_comp)
+            if not pc_comp.action_state then
                 g.panel_on = true
                 -- necessary to update UI so that only console string is visible
                 g.cnv_ui = ui_manager_play()
                 -- used to drop stuff around or to place items in proper places
-                player_comp.action_state = "bestow"
+                pc_comp.action_state = "bestow"
                 console_cmd("Bestow what?")
                 return false
             end
         end,
         ["quit"] = function()
-            if not player_comp.action_state then
-                player_comp.action_state = "quit"
+            if not pc_comp.action_state then
+                pc_comp.action_state = "quit"
                 console_cmd("Art thou truly certain thou dost wish to depart?")          
                 return false
             end
@@ -271,6 +269,6 @@ function player_cmd(player_comp, input_key)
         return false, true
     end
 
-    player_comp.string = ""
-    return commands[key](player_comp)
+    pc_comp.string = ""
+    return commands[key](pc_comp)
 end

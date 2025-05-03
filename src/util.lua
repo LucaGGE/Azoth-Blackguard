@@ -196,10 +196,10 @@ end
     start, to avoid erasing their data. Both cases are found in map_generator() func
 ]]--
 function entities_spawner(bp, loc_row, loc_col, name)
-    local player_num = 1
+    local pc_num = 1
     local is_pawn = false
     local is_npc = false
-    local new_player
+    local new_pc
 
     -- now create component instances to feed to new entity
     local instanced_comps = {}
@@ -251,8 +251,8 @@ function entities_spawner(bp, loc_row, loc_col, name)
             instanced_entity.comp["stats"] = stat_component
         end
 
-        new_player = instanced_entity
-        table.insert(g.party_group, new_player)
+        new_pc = instanced_entity
+        table.insert(g.party_group, new_pc)
     end
 
     -- positioning entities
@@ -288,11 +288,11 @@ end
     Tiles are then drawn once, being static, and then stored as a base canvas for
     dynamic Entities that need to be drawn each loop.
 ]]
-function map_generator(map_values, generate_players)
+function map_generator(map_values, generate_pcs)
     local cell_x = 0
     local cell_y = 0
     local entity_name -- optional entity name, tanken from third cell arg
-    local player_spawn = {}
+    local pc_spawn = {}
     -- function dedicated to finalize cell generation with tile/entity
     local finalize_cell = function(tile_index, blueprint, i, j)
         local new_index = tile_index
@@ -335,7 +335,7 @@ function map_generator(map_values, generate_players)
             -- if tile_index = x, it's a player spawn point!
             if tile_index == "x" and tile_value_2:match("%d") then
                 -- if a spawn point, save locations for players to be spawned later
-                player_spawn[tonumber(tile_value_2)] = {["row"] = i, ["col"] = j, ["cell"] = g.grid[i][j]}
+                pc_spawn[tonumber(tile_value_2)] = {["row"] = i, ["col"] = j, ["cell"] = g.grid[i][j]}
                 -- avoid finalize_cell() func, instead set cell to 'empty'
                 g.grid[i][j].index = "empty"
 
@@ -500,7 +500,7 @@ function map_generator(map_values, generate_players)
     end
 
     -- not spawning the players again if we just changed level
-    if generate_players then
+    if generate_pcs then
         -- finalizing player spawn: in the menu we have inserted players entities,
         -- but not their input components!
         local party_group_copy = g.party_group
@@ -510,7 +510,7 @@ function map_generator(map_values, generate_players)
             local bp = bpandname["bp"]
             local name = bpandname["name"]
             -- check that all 4 spawn locations for players were set
-            if not player_spawn[i] then
+            if not pc_spawn[i] then
                 error_handler(
                     "Map has insufficient Player Spawn Points. All maps should have four."
                 )
@@ -519,22 +519,22 @@ function map_generator(map_values, generate_players)
                 g.game_state:init()
                 break
             end
-            entities_spawner(bp, player_spawn[i]["row"], player_spawn[i]["col"], name)
+            entities_spawner(bp, pc_spawn[i]["row"], pc_spawn[i]["col"], name)
         end
     else
         -- players get generated at game start, and map generation happens each map.
         -- If players already exist, position them on their ordered spawn points
-        for i, player in ipairs(g.party_group)  do
-            player.cell["cell"] = player_spawn[i]["cell"]
-            player.cell["cell"].pawn = player["entity"]
-            player.cell["grid_row"] = player_spawn[i]["row"]
-            player.cell["grid_col"] = player_spawn[i]["col"]
-            table.insert(g.render_group, player)
+        for i, pc in ipairs(g.party_group)  do
+            pc.cell["cell"] = pc_spawn[i]["cell"]
+            pc.cell["cell"].pawn = pc["entity"]
+            pc.cell["grid_row"] = pc_spawn[i]["row"]
+            pc.cell["grid_col"] = pc_spawn[i]["col"]
+            table.insert(g.render_group, pc)
         end
     end
 end
 
-function map_reader(map, generate_players)
+function map_reader(map, generate_pcs)
     -- reading map values (static, one-draw pass tiles only)
     local map_values = csv_reader(FILES_PATH .. "map_"..map..".csv")
 
@@ -581,7 +581,7 @@ function map_reader(map, generate_players)
         end
     end
     -- now generating the map with the extracted data
-    map_generator(map_values, generate_players)
+    map_generator(map_values, generate_pcs)
     -- if everything went fine, return true. Else, false.
     return true
 end
@@ -1029,13 +1029,13 @@ end
 
 -- manages turns and applies effects before Entity activation
 -- NOTE: current player is always fed to coordinate camera position!
-function turns_manager(current_player)
+function turns_manager(current_pc)
     -- setting current_player coords for camera tweening
-    local x_for_tweening = current_player.cell["cell"].x
-    local y_for_tweening = current_player.cell["cell"].y
+    local x_for_tweening = current_pc.cell["cell"].x
+    local y_for_tweening = current_pc.cell["cell"].y
 
     -- set this next (or first) player as the g.camera entity
-    g.camera["entity"] = current_player
+    g.camera["entity"] = current_pc
 
     -- immediately nil console string, or it will linger for a moment after an
     -- action like 'equip' that closes inventory has been executed
@@ -1045,17 +1045,17 @@ function turns_manager(current_player)
     Timer.tween(TWEENING_TIME, {
         [g.camera] =  {x = x_for_tweening, y = y_for_tweening}        
     }):finish(function ()
-        local player_comp = current_player.comp["player"]
+        local pc_comp = current_pc.comp["player"]
 
         -- if it's not the NPCs turn, apply player pawn effects and enable them 
-        if current_player.alive then
-            for i, effect_tag in ipairs(current_player.effects) do
+        if current_pc.alive then
+            for i, effect_tag in ipairs(current_pc.effects) do
                 print("Player effect tag detected")
                 -- activate lasting effects for current_player
                 effect_tag:activate()
                 -- remove concluded effects from current_player["entity"].effects
                 if effect_tag.duration <= 0 then
-                    table.remove(current_player.effects, i)
+                    table.remove(current_pc.effects, i)
                 end
             end
         end
@@ -1083,13 +1083,13 @@ function turns_manager(current_player)
         ::continue::
 
         -- add to played turns
-        player_comp.turns = player_comp.turns + 1
+        pc_comp.turns = pc_comp.turns + 1
 
         -- check 'game cycle' completion for player's hp regeneration/hunger increase
-        if player_comp.turns > 20 then
-            local stat = current_player.comp["stats"].stat
+        if pc_comp.turns > 20 then
+            local stat = current_pc.comp["stats"].stat
 
-            player_comp.turns = 0
+            pc_comp.turns = 0
             stat["hunger"] = stat["hunger"] + stat["appetite"]
 
             -- if player is well fed (first 400 turns), regain 1 hp
@@ -1113,7 +1113,7 @@ function turns_manager(current_player)
 
             if stat["hunger"] >= 20 then
                 if g.hunger_msg then
-                    local name = current_player.name
+                    local name = current_pc.name
                     local color = {1, 0.5, 0.4, 1}
 
                     console_event(name .. " belly is most empty!", color)
@@ -1124,7 +1124,7 @@ function turns_manager(current_player)
 
             -- after 750 turns withous eating, player starts to starve
             if stat["hunger"] > 50 then
-                local name = current_player.name
+                local name = current_pc.name
                 local color = {1, 0.5, 0.4, 1}
 
                 -- this is the max value for hunger
@@ -1132,11 +1132,11 @@ function turns_manager(current_player)
 
                 console_event(name .. " is in dire want of sustenance!", color)
 
-                death_check(current_player, "1d1", "starvation", "perished from starvation!")
+                death_check(current_pc, "1d1", "starvation", "perished from starvation!")
 
                 -- check if starvation killed player
-                if not current_player.alive then
-                    register_death(current_player, "starvation", "Black Swamps")
+                if not current_pc.alive then
+                    register_death(current_pc, "starvation", "Black Swamps")
                 end
             end
         end
@@ -1283,7 +1283,7 @@ function draw_borders(group)
 end
 
 -- main menu UI manager
-function ui_manager_menu(text_in, input_phase, n_of_players, current_player, name)
+function ui_manager_menu(text_in, input_phase, n_of_pcs, current_pc, name)
     -- generating a canvas of the proper size
     local new_canvas  = love.graphics.newCanvas(g.w_width, g.w_height)
     local size = SIZE_MULT * 2
@@ -1318,7 +1318,7 @@ function ui_manager_menu(text_in, input_phase, n_of_players, current_player, nam
 
     -- setting proper text for input_phase
     text = text_in[input_phase]
-    str = text_in[current_player + 2]
+    str = text_in[current_pc + 2]
 
     -- text and text input coordinates setting
     text_x = 0
@@ -1328,7 +1328,7 @@ function ui_manager_menu(text_in, input_phase, n_of_players, current_player, nam
 
     love.graphics.setFont(FONTS["subtitle"])
     if input_phase == 1 then
-        love.graphics.printf(text .. n_of_players, text_x, text_y, g.w_width, "center")
+        love.graphics.printf(text .. n_of_pcs, text_x, text_y, g.w_width, "center")
     else
         love.graphics.printf(text .. str .. "rogue:\n" .. name, input_x, input_y, g.w_width, "center")
     end
@@ -1583,15 +1583,15 @@ function entity_available(target)
     end
 end
 
-function panel_update(player)
+function panel_update(pc)
     local new_canvas  = love.graphics.newCanvas(g.w_width, g.w_height)
     local size = SIZE_MULT * 2
     local t_size = TILE_SIZE * 2
     local inv_str = "abcdefghijklmnopqrstuvwxyz"
     local slots_str = "1234567890"
     -- referencing eventual player's 'inventory' component
-    local inventory = player.comp["inventory"]
-    local slots = player.comp["slots"]
+    local inventory = pc.comp["inventory"]
+    local slots = pc.comp["slots"]
     local available_items = {}
     local title_color = {0.49, 0.82, 0.90, 1}
 
@@ -1609,7 +1609,7 @@ function panel_update(player)
     love.graphics.setColor(title_color)
 
     -- printing owner's name
-    love.graphics.printf(player.name .. "'s bag", 0, SIZE["DEF"], g.w_width, "center")
+    love.graphics.printf(pc.name .. "'s bag", 0, SIZE["DEF"], g.w_width, "center")
 
     -- setting font for inventory's items
     love.graphics.setFont(FONTS["ui"])
@@ -1730,17 +1730,17 @@ end
 
 -- related to action_modes, selects a tile OR an inventory item to perform action on
 -- which one is selcted depends on inventory being opened or closed
-function target_selector(player_comp, performer, key)
+function target_selector(pc_comp, performer, key)
     local target_cell
     local pawn_ref, entity_ref -- Entities references
     
     
     if not g.panel_on then
-        if player_comp.movement_inputs[key] then
+        if pc_comp.movement_inputs[key] then
             local target_x, target_y
 
-            target_y = performer.cell["grid_col"] + player_comp.movement_inputs[key][2]
-            target_x = performer.cell["grid_row"] + player_comp.movement_inputs[key][1]
+            target_y = performer.cell["grid_col"] + pc_comp.movement_inputs[key][2]
+            target_x = performer.cell["grid_row"] + pc_comp.movement_inputs[key][1]
 
             target_cell = g.grid[target_x][target_y]
         else
@@ -1820,12 +1820,12 @@ function action_to_power(owner, target, key)
     owner.powers[key]:activate(owner, target, nil)
 end
 
-function observe_func(player_comp, player_entity, key)
+function observe_func(pc_comp, pc_entity, key)
     local valid_key
     local pawn, entity
     local pawn_str, entity_str
 
-    valid_key, pawn, entity = target_selector(player_comp, player_entity, key)
+    valid_key, pawn, entity = target_selector(pc_comp, pc_entity, key)
 
     if not valid_key then return false end
 
@@ -1859,17 +1859,17 @@ function observe_func(player_comp, player_entity, key)
     end
 
     -- observing is a 'free' action, so it resets action_state to 'nil'
-    player_comp.action_state = nil
+    pc_comp.action_state = nil
     console_cmd(nil)
 
     return false
 end
 
-function bestow_select_func(player_comp, player_entity, key)
-    local player_slots = player_entity.comp["slots"]
+function bestow_select_func(pc_comp, pc_entity, key)
+    local pc_slots = pc_entity.comp["slots"]
     local item
 
-    if not player_slots then
+    if not pc_slots then
         print("Entity without slots comp trying to bestow")
         return false
     end
@@ -1890,19 +1890,19 @@ function bestow_select_func(player_comp, player_entity, key)
 
     -- at this point, a valid item was selected
     g.panel_on = false
-    player_comp.action_state = "/bestow"
+    pc_comp.action_state = "/bestow"
     -- store selected item in player_comp.string
-    player_comp.string = key
+    pc_comp.string = key
     console_cmd("Where do you bestow it?")
 
     return false
 end
 
-function quit_func(player_comp, player_entity, key)
+function quit_func(pc_comp, pc_entity, key)
     if key == "n" then
-        player_comp.string = false
+        pc_comp.string = false
         console_cmd(nil)
-        player_comp.action_state = nil
+        pc_comp.action_state = nil
 
         return false
     end
@@ -1913,23 +1913,23 @@ function quit_func(player_comp, player_entity, key)
         return false
     end
 
-    player_comp.string = false
+    pc_comp.string = false
     console_event("Inscribe Y(ea) or N(ay)")
 
     return false
 end
 
 -- bestow can be applied to any Entity in inventory, if not equipped
-function bestow_place_func(player_comp, player_entity, key, input_item)
+function bestow_place_func(pc_comp, pc_entity, key, input_item)
     local valid_key
     local pawn, entity
     local target_cell
     local item = input_item -- only used for non-inventory unequip & bestow
-    local item_key = player_comp.string
+    local item_key = pc_comp.string
     local item_str
-    local pc_inventory = player_entity.comp["inventory"]
+    local pc_inventory = pc_entity.comp["inventory"]
 
-    valid_key, pawn, entity, target_cell = target_selector(player_comp, player_entity, key)
+    valid_key, pawn, entity, target_cell = target_selector(pc_comp, pc_entity, key)
 
     if not valid_key then
         print("Invalid key")
@@ -1971,8 +1971,8 @@ function bestow_place_func(player_comp, player_entity, key, input_item)
     -- set proper item string
     item_str = string_selector(item)
 
-    panel_update(player_entity)
-    player_comp.string = false
+    panel_update(pc_entity)
+    pc_comp.string = false
 
     -- then position item in target_cell and add to entities_group
     item.cell["cell"] = target_cell
@@ -1998,21 +1998,21 @@ function bestow_place_func(player_comp, player_entity, key, input_item)
     return true
 end
 
-function equip_func(player_comp, player_entity, key)
-    local player_slots = player_entity.comp["slots"]
+function equip_func(pc_comp, pc_entity, key)
+    local pc_slots = pc_entity.comp["slots"]
     local target_item
     local equipable_comp
-    local pc_inventory = player_entity.comp["inventory"]
+    local pc_inventory = pc_entity.comp["inventory"]
 
-    if not player_slots then
+    if not pc_slots then
         error_handler("Trying to equip without slots component")
         return false
     end
 
     -- player slots
-    player_slots = player_slots.slots
+    pc_slots = pc_slots.slots
 
-    _, _, target_item = target_selector(player_comp, player_entity, key)
+    _, _, target_item = target_selector(pc_comp, pc_entity, key)
 
     -- check if there's a target item
     if not target_item then
@@ -2035,13 +2035,13 @@ function equip_func(player_comp, player_entity, key)
 
     -- check if proper slot for the item is available in 'slots' component
     for _, slot in ipairs(equipable_comp.suitable_slots) do
-        if player_slots[slot] == "empty" then
+        if pc_slots[slot] == "empty" then
             local item_str = string_selector(target_item)
 
             -- save occupied slot in equipped object for easier referencing
             equipable_comp.slot_reference = slot
             -- store item inside slots component
-            player_slots[slot] = {
+            pc_slots[slot] = {
                 ["tag"] = key,
                 ["item"] = target_item
             }
@@ -2049,7 +2049,7 @@ function equip_func(player_comp, player_entity, key)
             play_sound(SOUNDS["sfx_equip"])
             -- activate equip() func in 'equipable' component
             -- this can trigger dedicated effects thanks to 'equip' tagged power
-            equipable_comp:equip(target_item, player_entity)
+            equipable_comp:equip(target_item, pc_entity)
 
             console_event("Thou dost equip thyself with " .. item_str)
 
@@ -2073,19 +2073,19 @@ function equip_func(player_comp, player_entity, key)
     return false
 end
 
-function unequip_func(player_comp, player_entity, key)
-    local player_slots
+function unequip_func(pc_comp, pc_entity, key)
+    local pc_slots
     local equipped_items = {}
 
-    if not player_entity.comp["slots"] then
+    if not pc_entity.comp["slots"] then
         print("WARNING: Entity without slots is trying to unequip")
         return false
     end
     -- if an item player_entity was equipped and still is,
     -- we can assume its data is predictable
-    player_slots = player_entity.comp["slots"].slots
+    pc_slots = pc_entity.comp["slots"].slots
 
-    for _, slot_value in pairs(player_slots) do
+    for _, slot_value in pairs(pc_slots) do
         if slot_value ~= "empty" then
             equipped_items[slot_value["tag"]] = slot_value["item"]
         end
@@ -2094,7 +2094,7 @@ function unequip_func(player_comp, player_entity, key)
     if equipped_items[key] then
         local item
         local success
-        local pc_inventory = player_entity.comp["inventory"]
+        local pc_inventory = pc_entity.comp["inventory"]
 
         item = equipped_items[key]
 
@@ -2124,13 +2124,13 @@ function unequip_func(player_comp, player_entity, key)
             end
 
             if not cursed then
-                bestowed = bestow_place_func(player_comp, player_entity, "s", item)
+                bestowed = bestow_place_func(pc_comp, pc_entity, "s", item)
             end
 
             if bestowed then
                 play_sound(SOUNDS["sfx_unequip"])
-                item.comp["equipable"]:unequip(item, player_entity)
-                player_slots[item.comp["equipable"].slot_reference] = "empty"
+                item.comp["equipable"]:unequip(item, pc_entity)
+                pc_slots[item.comp["equipable"].slot_reference] = "empty"
                 item.comp["equipable"].slot_reference = false
                 item.alive = true
             end
@@ -2138,7 +2138,7 @@ function unequip_func(player_comp, player_entity, key)
             return true
         end
 
-        success = item.comp["equipable"]:unequip(item, player_entity)
+        success = item.comp["equipable"]:unequip(item, pc_entity)
 
         if not success then
             play_sound(SOUNDS["sfx_cursed"])
@@ -2155,7 +2155,7 @@ function unequip_func(player_comp, player_entity, key)
             store_item = store_item and store_item:add(item)
 
             play_sound(SOUNDS["sfx_unequip"])
-            player_slots[item.comp["equipable"].slot_reference] = "empty"
+            pc_slots[item.comp["equipable"].slot_reference] = "empty"
             item.comp["equipable"].slot_reference = false
             item.alive = true
 
@@ -2169,11 +2169,11 @@ function unequip_func(player_comp, player_entity, key)
     end
 end
 
-function unlock_func(player_comp, player_entity, key)
+function unlock_func(pc_comp, pc_entity, key)
     local valid_key
     local pawn, entity
 
-    valid_key, pawn, entity = target_selector(player_comp, player_entity, key)
+    valid_key, pawn, entity = target_selector(pc_comp, pc_entity, key)
     
     if not valid_key then return false end
 
@@ -2185,7 +2185,7 @@ function unlock_func(player_comp, player_entity, key)
 
     -- if no unlockable target is found then warn player
     if entity.comp["locked"] then
-        entity.comp["locked"]:activate(entity, player_entity)
+        entity.comp["locked"]:activate(entity, pc_entity)
     else
         console_event("Thee can't unlock this")
     end
@@ -2193,16 +2193,16 @@ function unlock_func(player_comp, player_entity, key)
     return true
 end
 
-function use_func(player_comp, player_entity, key)
+function use_func(pc_comp, pc_entity, key)
     local valid_key
     local pawn, entity
     
-    valid_key, pawn, entity = target_selector(player_comp, player_entity, key)
+    valid_key, pawn, entity = target_selector(pc_comp, pc_entity, key)
 
     if not valid_key then return false end
 
     if not g.panel_on then
-        local input = player_comp.movement_inputs[key]
+        local input = pc_comp.movement_inputs[key]
         -- player shouldn't be able to activate entities he's standing on,
         -- since they could change physics and block him improperly
         
@@ -2230,7 +2230,7 @@ function use_func(player_comp, player_entity, key)
 
     -- if the target has a trigger 'trig_on_coll' comp, trigger immediately
     if entity.comp["trigger"] and entity.comp["trigger"].trig_on_coll then
-        entity.comp["trigger"]:activate(entity, player_entity, nil)
+        entity.comp["trigger"]:activate(entity, pc_entity, nil)
     end
 
     -- if usable target is found activate, else warn player
@@ -2240,11 +2240,11 @@ function use_func(player_comp, player_entity, key)
 
         -- if player_comp.string is empty, the command is a simple 'use'.
         -- Set it to false to let Usable comp & console_event() know this.
-        if player_comp.string == "" then player_comp.string = false end
-        console_string = player_comp.string or "usae "
+        if pc_comp.string == "" then pc_comp.string = false end
+        console_string = pc_comp.string or "usae "
 
         console_event("Thee " .. console_string .. " " .. entity_str)
-        entity.comp["usable"]:activate(entity, player_entity, player_comp.string)
+        entity.comp["usable"]:activate(entity, pc_entity, pc_comp.string)
     else
         console_event("Nothing doth happen")
     end
@@ -2252,10 +2252,10 @@ function use_func(player_comp, player_entity, key)
     return true
 end
 
-function pickup_check_func(player_comp, player_entity, key)
+function pickup_check_func(pc_comp, pc_entity, key)
     local valid_key
     local pawn, entity
-    local pc_inventory = player_entity.comp["inventory"]
+    local pc_inventory = pc_entity.comp["inventory"]
 
     -- if capacity <= 0, it is read as false
     pc_inventory = pc_inventory and pc_inventory.capacity > 0
@@ -2266,7 +2266,7 @@ function pickup_check_func(player_comp, player_entity, key)
         return true
     end            
 
-    valid_key, pawn, entity = target_selector(player_comp, player_entity, key)
+    valid_key, pawn, entity = target_selector(pc_comp, pc_entity, key)
     
     if not valid_key then return false end
 
@@ -2279,16 +2279,16 @@ function pickup_check_func(player_comp, player_entity, key)
     -- block any interaction with 'locked' or 'sealed' Entities
     if not entity_available(entity) then return true end
 
-    return pickup_func(entity, player_entity) 
+    return pickup_func(entity, pc_entity) 
 end
 
-function pickup_func(target_entity, player_entity)
+function pickup_func(target_entity, pc_entity)
     -- if the target has a trigger comp, trigger immediately
     if target_entity.comp["trigger"] then
-        target_entity.comp["trigger"]:activate(target_entity, player_entity)
+        target_entity.comp["trigger"]:activate(target_entity, pc_entity)
 
         -- activating optional pickup-related power
-        action_to_power(target_entity, player_entity, "on_pickup")
+        action_to_power(target_entity, pc_entity, "on_pickup")
     end
 
     -- if target is has destroyontrigger, don't bother picking up
@@ -2298,18 +2298,18 @@ function pickup_func(target_entity, player_entity)
 
     -- if target has no pickup comp then warn player
     if target_entity.comp["pickup"] then
-        return player_entity.comp["inventory"]:add(target_entity)
+        return pc_entity.comp["inventory"]:add(target_entity)
     else
         console_event("Thee art unable to pick hider up")
         return false
     end
 end
 
-function talk_func(player_comp, player_entity, key)
+function talk_func(pc_comp, pc_entity, key)
     local valid_key
     local entity
 
-    valid_key, _, entity = target_selector(player_comp, player_entity, key)
+    valid_key, _, entity = target_selector(pc_comp, pc_entity, key)
     
     if not valid_key then return false end
 
@@ -2321,10 +2321,10 @@ function talk_func(player_comp, player_entity, key)
 
     -- if the target has a trigger comp, trigger immediately
     if entity.comp["sealed"] then
-        entity.comp["sealed"]:activate(entity, player_entity, player_comp)
+        entity.comp["sealed"]:activate(entity, pc_entity, pc_comp)
 
         -- activating optional unseal-related power
-        action_to_power(entity, player_entity, "on_unseal")
+        action_to_power(entity, pc_entity, "on_unseal")
 
         return true
     end
@@ -2334,12 +2334,12 @@ function talk_func(player_comp, player_entity, key)
     return true
 end
 
-function loose_func(player_comp, player_entity, key)
+function loose_func(pc_comp, pc_entity, key)
     -- select behavior between launching item or shooting ranged weapon,
     -- depending on inventory open/close
     if not g.panel_on then
-        local weapon_ref = player_entity.comp["slots"]
-        local quiver_ref = player_entity.comp["slots"]
+        local weapon_ref = pc_entity.comp["slots"]
+        local quiver_ref = pc_entity.comp["slots"]
 
         -- trying to store player's 'weapon' slot
         weapon_ref = weapon_ref and weapon_ref.slots["weapon"] or false
@@ -2386,11 +2386,11 @@ function loose_func(player_comp, player_entity, key)
 
                 -- kill non-stack ammo, remove from slots and inventory
                 if not stack_ammo then
-                    local slots_ref = player_entity.comp["slots"].slots
+                    local slots_ref = pc_entity.comp["slots"].slots
                     local tag = slots_ref["quiver"]["tag"]
 
                     --quiver_ref["item"].alive = false
-                    player_entity.comp["inventory"]:remove(tag)
+                    pc_entity.comp["inventory"]:remove(tag)
                     slots_ref["quiver"] = "empty"
                     
                     console_event(
@@ -2410,11 +2410,11 @@ function loose_func(player_comp, player_entity, key)
 
                 -- kill consumed stack ammo, remove from inventory and slots
                 if stack_ammo and stack_ammo["hp"] <= 0 then
-                    local slots_ref = player_entity.comp["slots"].slots
+                    local slots_ref = pc_entity.comp["slots"].slots
                     local tag = slots_ref["quiver"]["tag"]
 
                     --quiver_ref["item"].alive = false
-                    player_entity.comp["inventory"]:remove(tag)
+                    pc_entity.comp["inventory"]:remove(tag)
                     slots_ref["quiver"] = "empty"
                     
                     console_event(
@@ -2446,7 +2446,7 @@ end
     possible, since components are store and iterated many times for each Entity.
 ]]--
 
-function player_manage_input(entity, key, comp)
+function pc_manage_input(entity, key, comp)
     if key == "escape" then 
         comp.action_state = nil
         comp.string = ""
@@ -2462,7 +2462,7 @@ function player_manage_input(entity, key, comp)
         if not mov_input and not comp.action_state then
             -- hotkeys allow access only to a few selected states/interactions.
             -- NOTE: 'comp' = this comp, and 'entity' = player entity
-            return player_cmd(comp, key)
+            return pc_cmd(comp, key)
         end
 
         -- check if player has inventory open, to avoid undesired movement input
@@ -3004,8 +3004,8 @@ function equipable_unequip(owner, target)
     return true
 end
 
-function sealed_activate(target, entity, player_comp)
-    if target.name == player_comp.string then
+function sealed_activate(target, entity, pc_comp)
+    if target.name == pc_comp.string then
         console_event("Thou dost unseal it!")
         if target.comp["trigger"] then
             target.comp["trigger"]:activate(owner, target, nil)
@@ -3013,7 +3013,7 @@ function sealed_activate(target, entity, player_comp)
 
         -- if Entity gets successfully unsealed, remove 'seled' comp
         target.comp["sealed"] = nil
-        player_comp.string = ""
+        pc_comp.string = ""
         return true
     end
 
@@ -3128,7 +3128,7 @@ function  stat_update(target, id, mods)
 end
 
 -- this warns the player when an EffectTag influences him
-function effect_player_check(target, string)
+function effect_pc_check(target, string)
     -- if player is suffering effect, warn him
     if target.comp["player"] then
         local color = {[1] = 1, [2] = 0.97, [3] = 0.44}

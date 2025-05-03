@@ -59,7 +59,7 @@ function bleed(target, input)
     local success
 
     -- if player is suffering effect, warn him
-    effect_player_check(target, "is bleeding")
+    effect_pc_check(target, "is bleeding")
 
     success, _ = death_check(target, "1", "bleeding", "hath bled to death", "sfx_death_ble")
 

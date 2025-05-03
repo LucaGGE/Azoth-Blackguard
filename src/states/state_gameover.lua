@@ -2,8 +2,6 @@ StateGameOver = BaseState:extend()
 
 -- used to avoid skipping game over screen by mistake
 local can_input
--- used to print all the death messages on screen
-local players_count
 -- menu dedicated canvas (gameover only)
 local canvas_gameover
 

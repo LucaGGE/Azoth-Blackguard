@@ -3085,7 +3085,7 @@ function  stat_update(target, id, mods)
     end
 
     -- update all statistics with its base_stat + corresponding modifier
-    -- NOTE: if modifier but no stat = ignored. If stat but no modifier = 0.
+    -- NOTE: if modifier but no stat = ignored. If stat but no modifier, mod = 0
     for statistic, _ in pairs(stats.stat) do
 
         -- current hp and hunger can never be modified by mutagens
